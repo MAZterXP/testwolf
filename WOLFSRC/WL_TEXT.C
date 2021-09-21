@@ -3,6 +3,18 @@
 #include "WL_DEF.H"
 #pragma	hdrstop
 
+// missing constants needed for SoD build
+// (these are dummies because the Read This feature is never available in SoD)
+#ifdef SPEAR
+#define H_TOPWINDOWPIC 0
+#define H_LEFTWINDOWPIC 0
+#define H_RIGHTWINDOWPIC 0
+#define H_BOTTOMINFOPIC 0
+#endif
+#ifdef SPEARDEMO
+#define T_ENDART1 0
+#endif
+
 /*
 =============================================================================
 

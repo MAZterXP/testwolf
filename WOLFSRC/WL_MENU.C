@@ -616,9 +616,11 @@ void CP_ReadThis(void)
 #endif
 #endif
 
+/*
 #ifndef SPEAR
 #ifndef GOODTIMES
 #else
+*/
 ////////////////////////////////////////////////////////////////////
 //
 // BOSS KEY
@@ -639,8 +641,10 @@ void BossKey(void)
 	VL_SetPalette (&gamepal);
 	LoadLatchMem();
 }
+/*
 #endif
 #endif
+*/
 
 ////////////////////////////////////////////////////////////////////
 //

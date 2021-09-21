@@ -1454,6 +1454,7 @@ void    DemoLoop (void)
 
 #ifndef DEMOTEST
 
+/*
 	#ifndef UPLOAD
 
 		#ifndef GOODTIMES
@@ -1473,6 +1474,7 @@ void    DemoLoop (void)
 		#endif
 		#endif
 	#endif
+*/
 
 	StartCPMusic(INTROSONG);
 
@@ -1541,7 +1543,10 @@ void    DemoLoop (void)
 			#ifndef SPEARDEMO
 			PlayDemo (LastDemo++%4);
 			#else
+/*
 			PlayDemo (0);
+*/
+			PlayDemo (LastDemo);
 			#endif
 
 			if (playstate == ex_abort)

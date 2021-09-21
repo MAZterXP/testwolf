@@ -36,7 +36,11 @@ extern	char		far signon;
 
 #ifndef SPEAR
 
+#ifndef GOODTIMES
+#include "GFXV_APO.H"
+#else
 #include "GFXV_WL6.H"
+#endif
 #include "AUDIOWL6.H"
 #include "MAPSWL6.H"
 
