@@ -173,13 +173,13 @@ static	word			sqMode,sqFadeStep;
 
 //====== WOLFDOSMPU BEGIN
 
-static word midiPort = 0x330;
-static boolean midiInitialized = false;
-static byte _seg *midiFileBuffer = 0;
-static word midiFileLen = 0;
-static word midiFilePos = 0;
-static word midiFileWait = 0;
-static boolean midiFileC0D0 = false;
+static word			midiPort 		= 0x330;
+static boolean		midiInitialized = false;
+static byte _seg 	*midiFileBuffer = 0;
+static word 		midiFileLen 	= 0;
+static word 		midiFilePos 	= 0;
+static word 		midiFileWait 	= 0;
+static boolean 		midiFileC0D0 	= false;
 
 void midiSend(byte length, byte far *buffer, word pos)
 {
@@ -224,8 +224,8 @@ word midiReadVarLen()
 	{
 		// varlen values longer than 14 bits are currently not supported
 		midiTurnOff();
-		midiFileLen = 0;
-		return 1;
+		midiFilePos = 0;
+		return 1;	// ensure that midiTick will exit its loop
 	}
 	result |= midiFileBuffer[midiFilePos++];
 	return result;
@@ -241,6 +241,7 @@ void midiStart(word songId)
 	if (! midiInitialized)
 	{
 		// initialize MPU401
+		i = 65535;
 		while (inportb(midiPort + 1) & 0x40)		// wait until we can write
 		{
 			i--;
@@ -271,8 +272,8 @@ void midiStart(word songId)
 		MM_FreePtr((memptr *) &midiFileBuffer);
 	}
 	midiFileBuffer = 0;
-	midiFilePos = 0;
 	midiFileLen = 0;
+	midiFilePos = 0;
 	midiFileWait = 0;
 	midiTurnOff();
 
@@ -333,12 +334,13 @@ void midiStart(word songId)
 	}
 	midiFileLen += 22;
 	midiFilePos = 22;
-	midiFileWait = midiReadVarLen() + 1;
+	midiFileWait = 1;
+	midiReadVarLen();	// doing it this way sets filePos > 22 atomically (so midiTick won't run until then)
 }
 
 void midiTick()
 {
-	if (midiFileLen == 0)
+	if (midiFilePos <= 22)
 		return;
 
 	midiFileWait--;

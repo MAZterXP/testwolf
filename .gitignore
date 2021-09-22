@@ -3,6 +3,8 @@ MUSIC/
 OBJ/
 *.SDM
 *.SOD
+*.SWP
+*.SYM
 *.WL1
 *.WL6
 *.EXE
