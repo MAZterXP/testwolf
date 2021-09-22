@@ -1,7 +1,8 @@
-.vscode
+.vscode/
+MUSIC/
+OBJ/
 *.SDM
 *.SOD
 *.WL1
 *.WL6
 *.EXE
-MUSIC

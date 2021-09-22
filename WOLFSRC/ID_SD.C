@@ -170,6 +170,228 @@ static	word			sqMode,sqFadeStep;
 //	Internal routines
 		void			SDL_DigitizedDone(void);
 
+
+//====== WOLFDOSMPU BEGIN
+
+static word midiPort = 0x330;
+static boolean midiInitialized = false;
+static byte _seg *midiFileBuffer = 0;
+static word midiFileLen = 0;
+static word midiFilePos = 0;
+static word midiFileWait = 0;
+static boolean midiFileC0D0 = false;
+
+void midiSend(byte length, byte far *buffer, word pos)
+{
+	while (length > 0)
+	{
+		byte b = buffer[pos++];
+		length--;
+
+		asm	pushf
+		asm	cli
+
+		asm	mov		dx,[midiPort]
+		asm	inc		dx
+midiWaitLoop:
+		asm	in		al,dx
+		asm	test	al,40h
+		asm	jnz		midiWaitLoop
+
+		asm	mov		al,[b]
+		asm	dec		dx
+		asm	out		dx,al
+
+		asm	popf
+	}
+}
+
+void midiTurnOff()
+{
+	// turn off all controllers and all notes in all channels
+	byte turnOff[] = { 0xB0, 0x79, 0x00, 0x7B, 00 };
+	for (turnOff[0] = 0xB0; turnOff[0] <= 0xBF; turnOff[0]++)
+		midiSend(sizeof(turnOff), turnOff, 0);
+	midiFileC0D0 = false;
+}
+
+word midiReadVarLen()
+{
+	word result = 0;
+	if (midiFileBuffer[midiFilePos] & 0x80)
+		result = (midiFileBuffer[midiFilePos++] & 0x7F) << 7;
+	if (midiFileBuffer[midiFilePos] & 0x80)
+	{
+		// varlen values longer than 14 bits are currently not supported
+		midiTurnOff();
+		midiFileLen = 0;
+		return 1;
+	}
+	result |= midiFileBuffer[midiFilePos++];
+	return result;
+}
+
+void midiStart(word songId)
+{
+	// only type-0 files running at 350 ticks per quarter note (700Hz) are currently supported
+	byte header[] = { 'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 0, 0, 1, 1, 94, 'M', 'T', 'r', 'k', 0, 0 };
+	byte filename[] = { 'M', 'U', 'S', 'I', 'C', '\\', 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	word i, j;
+
+	if (! midiInitialized)
+	{
+		// initialize MPU401
+		while (inportb(midiPort + 1) & 0x40)		// wait until we can write
+		{
+			i--;
+			if (i == 0)
+				return;								// MPU401 not responding
+		}
+		outportb(midiPort + 1, 0xFF);				// write "reset"
+		do
+		{
+			i = 65535;
+			while (inportb(midiPort + 1) & 0x80)	// wait until we can read
+			{
+				i--;
+				if (i == 0)							// some clone MPU401s never send ACK
+					break;
+			}
+		}
+		while (i != 0 && inport(midiPort) != 0xFE);	// wait until we get an ACK or if we never got to read
+		while (inportb(midiPort + 1) & 0x40);		// wait until we can write
+		outportb(midiPort + 1, 0x3F);				// write "set UART mode"
+
+		midiInitialized = true;
+	}
+
+	if (midiFileBuffer)
+	{
+		MM_SetLock((memptr *) &midiFileBuffer, false);
+		MM_FreePtr((memptr *) &midiFileBuffer);
+	}
+	midiFileBuffer = 0;
+	midiFilePos = 0;
+	midiFileLen = 0;
+	midiFileWait = 0;
+	midiTurnOff();
+
+	// if music has just been turned off, we're done
+	if (songId == 0)
+		return;
+
+	// load MUSIC\_INFO
+	MM_GetPtr((memptr *) &midiFileBuffer, 65536);
+	if (! CA_ReadFile("MUSIC\\_INFO", (memptr *) &midiFileBuffer))
+	{
+		MM_FreePtr((memptr *) &midiFileBuffer);
+		midiFileBuffer = 0;
+		return;
+	}
+
+	// match the reported length with the first song stored in MUSIC\_INFO that is the same length
+	for (i = 0; *((word far *) &midiFileBuffer[i]) != 0; i += 10)
+	{
+		if (*((word far *) &midiFileBuffer[i]) == songId)
+		{
+			for (j = 0; j < 8 && midiFileBuffer[i + j + 2] != 0; j++)
+				filename[6 + j] = midiFileBuffer[i + j + 2];
+
+			if (CA_ReadFile(filename, (memptr *) &midiFileBuffer))
+				break;
+			else
+			{
+				MM_FreePtr((memptr *) &midiFileBuffer);
+				midiFileBuffer = 0;
+				return;
+			}
+		}
+	}
+
+	// no songs matched
+	if (*((word far *) &midiFileBuffer[i]) == 0)
+	{
+		MM_FreePtr((memptr *) &midiFileBuffer);
+		midiFileBuffer = 0;
+		return;
+	}
+
+	// song matched; check if the header is valid
+	MM_SetLock((memptr *) &midiFileBuffer, true);
+	for (i = 0; i < 20; i++)
+	{
+		if (header[i] != midiFileBuffer[i])
+			return;
+	}
+
+	// get remaining file length from the header
+	midiFileLen = midiFileBuffer[20] * ((word) 256) + midiFileBuffer[21];
+	if (midiFileLen > 65535 - 22)
+	{
+		midiFileLen = 0;
+		return;
+	}
+	midiFileLen += 22;
+	midiFilePos = 22;
+	midiFileWait = midiReadVarLen() + 1;
+}
+
+void midiTick()
+{
+	if (midiFileLen == 0)
+		return;
+
+	midiFileWait--;
+
+	while (midiFileWait == 0)
+	{
+		byte b = midiFileBuffer[midiFilePos];
+		byte s = (b & 0xF0);
+		boolean c0d0 = (s == 0xC0 || s == 0xD0);
+		if (s == 0xF0)
+		{
+			// midi sysex, bpm change and other long messages are currently not supported
+			if (b == 0xFF)
+				midiFilePos++;	// skip FF meta-event type
+			midiFilePos++;
+			midiFilePos += midiReadVarLen();
+		}
+		else if (b < 0x80)
+		{
+			if (midiFileC0D0)
+			{
+				midiSend(1, midiFileBuffer, midiFilePos);
+				midiFilePos++;
+			}
+			else
+			{
+				midiSend(2, midiFileBuffer, midiFilePos);
+				midiFilePos += 2;
+			}
+		}
+		else
+		{
+			midiFileC0D0 = c0d0;
+			if (c0d0)
+			{
+				midiSend(2, midiFileBuffer, midiFilePos);
+				midiFilePos += 2;
+			}
+			else
+			{
+				midiSend(3, midiFileBuffer, midiFilePos);
+				midiFilePos += 3;
+			}
+		}
+		if (midiFilePos >= midiFileLen)
+			midiFilePos = 22;
+		midiFileWait = midiReadVarLen();
+	}
+}
+
+//====== WOLFDOSMPU END
+
+
 ///////////////////////////////////////////////////////////////////////////
 //
 //	SDL_SetTimer0() - Sets system timer 0 to the specified speed
@@ -1616,6 +1838,12 @@ asm	loop usecloop
 
 		return(true);
 	}
+//====== WOLFDOSMPU BEGIN
+	// always return true to allow systems without AdLib to anyway use MPU
+	// (but if the AdLib is present, it must be initialized)
+	else if (! alNoCheck)
+		return true;
+//====== WOLFDOSMPU END
 	else
 		return(false);
 }
@@ -1956,6 +2184,11 @@ SD_Startup(void)
 						else
 							Quit("SD_Startup: Unsupported address value in BLASTER");
 						break;
+//====== WOLFDOSMPU BEGIN
+					case 'P':
+						midiPort = strtol(env + 1,&env,16);
+						break;
+//====== WOLFDOSMPU END
 					case 'I':
 						temp = strtol(env + 1,&env,10);
 						if
@@ -2275,6 +2508,9 @@ void
 SD_MusicOn(void)
 {
 	sqActive = true;
+//====== WOLFDOSMPU BEGIN
+	midiStart(sqHackSeqLen);
+//====== WOLFDOSMPU END
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -2298,6 +2534,9 @@ SD_MusicOff(void)
 		break;
 	}
 	sqActive = false;
+//====== WOLFDOSMPU BEGIN
+	midiStart(0);
+//====== WOLFDOSMPU END
 }
 
 ///////////////////////////////////////////////////////////////////////////

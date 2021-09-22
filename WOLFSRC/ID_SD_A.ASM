@@ -11,6 +11,10 @@
 
 DEBUG	=	0
 
+;====== WOLFDOSMPU BEGIN
+	EXTRN	midiTick:FAR
+;====== WOLFDOSMPU END
+
 	EXTRN	SDL_DigitizedDone:FAR
 	EXTRN	alOut:FAR
 
@@ -381,6 +385,11 @@ extreme		dw	?
 	mov	ax,[sqActive]
 	or	ax,ax
 	jz	@@nosq
+
+;====== WOLFDOSMPU BEGIN
+	call midiTick
+	jmp	@@nosq
+;====== WOLFDOSMPU END
 
 	mov	ax,[sqHackLen]
 	or	ax,ax
