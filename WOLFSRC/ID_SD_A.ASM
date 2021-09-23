@@ -7,13 +7,13 @@
 	MODEL	MEDIUM,C
 	JUMPS
 
-	INCLUDE 'ID_SD.EQU'
+	INCLUDE 'ID_SD_A.EQU'
 
 DEBUG	=	0
 
-;====== WOLFDOSMPU BEGIN
+IFDEF	WOLFDOSMPU
 	EXTRN	midiTick:FAR
-;====== WOLFDOSMPU END
+ENDIF	; WOLFDOSMPU
 
 	EXTRN	SDL_DigitizedDone:FAR
 	EXTRN	alOut:FAR
@@ -386,11 +386,9 @@ extreme		dw	?
 	or	ax,ax
 	jz	@@nosq
 
-;====== WOLFDOSMPU BEGIN
+IFDEF	WOLFDOSMPU
 	call midiTick
-	jmp	@@nosq
-;====== WOLFDOSMPU END
-
+ELSE	; WOLFDOSMPU
 	mov	ax,[sqHackLen]
 	or	ax,ax
 	jz	@@sqdone
@@ -443,6 +441,7 @@ extreme		dw	?
 	mov	[WORD PTR alTimeCount+2],ax
 	mov	[WORD PTR sqHackTime],ax
 	mov	[WORD PTR sqHackTime+2],ax
+ENDIF	; WOLFDOSMPU
 @@nosq:
 
 	les	di,[ssSample]			; Get pointer to Sound Source sample

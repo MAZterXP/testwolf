@@ -171,7 +171,7 @@ static	word			sqMode,sqFadeStep;
 		void			SDL_DigitizedDone(void);
 
 
-//====== WOLFDOSMPU BEGIN
+#ifdef WOLFDOSMPU
 
 static word			midiPort 		= 0x330;
 static boolean		midiInitialized = false;
@@ -391,8 +391,7 @@ void midiTick()
 	}
 }
 
-//====== WOLFDOSMPU END
-
+#endif // WOLFDOSMPU
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -1840,14 +1839,14 @@ asm	loop usecloop
 
 		return(true);
 	}
-//====== WOLFDOSMPU BEGIN
-	// always return true to allow systems without AdLib to anyway use MPU
-	// (but if the AdLib is present, it must be initialized)
-	else if (! alNoCheck)
-		return true;
-//====== WOLFDOSMPU END
 	else
+#ifdef WOLFDOSMPU
+		// always return true to allow systems without AdLib to anyway use MPU
+		// (but if the AdLib is present, it must be initialized)
+		return true;
+#else  // WOLFDOSMPU
 		return(false);
+#endif // WOLFDOSMPU
 }
 
 #if 0
@@ -2186,11 +2185,13 @@ SD_Startup(void)
 						else
 							Quit("SD_Startup: Unsupported address value in BLASTER");
 						break;
-//====== WOLFDOSMPU BEGIN
+#ifdef WOLFDOSMPU
 					case 'P':
 						midiPort = strtol(env + 1,&env,16);
+						if (midiPort < 0x200 || midiPort > 0x3FF)
+							midiPort = 0x330;
 						break;
-//====== WOLFDOSMPU END
+#endif // WOLFDOSMPU
 					case 'I':
 						temp = strtol(env + 1,&env,10);
 						if
@@ -2510,9 +2511,9 @@ void
 SD_MusicOn(void)
 {
 	sqActive = true;
-//====== WOLFDOSMPU BEGIN
+#ifdef WOLFDOSMPU
 	midiStart(sqHackSeqLen);
-//====== WOLFDOSMPU END
+#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -2536,9 +2537,9 @@ SD_MusicOff(void)
 		break;
 	}
 	sqActive = false;
-//====== WOLFDOSMPU BEGIN
+#ifdef WOLFDOSMPU
 	midiStart(0);
-//====== WOLFDOSMPU END
+#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////

@@ -127,7 +127,11 @@ far SndMenu[]=
 	{0,"",0},
 	{0,"",0},
 	{1,STR_NONE,0},
+#ifdef WOLFDOSMPU
+	{1,STR_MPU,0}
+#else  // WOLFDOSMPU
 	{1,STR_ALSB,0}
+#endif // WOLFDOSMPU
 #endif
 },
 

@@ -5,6 +5,8 @@ OBJ/
 *.SOD
 *.SWP
 *.SYM
+*.TMP
 *.WL1
 *.WL6
-*.EXE
+SPEAR*.EXE
+WOLF3D*.EXE
