@@ -173,13 +173,13 @@ static	word			sqMode,sqFadeStep;
 
 #ifdef WOLFDOSMPU
 
-static word			midiPort 		= 0x330;
-static boolean		midiInitialized = false;
-static byte _seg 	*midiFileBuffer = 0;
-static word 		midiFileLen 	= 0;
-static word 		midiFilePos 	= 0;
-static word 		midiFileWait 	= 0;
-static boolean 		midiFileC0D0 	= false;
+word		midiPort		= 0x330;
+boolean		midiInitialized	= false;
+byte _seg	*midiFileBuffer	= 0;
+word		midiFileLen		= 0;
+word		midiFilePos		= 0;
+word		midiFileWait	= 0;
+boolean		midiFileC0D0	= false;
 
 void midiSend(byte length, byte far *buffer, word pos)
 {
@@ -209,7 +209,11 @@ midiWaitLoop:
 void midiTurnOff()
 {
 	// turn off all controllers and all notes in all channels
-	byte turnOff[] = { 0xB0, 0x79, 0x00, 0x7B, 00 };
+	byte turnOff[5];
+	turnOff[1] = 0x79;
+	turnOff[2] = 0x00;
+	turnOff[3] = 0x7B;
+	turnOff[4] = 0x00;
 	for (turnOff[0] = 0xB0; turnOff[0] <= 0xBF; turnOff[0]++)
 		midiSend(sizeof(turnOff), turnOff, 0);
 	midiFileC0D0 = false;
@@ -233,9 +237,7 @@ word midiReadVarLen()
 
 void midiStart(word songId)
 {
-	// only type-0 files running at 350 ticks per quarter note (700Hz) are currently supported
-	byte header[] = { 'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 0, 0, 1, 1, 94, 'M', 'T', 'r', 'k', 0, 0 };
-	byte filename[] = { 'M', 'U', 'S', 'I', 'C', '\\', 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	byte filename[15];
 	word i, j;
 
 	if (! midiInitialized)
@@ -281,9 +283,23 @@ void midiStart(word songId)
 	if (songId == 0)
 		return;
 
+	// believe it or not, initializing like this instead of using a string constant will *save* bytes in the data segment!
+	filename[0] = 'M';
+	filename[1] = 'U';
+	filename[2] = 'S';
+	filename[3] = 'I';
+	filename[4] = 'C';
+	filename[5] = '\\';
+	filename[6] = '_';
+	filename[7] = 'I';
+	filename[8] = 'N';
+	filename[9] = 'F';
+	filename[10] = 'O';
+	filename[11] = 0;
+
 	// load MUSIC\_INFO
 	MM_GetPtr((memptr *) &midiFileBuffer, 65536);
-	if (! CA_ReadFile("MUSIC\\_INFO", (memptr *) &midiFileBuffer))
+	if (! CA_ReadFile(filename, (memptr *) &midiFileBuffer))
 	{
 		MM_FreePtr((memptr *) &midiFileBuffer);
 		midiFileBuffer = 0;
@@ -297,6 +313,7 @@ void midiStart(word songId)
 		{
 			for (j = 0; j < 8 && midiFileBuffer[i + j + 2] != 0; j++)
 				filename[6 + j] = midiFileBuffer[i + j + 2];
+			filename[6 + j] = 0;
 
 			if (CA_ReadFile(filename, (memptr *) &midiFileBuffer))
 				break;
@@ -317,15 +334,37 @@ void midiStart(word songId)
 		return;
 	}
 
-	// song matched; check if the header is valid
 	MM_SetLock((memptr *) &midiFileBuffer, true);
-	for (i = 0; i < 20; i++)
-	{
-		if (header[i] != midiFileBuffer[i])
-			return;
-	}
 
-	// get remaining file length from the header
+	// song matched; check if the header is valid
+	if (midiFileBuffer[ 0] != 'M') return;
+	if (midiFileBuffer[ 1] != 'T') return;
+	if (midiFileBuffer[ 2] != 'h') return;
+	if (midiFileBuffer[ 3] != 'd') return;
+
+	if (midiFileBuffer[ 4] !=   0) return;
+	if (midiFileBuffer[ 5] !=   0) return;
+	if (midiFileBuffer[ 6] !=   0) return;
+	if (midiFileBuffer[ 7] !=   6) return;
+
+	if (midiFileBuffer[ 8] !=   0) return;	// only type-0 files supported
+	if (midiFileBuffer[ 9] !=   0) return;
+
+	if (midiFileBuffer[10] !=   0) return;	// only 1 track supported
+	if (midiFileBuffer[11] !=   1) return;
+
+	if (midiFileBuffer[12] !=   1) return;	// only 350 beats per quarter note supported
+	if (midiFileBuffer[13] !=  94) return;
+
+	if (midiFileBuffer[14] != 'M') return;
+	if (midiFileBuffer[15] != 'T') return;
+	if (midiFileBuffer[16] != 'r') return;
+	if (midiFileBuffer[17] != 'k') return;
+
+	if (midiFileBuffer[18] !=   0) return;	// only max length of 65535 supported, so high word is ignored
+	if (midiFileBuffer[19] !=   0) return;
+
+	// get remaining file length from the header (must be 65535 - header length)
 	midiFileLen = midiFileBuffer[20] * ((word) 256) + midiFileBuffer[21];
 	if (midiFileLen > 65535 - 22)
 	{

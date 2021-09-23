@@ -1382,6 +1382,10 @@ void Quit (char *error)
 		clrscr();
 		#ifndef JAPAN
 		movedata ((unsigned)screen,7,0xb800,0,4000);
+#ifdef WOLFDOSMPU
+		gotoxy(1,25);
+		puts(WVERSION);
+#endif
 		gotoxy(1,24);
 		#endif
 //asm	mov	bh,0
