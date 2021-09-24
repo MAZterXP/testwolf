@@ -79,7 +79,7 @@ In case you're wondering, the MUSIC\ directory contains all the tracks for _both
 Don't hurt MIDI.
 ----------------
 
-1. If you use an Apogee version of the data files (either registered or shareware), make sure you download the correct .EXE file _or you will get garbled graphics_. Apogee version 1.4 is _NOT_ compatible with other releases that are also marked "version 1.4", despite the numbering. (Also note that the title screen's publisher logo will always say GT in this mod -- this is a sad consequence of id Software providing only one SIGNON.OBJ graphic in their open-source release, and is purely cosmetic.)
+1. If you use an Apogee version of the data files (either registered or shareware), make sure you download the correct .EXE file _or you will get garbled graphics or system crashes_. Apogee version 1.4 is _NOT_ compatible with other releases that are also marked "version 1.4", despite the numbering. (Also note that the title screen's publisher logo will always say GT in this mod -- this is a sad consequence of id Software providing only one SIGNON.OBJ graphic in their open-source release, and is purely cosmetic.)
 
 2. If you use wolfdosmpu inside DOSBox, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
 
@@ -120,6 +120,6 @@ _SC.BAT -- SoD commercial 1.0/1.4 (FormGen and Steam releases)
 _SD.BAT -- SoD demo 1.0 (FormGen release)
 ```
 
-As of version 1.10, LZEXE has been integrated into the build system. Whenever you switch between versions, an LZEXE-compressed .EXE file is generated from the last built WOLF3D.EXE in the OBJ\ subdirectory, and renamed as appropriate (e.g., WOLF3DRM.EXE, SPEARCM.EXE, etc.). This workflow is meant to speed up building the various game versions in consecutive fashion (e.g., execute one batch file, run BC.EXE, press F9, press Alt+X when successful, then repeat for the next version...). If you want LZEXE compression on your current build but don't want to switch between game versions, you can simply re-execute the same version batch file just to trigger the compression routine. (This also cleans up the OBJ\ directory.) When the compressor issues a warning, _you may safely ignore it--just enter N to continue the compression._ (I know, it's confusing.)
+As of version 1.10, LZEXE has been integrated into the build system. Whenever you switch between versions, an LZEXE-compressed .EXE file is generated from the last built WOLF3D.EXE in the OBJ\ subdirectory, and renamed as appropriate (e.g., WOLF3DRM.EXE, SPEARCM.EXE, etc.). If you want LZEXE compression on your current build but don't want to switch between game versions, you can run VERSION.BAT to trigger the compression routine on its own. When the compressor issues a warning, _you may safely ignore it--just enter N to continue the compression._ (I know, it's confusing.)
 
-Also as of version 1.10, you can build the original vanilla Wolf3D/SoD games without MPU support by passing (any) argument to each batch file. The output of the batch file will indicate "MPU enabled" (wolfdosmpu version) or "MPU disabled" (vanilla version).
+Also as of version 1.10, you can build the original vanilla Wolf3D/SoD games without MPU support by passing (any) argument to each batch file. The output of the batch file will indicate "MPU enabled" (wolfdosmpu version) or "MPU disabled" (vanilla version). You can also build ALL versions by executing the _ALL.BAT file. (Unfortunately, I don't know of any way to skip the LZEXE compressor's warning, so you need to enter N at every prompt.)
