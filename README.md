@@ -33,7 +33,7 @@ Version History
 
 1.10 BETA (2021-09-24)
 ----------------------
-- Added support for Apogee Registered Version 1.4 by using techniques to reduce data segment usage (e.g., by allocating strings as individual characters in the code segment).
+- Added support for Apogee registered version 1.4/1.4G by using techniques to reduce data segment usage (e.g., by allocating strings as individual characters in the code segment).
 - Corrected a very rare edge case where midiTick may get executed before the length of the MIDI file has been calculated, and the song counter could potentially go out-of-bounds.
 - Limited the MPU port selection in BLASTER environment variable to the range 2xx-3xx hex because poking some ports by accident can potentially kill your system!
 - Changed sound options menu to display "MPU-401 (General MIDI)" instead of "AdLib/Sound Blaster". (suggested by Gmlb256)
@@ -79,7 +79,7 @@ In case you're wondering, the MUSIC\ directory contains all the tracks for _both
 Don't hurt MIDI.
 ----------------
 
-1. If you use an Apogee version of the data files (either registered or shareware), make sure you download the correct .EXE file _or you will get garbled graphics or system crashes_. Apogee version 1.4 is _NOT_ compatible with other releases that are also marked "version 1.4", despite the numbering. (Also note that the title screen's publisher logo will always say GT in this mod -- this is a sad consequence of id Software providing only one SIGNON.OBJ graphic in their open-source release, and is purely cosmetic.)
+1. If you use an Apogee version of the data files (either registered or shareware), make sure you download the correct .EXE file _or you will get garbled graphics or system crashes_. Apogee version 1.4/1.4G's .WL6 data files are _NOT_ compatible with other releases that are also marked "version 1.4", despite the numbering. However, the .WL6 data files are identical between both Apogee 1.4 and 1.4G. (Also note that the title screen's publisher logo will always say GT in this mod -- this is a sad consequence of id Software providing only one SIGNON.OBJ graphic in their open-source release, and is purely cosmetic.)
 
 2. If you use wolfdosmpu inside DOSBox, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
 
@@ -113,10 +113,10 @@ The version of the Wolf3D source code in wolfdosmpu has been streamlined -- it d
 In addition, helper batch files are provided to quickly switch between versions. You should execute the batch file of your preferred version inside DOSBox before launching the Borland C++ environment (BC.EXE). Then simply press F9 to build.
 
 ```
-_WC.BAT -- Wolf3D commercial 1.4 (GT, Activision, and Steam releases)
-_WR.BAT -- Wolf3D registered 1.4 (Apogee release)
-_WS.BAT -- Wolf3D shareware 1.4 (Apogee release)
-_SC.BAT -- SoD commercial 1.0/1.4 (FormGen and Steam releases)
+_WC.BAT -- Wolf3D commercial v1.4 (GT, Activision, and Steam releases)
+_WR.BAT -- Wolf3D registered v1.4/v1.4G (Apogee releases)
+_WS.BAT -- Wolf3D shareware v1.4 (Apogee release)
+_SC.BAT -- SoD commercial v1.0/v1.4 (FormGen and Steam releases)
 _SD.BAT -- SoD demo 1.0 (FormGen release)
 ```
 
