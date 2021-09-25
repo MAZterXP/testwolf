@@ -36,7 +36,7 @@ Version History
 - Rewrote MPU code to fully reuse the existing OPL sequencer state variables for MPU playback. This should make this mod 100% savegame- and data-segment-compatible with the latest commercial versions of Wolf3D and SoD.
 - Currently testing the removal of the clear interrupt flag instruction in the inner assembly loop. Maybe that will fix issues for some hardware. Maybe not. Maybe it's worse. Please test.
 - Altered .PRJ file to strip debugging symbols for better LZEXE compression.
-- Replaced SIGNON.OBJ and GAMEPAL.OBJ with ones from the [url=https://bitbucket.org/gamesrc-ver-recreation/wolf3d/"]Wolf3D game source recreation project[/url]. For the Wolf3D screen, I personally dislike the weird colors of the Activision logo, so I opted for the id logo for neutrality. :)
+- Replaced SIGNON.OBJ and GAMEPAL.OBJ with ones from the [Wolf3D game source recreation project](https://bitbucket.org/gamesrc-ver-recreation/wolf3d/). For the Wolf3D screen, I personally dislike the weird colors of the Activision logo, so I opted for the id logo for neutrality. :)
 - Moved all the license files to the README section. I believe the general consensus is that Wolf3D's source code came under dual licenses -- limited non-commercial license and GPL). Like many other mods, I defer the option to the user.
 
 1.10 BETA (2021-09-24)
@@ -98,7 +98,7 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 ```
 3. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
-4. __Note on savegames__: Savegames are only compatible between the final commercial (Activision) version of each game (Wolf3D or SoD) and its wolfdosmpu-enhanced counterpart. This is simply because the open-source Wolf3D codebase was last used to build these two versions. Note that savegames are also incompatible between these final commercial versions and their Apogee, GT and FormGen predecessor versions, because id didn't care (most of their games have been like this). Supporting savegame compatibility for the demo SoD and shareware/registered Wolf3D builds of wolfdosmpu will require extensive backporting of community changes, e.g., from the [url=https://bitbucket.org/gamesrc-ver-recreation/wolf3d/"]game source recreation project[/url]. Maybe in the future -- I also don't want to clutter the code too much.
+4. __Note on savegames__: Savegames are only compatible between the final commercial (Activision) version of each game (Wolf3D or SoD) and its wolfdosmpu-enhanced counterpart. This is simply because the open-source Wolf3D codebase was last used to build these two versions. Note that savegames are also incompatible between these final commercial versions and their Apogee, GT and FormGen predecessor versions, because id didn't care (most of their games have been like this). Supporting savegame compatibility for the demo SoD and shareware/registered Wolf3D builds of wolfdosmpu will require extensive backporting of community changes, e.g., from the [Wolf3D game source recreation project](https://bitbucket.org/gamesrc-ver-recreation/wolf3d/). Maybe in the future -- I also don't want to clutter the code too much.
 
 
 Bring "M" on!
@@ -123,11 +123,11 @@ The version of the Wolf3D source code in wolfdosmpu has been streamlined -- it d
 In addition, helper batch files are provided to quickly switch between versions. You should execute the batch file of your preferred version inside DOSBox before launching the Borland C++ environment (BC.EXE). Then simply press F9 to build.
 
 ```
-Supported versions:
+Supported versions: (savegame compatibility is preserved between original .EXE and wolfdosmpu-enabled .EXE)
 _WC.BAT -- Wolf3D commercial v1.4 (id, GT and Activision/Steam releases)
 _SC.BAT -- SoD commercial v1.0/v1.4 (FormGen and Activision/Steam releases)
 
-Semi-supported versions: (savegame compatibility is not preserved between original and wolfdosmpu)
+Semi-supported versions: (savegame compatibility is NOT preserved between original .EXE and wolfdosmpu-enabled .EXE)
 _WR.BAT -- Wolf3D registered v1.4/v1.4g (Apogee releases)
 _WS.BAT -- Wolf3D shareware v1.4/v1.4g (Apogee releases)
 _SD.BAT -- SoD demo 1.0 (FormGen release)
