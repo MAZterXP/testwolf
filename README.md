@@ -35,7 +35,7 @@ Version History
 ----------------------
 - Rewrote MPU code to fully reuse the existing OPL sequencer state variables for MPU playback. This should make this mod 100% savegame- and data-segment-compatible with the latest commercial versions of Wolf3D and SoD.
 - Currently testing the removal of the clear interrupt flag instruction in the inner assembly loop. Maybe that will fix issues for some hardware. Maybe not. Maybe it's worse. Please test.
-- Altered .PRJ file to strip debugging symbols for better LZEXE compression.
+- Altered .PRJ file to strip debugging symbols for better LZEXE compression. (decided after discussion with Akuma and Gmlb256)
 - Replaced SIGNON.OBJ and GAMEPAL.OBJ with ones from the [Wolf3D game source recreation project](https://bitbucket.org/gamesrc-ver-recreation/wolf3d/). For the Wolf3D screen, I personally dislike the weird colors of the Activision logo, so I opted for the id logo for neutrality. :)
 - Moved all the license files to the README section. I believe the general consensus is that Wolf3D's source code came under dual licenses -- limited non-commercial license and GPL). Like many other mods, I defer the option to the user.
 
