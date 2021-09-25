@@ -29,6 +29,10 @@ THIS MOD IS CURRENTLY IN BETA. It has been tested in emulation (via DOSBox), but
 Version History
 ===============
 
+1.21 BETA (2021-09-26)
+----------------------
+- Partial compatibility with Sound Blaster AWEUTIL (MPU-401 port emulation) in DOS. The game must be started with the NOXMS and NOEMS parameters to prevent crashing.
+
 1.20 BETA (2021-09-25)
 ----------------------
 - Rewrote MPU code to fully reuse the existing OPL sequencer state variables for MPU playback. This should make this mod 100% savegame- and data-segment-compatible with the latest commercial versions of Wolf3D and SoD.
@@ -94,9 +98,11 @@ Don't hurt MIDI.
 
 example: SET BLASTER=A220 I7 D1 T6 P330 H5
 ```
-3. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
+4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
-4. __Note on savegames__: Savegames are only compatible between the final commercial (Activision) version of each game (Wolf3D or SoD) and its wolfdosmpu-enhanced counterpart. This is simply because the open-source Wolf3D codebase was last used to build these two versions. Note that savegames are also incompatible between these final commercial versions and their Apogee, GT and FormGen predecessor versions, because id didn't care (most of their games have been like this). Supporting savegame compatibility for the demo SoD and shareware/registered Wolf3D builds of wolfdosmpu will require extensive backporting of community changes, e.g., from the [Wolf3D game source recreation project](https://bitbucket.org/gamesrc-ver-recreation/wolf3d/). Maybe in the future -- I also don't want to clutter the code too much.
+5. __Note on savegames__: Savegames are only compatible between the final commercial (Activision) version of each game (Wolf3D or SoD) and its wolfdosmpu-enhanced counterpart. This is simply because the open-source Wolf3D codebase was last used to build these two versions. Note that savegames are also incompatible between these final commercial versions and their Apogee, GT and FormGen predecessor versions, because id didn't care (most of their games have been like this). Supporting savegame compatibility for the demo SoD and shareware/registered Wolf3D builds of wolfdosmpu will require extensive backporting of community changes, e.g., from the [Wolf3D game source recreation project](https://bitbucket.org/gamesrc-ver-recreation/wolf3d/). Maybe in the future -- I also don't want to clutter the code too much.
+
+6. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 72K more RAM (estimated) than vanilla Wolf3D, needed for MIDI file caching and parsing. Also, TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) are known to crash the game unless you run with the NOXMS and/or NOEMS command line parameters. (e.g., "WOLF3DCM.EXE NOEMS NOXMS") Please try either or both options to find your ideal configuration. In such a case, it might help to load any other required TSRs in the upper memory area using the LOADHIGH command.
 
 
 Bring "M" on!
