@@ -173,6 +173,8 @@ static	word			sqMode,sqFadeStep;
 
 #ifdef WOLFDOSMPU
 
+#define MPURATE 3125
+#define POLLRATE 1000
 /*
 // the actual state variables used by WOLFDOSMPU
 byte _seg *	mpuBuffer;
@@ -201,14 +203,21 @@ void mpuSend(byte length, byte far *buffer, word pos)
 		length--;
 
 		asm	mov		dx,[port]
+mpuLoopStart:
 		asm	inc		dx
 mpuWaitLoop:
 		asm	in		al,dx
-		asm	test	al,40h
-		asm	jnz		mpuWaitLoop
-
+		asm	test	al,40h			// test port+1 if clear for sending
+		asm	jz		mpuCanWrite		// if so, go ahead
+mpuTryReading:
+		asm	test	al,80h			// test port+1 for incoming
+		asm	jnz		mpuWaitLoop		// if none, loop back
+		asm	dec		dx				// flush input from port+0
+		asm	in		al,dx
+		asm	jmp		mpuLoopStart
+mpuCanWrite:
 		asm	mov		al,[b]
-		asm	dec		dx
+		asm	dec		dx				// actually write to port+0
 		asm	out		dx,al
 	}
 }
@@ -259,31 +268,55 @@ void mpuStart(word songId)
 
 	if (! mpuBuffer)
 	{
+		byte b;
+
 		// ensure valid mpuPort
 		if (mpuPort < 0x200 || mpuPort > 0x3FF)
 			mpuPort = 0x330;
 
 		// initialize MPU401
-		i = 65535;
-		while (inportb(mpuPort + 1) & 0x40)			// wait until we can write
+		i = MPURATE;
+		j = POLLRATE;
+		while ((b = inportb(mpuPort + 1)) & 0x40)	// wait until we can write
 		{
-			i--;
-			if (i == 0)
-				return;								// MPU401 not responding
-		}
-		outportb(mpuPort + 1, 0xFF);				// write "reset"
-		do
-		{
-			i = 65535;
-			while (inportb(mpuPort + 1) & 0x80)		// wait until we can read
+			if (b & 0x80)
+				j--;
+			else
+			{
+				j = 0;
+				inportb(mpuPort);					// flush incoming messages
+			}
+			if (j == 0)
 			{
 				i--;
-				if (i == 0)							// some clone MPU401s never send ACK
-					break;
+				j = POLLRATE;
+			}
+			if (i == 0)
+				return;								// MPU401 write register not responding
+		}
+		outportb(mpuPort + 1, 0xFF);				// write "reset"
+
+		i = MPURATE;
+		j = POLLRATE;
+		do
+		{
+			if (inportb(mpuPort + 1) & 0x80)		// wait until we can read
+				j--;
+			else
+				j = 0;
+			if (j == 0)
+			{
+				i--;
+				j = POLLRATE;
 			}
 		}
-		while (i != 0 && inport(mpuPort) != 0xFE);	// wait until we get an ACK or if we never got to read
-		while (inportb(mpuPort + 1) & 0x40);		// wait until we can write
+		while (i > 0 && inportb(mpuPort) != 0xFE);	// wait until we get an ACK, or i bytes have passed
+
+		while ((b = inportb(mpuPort + 1)) & 0x40)	// wait until we can write
+		{
+			if (b & 0x80)
+				inportb(mpuPort);					// flush incoming messages
+		}
 		outportb(mpuPort + 1, 0x3F);				// write "set UART mode"
 
 		MM_GetPtr((memptr *) &mpuBuffer, 65536);
