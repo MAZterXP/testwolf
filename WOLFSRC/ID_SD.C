@@ -173,40 +173,47 @@ static	word			sqMode,sqFadeStep;
 
 #ifdef WOLFDOSMPU
 
-word		midiPort		= 0x330;
-boolean		midiInitialized	= false;
-byte _seg	*midiFileBuffer	= 0;
-word		midiFileLen		= 0;
-word		midiFilePos		= 0;
-word		midiFileWait	= 0;
-boolean		midiFileC0D0	= false;
+/*
+// the actual state variables used by WOLFDOSMPU
+byte _seg *	mpuBuffer;
+word		mpuPort = 0;
+word		mpuLen;
+word		mpuPos;
+word		mpuWait;
+*/
 
-void midiSend(byte length, byte far *buffer, word pos)
+// we're reusing the sqHack variables in order not to use up precious data segment bytes for further mods;
+// this is, after all, a hack ;)
+#define mpuBuffer	((byte _seg *)	alTimeCount)
+#define mpuPort		((word)			sqHack)
+#define mpuLen		((word)			sqHackPtr)
+#define mpuPos						sqHackLen
+#define mpuWait						sqHackSeqLen
+
+void mpuSend(byte length, byte far *buffer, word pos)
 {
+	byte b;
+	word port = mpuPort;
+
 	while (length > 0)
 	{
-		byte b = buffer[pos++];
+		b = buffer[pos++];
 		length--;
 
-		asm	pushf
-		asm	cli
-
-		asm	mov		dx,[midiPort]
+		asm	mov		dx,[port]
 		asm	inc		dx
-midiWaitLoop:
+mpuWaitLoop:
 		asm	in		al,dx
 		asm	test	al,40h
-		asm	jnz		midiWaitLoop
+		asm	jnz		mpuWaitLoop
 
 		asm	mov		al,[b]
 		asm	dec		dx
 		asm	out		dx,al
-
-		asm	popf
 	}
 }
 
-void midiTurnOff()
+void mpuStop()
 {
 	// turn off all controllers and all notes in all channels
 	byte turnOff[5];
@@ -215,73 +222,75 @@ void midiTurnOff()
 	turnOff[3] = 0x7B;
 	turnOff[4] = 0x00;
 	for (turnOff[0] = 0xB0; turnOff[0] <= 0xBF; turnOff[0]++)
-		midiSend(sizeof(turnOff), turnOff, 0);
-	midiFileC0D0 = false;
+		mpuSend(5, turnOff, 0);
 }
 
-word midiReadVarLen()
+word mpuReadVarLen()
 {
 	word result = 0;
-	if (midiFileBuffer[midiFilePos] & 0x80)
-		result = (midiFileBuffer[midiFilePos++] & 0x7F) << 7;
-	if (midiFileBuffer[midiFilePos] & 0x80)
+	if (mpuBuffer[mpuPos] & 0x80)
+		result = (mpuBuffer[mpuPos++] & 0x7F) << 7;
+	if (mpuBuffer[mpuPos] & 0x80)
 	{
 		// varlen values longer than 14 bits are currently not supported
-		midiTurnOff();
-		midiFilePos = 0;
-		return 1;	// ensure that midiTick will exit its loop
+		mpuStop();
+		mpuPos = 0;
+		return 1;	// ensure that mpuTick will exit its loop
 	}
-	result |= midiFileBuffer[midiFilePos++];
+	result |= mpuBuffer[mpuPos++];
 	return result;
 }
 
-void midiStart(word songId)
+void mpuRestart(boolean force)
+{
+	// don't allow restart if we're not playing
+	if (! force && mpuPos < 22)
+		return;
+
+	// read the first varlen delay
+	mpuPos = 22;
+	mpuWait = (mpuReadVarLen() << 1) + 2;		// (ticks + 1) * 2 -- the ones place is reserved for the running status flag
+}
+
+void mpuStart(word songId)
 {
 	byte filename[15];
 	word i, j;
 
-	if (! midiInitialized)
+	if (! mpuBuffer)
 	{
+		// ensure valid mpuPort
+		if (mpuPort < 0x200 || mpuPort > 0x3FF)
+			mpuPort = 0x330;
+
 		// initialize MPU401
 		i = 65535;
-		while (inportb(midiPort + 1) & 0x40)		// wait until we can write
+		while (inportb(mpuPort + 1) & 0x40)			// wait until we can write
 		{
 			i--;
 			if (i == 0)
 				return;								// MPU401 not responding
 		}
-		outportb(midiPort + 1, 0xFF);				// write "reset"
+		outportb(mpuPort + 1, 0xFF);				// write "reset"
 		do
 		{
 			i = 65535;
-			while (inportb(midiPort + 1) & 0x80)	// wait until we can read
+			while (inportb(mpuPort + 1) & 0x80)		// wait until we can read
 			{
 				i--;
 				if (i == 0)							// some clone MPU401s never send ACK
 					break;
 			}
 		}
-		while (i != 0 && inport(midiPort) != 0xFE);	// wait until we get an ACK or if we never got to read
-		while (inportb(midiPort + 1) & 0x40);		// wait until we can write
-		outportb(midiPort + 1, 0x3F);				// write "set UART mode"
+		while (i != 0 && inport(mpuPort) != 0xFE);	// wait until we get an ACK or if we never got to read
+		while (inportb(mpuPort + 1) & 0x40);		// wait until we can write
+		outportb(mpuPort + 1, 0x3F);				// write "set UART mode"
 
-		midiInitialized = true;
+		MM_GetPtr((memptr *) &mpuBuffer, 65536);
+		MM_SetLock((memptr *) &mpuBuffer, true);
 	}
 
-	if (midiFileBuffer)
-	{
-		MM_SetLock((memptr *) &midiFileBuffer, false);
-		MM_FreePtr((memptr *) &midiFileBuffer);
-	}
-	midiFileBuffer = 0;
-	midiFileLen = 0;
-	midiFilePos = 0;
-	midiFileWait = 0;
-	midiTurnOff();
-
-	// if music has just been turned off, we're done
-	if (songId == 0)
-		return;
+	mpuPos = 0;
 
 	// believe it or not, initializing like this instead of using a string constant will *save* bytes in the data segment!
 	filename[0] = 'M';
@@ -298,135 +307,130 @@ void midiStart(word songId)
 	filename[11] = 0;
 
 	// load MUSIC\_INFO
-	MM_GetPtr((memptr *) &midiFileBuffer, 65536);
-	if (! CA_ReadFile(filename, (memptr *) &midiFileBuffer))
-	{
-		MM_FreePtr((memptr *) &midiFileBuffer);
-		midiFileBuffer = 0;
+	if (! CA_ReadFile(filename, (memptr *) &mpuBuffer))
 		return;
-	}
 
 	// match the reported length with the first song stored in MUSIC\_INFO that is the same length
-	for (i = 0; *((word far *) &midiFileBuffer[i]) != 0; i += 10)
+	for (i = 0; *((word far *) &mpuBuffer[i]) != 0; i += 10)
 	{
-		if (*((word far *) &midiFileBuffer[i]) == songId)
+		if (*((word far *) &mpuBuffer[i]) == songId)
 		{
-			for (j = 0; j < 8 && midiFileBuffer[i + j + 2] != 0; j++)
-				filename[6 + j] = midiFileBuffer[i + j + 2];
+			for (j = 0; j < 8 && mpuBuffer[i + j + 2] != 0; j++)
+				filename[6 + j] = mpuBuffer[i + j + 2];
 			filename[6 + j] = 0;
 
-			if (CA_ReadFile(filename, (memptr *) &midiFileBuffer))
+			if (CA_ReadFile(filename, (memptr *) &mpuBuffer))
 				break;
 			else
-			{
-				MM_FreePtr((memptr *) &midiFileBuffer);
-				midiFileBuffer = 0;
 				return;
-			}
 		}
 	}
 
 	// no songs matched
-	if (*((word far *) &midiFileBuffer[i]) == 0)
-	{
-		MM_FreePtr((memptr *) &midiFileBuffer);
-		midiFileBuffer = 0;
+	if (*((word far *) &mpuBuffer[i]) == 0)
 		return;
-	}
-
-	MM_SetLock((memptr *) &midiFileBuffer, true);
 
 	// song matched; check if the header is valid
-	if (midiFileBuffer[ 0] != 'M') return;
-	if (midiFileBuffer[ 1] != 'T') return;
-	if (midiFileBuffer[ 2] != 'h') return;
-	if (midiFileBuffer[ 3] != 'd') return;
+	if (mpuBuffer[ 0] != 'M') return;
+	if (mpuBuffer[ 1] != 'T') return;
+	if (mpuBuffer[ 2] != 'h') return;
+	if (mpuBuffer[ 3] != 'd') return;
 
-	if (midiFileBuffer[ 4] !=   0) return;
-	if (midiFileBuffer[ 5] !=   0) return;
-	if (midiFileBuffer[ 6] !=   0) return;
-	if (midiFileBuffer[ 7] !=   6) return;
+	if (mpuBuffer[ 4] !=   0) return;
+	if (mpuBuffer[ 5] !=   0) return;
+	if (mpuBuffer[ 6] !=   0) return;
+	if (mpuBuffer[ 7] !=   6) return;
 
-	if (midiFileBuffer[ 8] !=   0) return;	// only type-0 files supported
-	if (midiFileBuffer[ 9] !=   0) return;
+	if (mpuBuffer[ 8] !=   0) return;	// only type-0 files supported
+	if (mpuBuffer[ 9] !=   0) return;
 
-	if (midiFileBuffer[10] !=   0) return;	// only 1 track supported
-	if (midiFileBuffer[11] !=   1) return;
+	if (mpuBuffer[10] !=   0) return;	// only 1 track supported
+	if (mpuBuffer[11] !=   1) return;
 
-	if (midiFileBuffer[12] !=   1) return;	// only 350 beats per quarter note supported
-	if (midiFileBuffer[13] !=  94) return;
+	if (mpuBuffer[12] !=   1) return;	// only 350 beats per quarter note supported
+	if (mpuBuffer[13] !=  94) return;
 
-	if (midiFileBuffer[14] != 'M') return;
-	if (midiFileBuffer[15] != 'T') return;
-	if (midiFileBuffer[16] != 'r') return;
-	if (midiFileBuffer[17] != 'k') return;
+	if (mpuBuffer[14] != 'M') return;
+	if (mpuBuffer[15] != 'T') return;
+	if (mpuBuffer[16] != 'r') return;
+	if (mpuBuffer[17] != 'k') return;
 
-	if (midiFileBuffer[18] !=   0) return;	// only max length of 65535 supported, so high word is ignored
-	if (midiFileBuffer[19] !=   0) return;
+	if (mpuBuffer[18] !=   0) return;	// only max length of 65535 supported, so high word is ignored
+	if (mpuBuffer[19] !=   0) return;
 
 	// get remaining file length from the header (must be 65535 - header length)
-	midiFileLen = midiFileBuffer[20] * ((word) 256) + midiFileBuffer[21];
-	if (midiFileLen > 65535 - 22)
-	{
-		midiFileLen = 0;
+	mpuLen = mpuBuffer[20] * ((word) 256) + mpuBuffer[21];
+	if (mpuLen > 65535 - 22)
 		return;
-	}
-	midiFileLen += 22;
-	midiFilePos = 22;
-	midiFileWait = 1;
-	midiReadVarLen();	// doing it this way sets filePos > 22 atomically (so midiTick won't run until then)
+	mpuLen += 22;	// add the header
+
+	mpuRestart(true);
 }
 
-void midiTick()
+void mpuTick()
 {
-	if (midiFilePos <= 22)
+	if (mpuPos < 22)
 		return;
 
-	midiFileWait--;
+	mpuWait -= 2;	// decrement 1 tick (again, the lowest bit is reserved for the running status flag)
 
-	while (midiFileWait == 0)
+	while ((mpuWait & 0xFFFE) == 0)
 	{
-		byte b = midiFileBuffer[midiFilePos];
+		byte b = mpuBuffer[mpuPos];
 		byte s = (b & 0xF0);
-		boolean c0d0 = (s == 0xC0 || s == 0xD0);
 		if (s == 0xF0)
 		{
 			// midi sysex, bpm change and other long messages are currently not supported
 			if (b == 0xFF)
-				midiFilePos++;	// skip FF meta-event type
-			midiFilePos++;
-			midiFilePos += midiReadVarLen();
+				mpuPos++;	// skip FF meta-event type
+			mpuPos++;
+			mpuPos += mpuReadVarLen();
+			if (mpuPos < 22)
+				return;
 		}
 		else if (b < 0x80)
 		{
-			if (midiFileC0D0)
+			if (mpuWait)
 			{
-				midiSend(1, midiFileBuffer, midiFilePos);
-				midiFilePos++;
+				// one-byte running status was set
+				mpuSend(1, mpuBuffer, mpuPos);
+				mpuPos++;
 			}
 			else
 			{
-				midiSend(2, midiFileBuffer, midiFilePos);
-				midiFilePos += 2;
+				// two-byte running status was set
+				mpuSend(2, mpuBuffer, mpuPos);
+				mpuPos += 2;
 			}
 		}
 		else
 		{
-			midiFileC0D0 = c0d0;
-			if (c0d0)
+			if (s == 0xC0 || s == 0xD0)
 			{
-				midiSend(2, midiFileBuffer, midiFilePos);
-				midiFilePos += 2;
+				mpuWait = 1;	// set running status to one byte
+				mpuSend(2, mpuBuffer, mpuPos);
+				mpuPos += 2;
 			}
 			else
 			{
-				midiSend(3, midiFileBuffer, midiFilePos);
-				midiFilePos += 3;
+				mpuWait = 0;	// set running status to two bytes
+				mpuSend(3, mpuBuffer, mpuPos);
+				mpuPos += 3;
 			}
 		}
-		if (midiFilePos >= midiFileLen)
-			midiFilePos = 22;
-		midiFileWait = midiReadVarLen();
+		if (mpuPos >= mpuLen)
+			mpuPos = 22;
+		mpuWait |= mpuReadVarLen() << 1;
+	}
+}
+
+void mpuExit()
+{
+	if (mpuBuffer)
+	{
+		MM_SetLock((memptr *) &mpuBuffer, false);
+		MM_FreePtr((memptr *) &mpuBuffer);
+		mpuBuffer = 0;
 	}
 }
 
@@ -2226,9 +2230,7 @@ SD_Startup(void)
 						break;
 #ifdef WOLFDOSMPU
 					case 'P':
-						midiPort = strtol(env + 1,&env,16);
-						if (midiPort < 0x200 || midiPort > 0x3FF)
-							midiPort = 0x330;
+						mpuPort = strtol(env + 1,&env,16);
 						break;
 #endif // WOLFDOSMPU
 					case 'I':
@@ -2359,6 +2361,10 @@ SD_Shutdown(void)
 	setvect(8,t0OldService);
 
 	asm	popf
+
+#ifdef WOLFDOSMPU
+	mpuExit();
+#endif // WOLFDOSMPU
 
 	SD_Started = false;
 }
@@ -2550,9 +2556,6 @@ void
 SD_MusicOn(void)
 {
 	sqActive = true;
-#ifdef WOLFDOSMPU
-	midiStart(sqHackSeqLen);
-#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -2577,7 +2580,8 @@ SD_MusicOff(void)
 	}
 	sqActive = false;
 #ifdef WOLFDOSMPU
-	midiStart(0);
+	mpuStop();
+	mpuRestart(false);
 #endif // WOLFDOSMPU
 }
 
@@ -2595,10 +2599,14 @@ asm	cli
 
 	if (MusicMode == smm_AdLib)
 	{
+#ifdef WOLFDOSMPU
+		mpuStart(music->length);
+#else  // WOLFDOSMPU
 		sqHackPtr = sqHack = music->values;
 		sqHackSeqLen = sqHackLen = music->length;
 		sqHackTime = 0;
 		alTimeCount = 0;
+#endif // WOLFDOSMPU
 		SD_MusicOn();
 	}
 

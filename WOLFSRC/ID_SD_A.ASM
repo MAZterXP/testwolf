@@ -13,7 +13,7 @@
 DEBUG	=	0
 
 IFDEF	WOLFDOSMPU
-	EXTRN	midiTick:FAR
+	EXTRN	mpuTick:FAR
 ENDIF	; WOLFDOSMPU
 
 	EXTRN	SDL_DigitizedDone:FAR
@@ -388,7 +388,7 @@ extreme		dw	?
 	jz	@@nosq
 
 IFDEF	WOLFDOSMPU
-	call midiTick
+	call mpuTick
 ELSE	; WOLFDOSMPU
 	mov	ax,[sqHackLen]
 	or	ax,ax

@@ -31,9 +31,17 @@ THIS MOD IS CURRENTLY IN BETA. It has been tested in emulation (via DOSBox), but
 Version History
 ===============
 
+1.20 BETA (2021-09-25)
+----------------------
+- Rewrote MPU code to fully reuse the existing OPL sequencer state variables for MPU playback. This should make this mod 100% savegame- and data-segment-compatible with the latest commercial versions of Wolf3D and SoD.
+- Currently testing the removal of the clear interrupt flag instruction in the inner assembly loop. Maybe that will fix issues for some hardware. Maybe not. Maybe it's worse. Please test.
+- Altered .PRJ file to strip debugging symbols for better LZEXE compression.
+- Replaced SIGNON.OBJ and GAMEPAL.OBJ with ones from the [url=https://bitbucket.org/gamesrc-ver-recreation/wolf3d/"]Wolf3D game source recreation project[/url]. For the Wolf3D screen, I personally dislike the weird colors of the Activision logo, so I opted for the id logo for neutrality. :)
+- Moved all the license files to the README section. I believe the general consensus is that Wolf3D's source code came under dual licenses -- limited non-commercial license and GPL). Like many other mods, I defer the option to the user.
+
 1.10 BETA (2021-09-24)
 ----------------------
-- Added support for Apogee registered version 1.4/1.4G by using techniques to reduce data segment usage (e.g., by allocating strings as individual characters in the code segment).
+- Added support for Apogee registered version 1.4/1.4g by using techniques to reduce data segment usage (e.g., by allocating strings as individual characters in the code segment).
 - Corrected a very rare edge case where midiTick may get executed before the length of the MIDI file has been calculated, and the song counter could potentially go out-of-bounds.
 - Limited the MPU port selection in BLASTER environment variable to the range 2xx-3xx hex because poking some ports by accident can potentially kill your system!
 - Changed sound options menu to display "MPU-401 (General MIDI)" instead of "AdLib/Sound Blaster". (suggested by Gmlb256)
@@ -79,17 +87,19 @@ In case you're wondering, the MUSIC\ directory contains all the tracks for _both
 Don't hurt MIDI.
 ----------------
 
-1. If you use an Apogee version of the data files (either registered or shareware), make sure you download the correct .EXE file _or you will get garbled graphics or system crashes_. Apogee version 1.4/1.4G's .WL6 data files are _NOT_ compatible with other releases that are also marked "version 1.4", despite the numbering. However, the .WL6 data files are identical between both Apogee 1.4 and 1.4G. (Also note that the title screen's publisher logo will always say GT in this mod -- this is a sad consequence of id Software providing only one SIGNON.OBJ graphic in their open-source release, and is purely cosmetic.)
+1. If you use wolfdosmpu inside DOSBox, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
 
-2. If you use wolfdosmpu inside DOSBox, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
-
-3. If your hardware MPU-401 is not being detected, try to set the port via the P option of the BLASTER environment variable. Try this even if you don't have a Sound Blaster card. (Some Roland MPU-401s and clones may be configured to use a different address instead of the default 330, e.g., 300, 332, etc.)
+2. If your hardware MPU-401 is not being detected, try to set the port via the P option of the BLASTER environment variable. Try this even if you don't have a Sound Blaster card. (Some Roland MPU-401s and clones may be configured to use a different address instead of the default 330, e.g., 300, 332, etc.)
 
 ```
          SET BLASTER= ... P330 ...
 
 example: SET BLASTER=A220 I7 D1 T6 P330 H5
 ```
+3. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
+
+4. __Note on savegames__: Savegames are only compatible between the final commercial (Activision) version of each game (Wolf3D or SoD) and its wolfdosmpu-enhanced counterpart. This is simply because the open-source Wolf3D codebase was last used to build these two versions. Note that savegames are also incompatible between these final commercial versions and their Apogee, GT and FormGen predecessor versions, because id didn't care (most of their games have been like this). Supporting savegame compatibility for the demo SoD and shareware/registered Wolf3D builds of wolfdosmpu will require extensive backporting of community changes, e.g., from the [url=https://bitbucket.org/gamesrc-ver-recreation/wolf3d/"]game source recreation project[/url]. Maybe in the future -- I also don't want to clutter the code too much.
+
 
 Bring "M" on!
 -------------
@@ -113,13 +123,16 @@ The version of the Wolf3D source code in wolfdosmpu has been streamlined -- it d
 In addition, helper batch files are provided to quickly switch between versions. You should execute the batch file of your preferred version inside DOSBox before launching the Borland C++ environment (BC.EXE). Then simply press F9 to build.
 
 ```
-_WC.BAT -- Wolf3D commercial v1.4 (GT, Activision, and Steam releases)
-_WR.BAT -- Wolf3D registered v1.4/v1.4G (Apogee releases)
-_WS.BAT -- Wolf3D shareware v1.4 (Apogee release)
-_SC.BAT -- SoD commercial v1.0/v1.4 (FormGen and Steam releases)
+Supported versions:
+_WC.BAT -- Wolf3D commercial v1.4 (id, GT and Activision/Steam releases)
+_SC.BAT -- SoD commercial v1.0/v1.4 (FormGen and Activision/Steam releases)
+
+Semi-supported versions: (savegame compatibility is not preserved between original and wolfdosmpu)
+_WR.BAT -- Wolf3D registered v1.4/v1.4g (Apogee releases)
+_WS.BAT -- Wolf3D shareware v1.4/v1.4g (Apogee releases)
 _SD.BAT -- SoD demo 1.0 (FormGen release)
 ```
 
-As of version 1.10, LZEXE has been integrated into the build system. Whenever you switch between versions, an LZEXE-compressed .EXE file is generated from the last built WOLF3D.EXE in the OBJ\ subdirectory, and renamed as appropriate (e.g., WOLF3DRM.EXE, SPEARCM.EXE, etc.). If you want LZEXE compression on your current build but don't want to switch between game versions, you can run VERSION.BAT to trigger the compression routine on its own. When the compressor issues a warning, _you may safely ignore it--just enter N to continue the compression._ (I know, it's confusing.)
+As of version 1.10, LZEXE has been integrated into the build system. Whenever you switch between versions, an LZEXE-compressed .EXE file is generated from the last built WOLF3D.EXE in the OBJ\ subdirectory, and renamed as appropriate (e.g., WOLF3DCM.EXE, SPEARCM.EXE, etc.). If you want LZEXE compression on your current build but don't want to switch between game versions, you can run VERSION.BAT to trigger the compression routine on its own.
 
-Also as of version 1.10, you can build the original vanilla Wolf3D/SoD games without MPU support by passing (any) argument to each batch file. The output of the batch file will indicate "MPU enabled" (wolfdosmpu version) or "MPU disabled" (vanilla version). You can also build ALL versions by executing the _ALL.BAT file. (Unfortunately, I don't know of any way to skip the LZEXE compressor's warning, so you need to enter N at every prompt.)
+Also as of version 1.10, you can build the original vanilla Wolf3D/SoD games without MPU support by passing (any) argument to each batch file. The output of the batch file will indicate "MPU enabled" (wolfdosmpu version) or "MPU disabled" (vanilla version). You can also build ALL versions at once by executing the _ALL.BAT file. Warning: This builds 10 .EXE files (5 versions, each with vanilla and wolfdosmpu variants), and it takes a while.

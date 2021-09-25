@@ -7,5 +7,4 @@
 //#define DEBCHECK
 #define CARMACIZED
 //#define UPLOAD
-#define WVERSION "wolfdosmpu v1.10 BETA"
 #define WOLFDOSMPU
