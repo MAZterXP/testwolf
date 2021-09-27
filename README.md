@@ -29,9 +29,13 @@ THIS MOD IS CURRENTLY IN BETA. It has been tested in emulation (via DOSBox), but
 Version History
 ===============
 
+1.22 BETA (2021-09-27)
+----------------------
+- Fixed Read This support in WOLF3DRM.EXE and WOLF3DSM.EXE so that they don't shrink the view window every time (and cause a crash once in a while). This is due to the help screens taking up a lot of memory, which Wolf3D compensates for by releasing some memory used by the view window.
+
 1.21 BETA (2021-09-26)
 ----------------------
-- Partial compatibility with Sound Blaster AWEUTIL (MPU-401 port emulation) in DOS. The game must be started with the NOXMS parameter to prevent crashing. (thanks to Gmlb256 for testing!)
+- Partial compatibility with Sound Blaster AWEUTIL (MPU-401 port emulation) in DOS. The game must be started with the NOXMS parameter to prevent crashing. (Thanks to Gmlb256 for testing!)
 
 1.20 BETA (2021-09-25)
 ----------------------
@@ -48,7 +52,7 @@ Version History
 - Limited the MPU port selection in BLASTER environment variable to the range 2xx-3xx hex because poking some ports by accident can potentially kill your system!
 - Changed sound options menu to display "MPU-401 (General MIDI)" instead of "AdLib/Sound Blaster". (suggested by Gmlb256)
 - Added Fabrice Bellard's [LZEXE](https://bellard.org/lzexe.html) compressor in the build workflow. This is the original compressor used by id to fit the shareware game on a single floppy disk. (suggested by Gmlb256)
-- Revamped build workflow to allow building the original OPL2 versions (essentially Vanilla Wolf3D) by specifying any argument in the version selection batch files.
+- Revamped build workflow to allow building the original OPL2 versions (essentially "vanilla" Wolf3D) by specifying any argument in the version selection batch files.
 
 1.00 BETA (2021-09-22)
 ----------------------
@@ -98,11 +102,11 @@ Don't hurt MIDI.
 
 example: SET BLASTER=A220 I7 D1 T6 P330 H5
 ```
-3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 96K more RAM (estimated) than vanilla Wolf3D, needed for MIDI file caching and parsing. Also, TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) are known to crash the game unless you run with the NOXMS command line parameter (e.g., "WOLF3DCM.EXE NOXMS"). In such a case, it might help to load any other required TSRs in the upper memory area (using the LOADHIGH command) and to load Microsoft's EMM386.
+3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 96K more RAM (estimated) than the original Wolf3D, needed for MIDI file caching and parsing. Also, TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) are known to crash the game unless you run with the NOXMS command line parameter (e.g., "WOLF3DCM.EXE NOXMS"). In such a case, it might help to load any other required TSRs in the upper memory area (using the LOADHIGH command) and to load Microsoft's EMM386.
 
 4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
-5. __Note on savegames__: Savegames are only compatible between the final commercial (Activision) version of each game (Wolf3D or SoD) and its wolfdosmpu-enhanced counterpart. This is simply because the open-source Wolf3D codebase was last used to build these two versions. Note that savegames are also incompatible between these final commercial versions and their Apogee, GT and FormGen predecessor versions, because id didn't care (most of their games have been like this). Supporting savegame compatibility for the demo SoD and shareware/registered Wolf3D builds of wolfdosmpu will require extensive backporting of community changes, e.g., from the [Wolf3D game source recreation project](https://bitbucket.org/gamesrc-ver-recreation/wolf3d/). Maybe in the future -- I also don't want to clutter the code too much.
+5. __Note on savegames__: Savegames are only compatible between the final commercial (i.e., Activision) version of each game (Wolf3D or SoD) and its wolfdosmpu-enhanced counterpart. This is simply because the open-source Wolf3D codebase was last used to build these two commercial versions. Note that savegames are also incompatible between these versions and their Apogee, GT and FormGen predecessor versions. Simply put, id didn't really care about savegame compatibility across versions; most of their classic games have been like this. Supporting savegame compatibility for the demo SoD and shareware/registered Wolf3D builds of wolfdosmpu will require extensive backporting of community changes, e.g., from the [Wolf3D game source recreation project](https://bitbucket.org/gamesrc-ver-recreation/wolf3d/), and currently I feel that it's not worth the hassle. Interestingly enough, savegames from WOLF3DRM.EXE actually work in WOLF3DCM.EXE (and vice versa) because the arrangement of the savegame variables are similar between the two, so there's that...
 
 Bring "M" on!
 -------------
@@ -138,4 +142,4 @@ _SD.BAT -- SoD demo 1.0 (FormGen release)
 
 As of version 1.10, LZEXE has been integrated into the build system. Whenever you switch between versions, an LZEXE-compressed .EXE file is generated from the last built WOLF3D.EXE in the OBJ\ subdirectory, and renamed as appropriate (e.g., WOLF3DCM.EXE, SPEARCM.EXE, etc.). If you want LZEXE compression on your current build but don't want to switch between game versions, you can run VERSION.BAT to trigger the compression routine on its own.
 
-Also as of version 1.10, you can build the original vanilla Wolf3D/SoD games without MPU support by passing (any) argument to each batch file. The output of the batch file will indicate "MPU enabled" (wolfdosmpu version) or "MPU disabled" (vanilla version). You can also build ALL versions at once by executing the _ALL.BAT file. Warning: This builds 10 .EXE files (5 versions, each with vanilla and wolfdosmpu variants), and it takes a while.
+Also as of version 1.10, you can build the "vanilla" Wolf3D/SoD games without MPU support by passing (any) argument to each batch file. (Note that these "vanilla" versions are savegame-compatible with their corresponding MPU-supporting version.) The output of the batch file will indicate "MPU enabled" (wolfdosmpu version) or "MPU disabled" (vanilla version). You can also build ALL versions at once by executing the _ALL.BAT file. Warning: This builds 10 .EXE files (5 versions, each with vanilla and wolfdosmpu variants), and it takes a while.

@@ -175,15 +175,15 @@ static	word			sqMode,sqFadeStep;
 
 #define MPURATE 3125
 #define POLLRATE 1000
-/*
+
+#if 0
 // the actual state variables used by WOLFDOSMPU
 byte _seg *	mpuBuffer;
-word		mpuPort = 0;
+word		mpuPort;
 word		mpuLen;
 word		mpuPos;
 word		mpuWait;
-*/
-
+#else
 // we're reusing the sqHack variables in order not to use up precious data segment bytes for further mods;
 // this is, after all, a hack ;)
 #define mpuBuffer	((byte _seg *)	alTimeCount)
@@ -191,6 +191,7 @@ word		mpuWait;
 #define mpuLen		((word)			sqHackPtr)
 #define mpuPos						sqHackLen
 #define mpuWait						sqHackSeqLen
+#endif
 
 void mpuSend(byte length, byte far *buffer, word pos)
 {
@@ -243,7 +244,7 @@ word mpuReadVarLen()
 	{
 		// varlen values longer than 14 bits are currently not supported
 		mpuStop();
-		mpuPos = 0;
+		mpuPos = 1;
 		return 1;	// ensure that mpuTick will exit its loop
 	}
 	result |= mpuBuffer[mpuPos++];
@@ -266,7 +267,7 @@ void mpuStart(word songId)
 	byte filename[15];
 	word i, j;
 
-	if (! mpuBuffer)
+	if (mpuPos == 0)
 	{
 		byte b;
 
@@ -318,12 +319,9 @@ void mpuStart(word songId)
 				inportb(mpuPort);					// flush incoming messages
 		}
 		outportb(mpuPort + 1, 0x3F);				// write "set UART mode"
-
-		MM_GetPtr((memptr *) &mpuBuffer, 65536);
-		MM_SetLock((memptr *) &mpuBuffer, true);
 	}
 
-	mpuPos = 0;
+	mpuPos = 1;
 
 	// believe it or not, initializing like this instead of using a string constant will *save* bytes in the data segment!
 	filename[0] = 'M';
@@ -457,7 +455,18 @@ void mpuTick()
 	}
 }
 
-void mpuExit()
+void mpuInit()
+{
+	if (! mpuBuffer)
+	{
+		MM_GetPtr((memptr *) &mpuBuffer, 65536);
+		MM_SetLock((memptr *) &mpuBuffer, true);
+		mpuPort = 0x330;
+		mpuPos = 0;
+	}
+}
+
+void mpuDestroy()
 {
 	if (mpuBuffer)
 	{
@@ -2226,6 +2235,10 @@ SD_Startup(void)
 
 	LocalTime = TimeCount = alTimeCount = 0;
 
+#ifdef WOLFDOSMPU
+	mpuInit();
+#endif // WOLFDOSMPU
+
 	SD_SetSoundMode(sdm_Off);
 	SD_SetMusicMode(smm_Off);
 
@@ -2396,7 +2409,7 @@ SD_Shutdown(void)
 	asm	popf
 
 #ifdef WOLFDOSMPU
-	mpuExit();
+	mpuDestroy();
 #endif // WOLFDOSMPU
 
 	SD_Started = false;
