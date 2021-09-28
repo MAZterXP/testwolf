@@ -173,9 +173,6 @@ static	word			sqMode,sqFadeStep;
 
 #ifdef WOLFDOSMPU
 
-#define MPURATE 3125
-#define POLLRATE 1000
-
 #if 0
 // the actual state variables used by WOLFDOSMPU
 byte _seg *	mpuBuffer;
@@ -275,47 +272,29 @@ void mpuStart(word songId)
 		if (mpuPort < 0x200 || mpuPort > 0x3FF)
 			mpuPort = 0x330;
 
-		// initialize MPU401
-		i = MPURATE;
-		j = POLLRATE;
-		while ((b = inportb(mpuPort + 1)) & 0x40)	// wait until we can write
+		i = 65535;
+		while (inportb(mpuPort + 1) & 0x40)			// wait until we can write
 		{
-			if (b & 0x80)
-				j--;
-			else
-			{
-				j = 0;
-				inportb(mpuPort);					// flush incoming messages
-			}
-			if (j == 0)
-			{
-				i--;
-				j = POLLRATE;
-			}
+			i--;
 			if (i == 0)
-				return;								// MPU401 write register not responding
+				return;								// MPU401 not responding
 		}
 		outportb(mpuPort + 1, 0xFF);				// write "reset"
-
-		i = MPURATE;
-		j = POLLRATE;
 		do
 		{
-			if (inportb(mpuPort + 1) & 0x80)		// wait until we can read
-				j--;
-			else
-				j = 0;
-			if (j == 0)
+			i = 65535;
+			while (inportb(mpuPort + 1) & 0x80)		// wait until we can read
 			{
 				i--;
-				j = POLLRATE;
+				if (i == 0)							// some clone MPU401s never send ACK
+					break;
 			}
 		}
-		while (i > 0 && inportb(mpuPort) != 0xFE);	// wait until we get an ACK, or i bytes have passed
+		while (i != 0 && inport(mpuPort) != 0xFE);	// wait until we get an ACK
 
 		while ((b = inportb(mpuPort + 1)) & 0x40)	// wait until we can write
 		{
-			if (b & 0x80)
+			if (! (b & 0x80))
 				inportb(mpuPort);					// flush incoming messages
 		}
 		outportb(mpuPort + 1, 0x3F);				// write "set UART mode"

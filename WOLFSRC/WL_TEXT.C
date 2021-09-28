@@ -3,17 +3,7 @@
 #include "WL_DEF.H"
 #pragma	hdrstop
 
-// missing constants needed for SoD build
-// (these are dummies because the Read This feature is never available in SoD)
-#ifdef SPEAR
-#define H_TOPWINDOWPIC 0
-#define H_LEFTWINDOWPIC 0
-#define H_RIGHTWINDOWPIC 0
-#define H_BOTTOMINFOPIC 0
-#endif
-#ifdef SPEARDEMO
-#define T_ENDART1 0
-#endif
+#ifndef SPEARDEMO
 
 /*
 =============================================================================
@@ -434,10 +424,12 @@ void PageLayout (boolean shownumber)
 // clear the screen
 //
 	VWB_Bar (0,0,320,200,BACKCOLOR);
+#ifndef SPEAR
 	VWB_DrawPic (0,0,H_TOPWINDOWPIC);
 	VWB_DrawPic (0,8,H_LEFTWINDOWPIC);
 	VWB_DrawPic (312,8,H_RIGHTWINDOWPIC);
 	VWB_DrawPic (8,176,H_BOTTOMINFOPIC);
+#endif
 
 
 	for (i=0;i<TEXTROWS;i++)
@@ -570,10 +562,12 @@ void CacheLayoutGraphics (void)
 				numpages++;
 			if (ch == 'E')		// end of file, so load graphics and return
 			{
+#ifndef SPEAR
 				CA_MarkGrChunk(H_TOPWINDOWPIC);
 				CA_MarkGrChunk(H_LEFTWINDOWPIC);
 				CA_MarkGrChunk(H_RIGHTWINDOWPIC);
 				CA_MarkGrChunk(H_BOTTOMINFOPIC);
+#endif
 				CA_CacheMarks ();
 				text = textstart;
 				return;
@@ -895,3 +889,5 @@ void EndText (void)
 		NewViewSize(oldview / 16);
 #endif // WOLFDOSMPU
 }
+
+#endif
