@@ -29,6 +29,10 @@ THIS MOD IS CURRENTLY IN BETA. It has been tested in emulation (via DOSBox), but
 Version History
 ===============
 
+1.24 BETA (2021-09-28)
+----------------------
+- REALLY fixed the regression this time. (Thanks to Gmlb256 for testing!)
+
 1.23 BETA (2021-09-28)
 ----------------------
 - Fixed a regression in MPU-401 detection code.

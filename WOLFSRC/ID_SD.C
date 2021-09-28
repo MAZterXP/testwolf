@@ -175,7 +175,7 @@ static	word			sqMode,sqFadeStep;
 
 #if 0
 // the actual state variables used by WOLFDOSMPU
-byte _seg *	mpuBuffer;
+byte _seg *	mpuBuffer = 0;
 word		mpuPort;
 word		mpuLen;
 word		mpuPos;
@@ -222,8 +222,13 @@ mpuCanWrite:
 
 void mpuStop()
 {
-	// turn off all controllers and all notes in all channels
 	byte turnOff[5];
+
+	// if not yet initialized, don't bother
+	if (mpuPos == 0)
+		return;
+
+	// turn off all controllers and all notes in all channels
 	turnOff[1] = 0x79;
 	turnOff[2] = 0x00;
 	turnOff[3] = 0x7B;
@@ -273,16 +278,18 @@ void mpuStart(word songId)
 			mpuPort = 0x330;
 
 		i = 65535;
-		while (inportb(mpuPort + 1) & 0x40)			// wait until we can write
+		while ((b = inportb(mpuPort + 1)) & 0x40)	// wait until we can write
 		{
+			if (! (b & 0x80))
+				inportb(mpuPort);					// flush incoming messages
 			i--;
 			if (i == 0)
 				return;								// MPU401 not responding
 		}
 		outportb(mpuPort + 1, 0xFF);				// write "reset"
+		i = 65535;
 		do
 		{
-			i = 65535;
 			while (inportb(mpuPort + 1) & 0x80)		// wait until we can read
 			{
 				i--;
