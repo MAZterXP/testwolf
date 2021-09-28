@@ -762,7 +762,7 @@ void HelpScreens (void)
 	// Apogee executables, but is not triggered very often. However, WOLFDOSMPU triggers it every time
 	// (because it uses 64K of heap memory up front), so we have to fix it in this case.
 	int oldview = viewwidth;
-#endif //WOLFDOSMPU
+#endif // WOLFDOSMPU
 
 	CA_UpLevel ();
 	MM_SortMem ();
@@ -828,7 +828,7 @@ void EndText (void)
 	// Apogee executables, but is not triggered very often. However, WOLFDOSMPU triggers it every time
 	// (because it uses 64K of heap memory up front), so we have to fix it in this case.
 	int oldview = viewwidth;
-#endif //WOLFDOSMPU
+#endif // WOLFDOSMPU
 
 	ClearMemory ();
 
