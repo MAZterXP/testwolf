@@ -175,17 +175,17 @@ static	word			sqMode,sqFadeStep;
 
 #if 0
 // the actual state variables used by WOLFDOSMPU
-byte _seg *	mpuBuffer = 0;
+byte far *	mpuBuffer;
 word		mpuPort;
-word		mpuLen;
+word		mpuSize;
 word		mpuPos;
 word		mpuWait;
 #else
 // we're reusing the sqHack variables in order not to use up precious data segment bytes for further mods;
 // this is, after all, a hack ;)
-#define mpuBuffer	((byte _seg *)	alTimeCount)
+#define mpuBuffer	((byte far *)	sqHackTime)
 #define mpuPort		((word)			sqHack)
-#define mpuLen		((word)			sqHackPtr)
+#define mpuSize		((word)			sqHackPtr)
 #define mpuPos						sqHackLen
 #define mpuWait						sqHackSeqLen
 #endif
@@ -264,15 +264,101 @@ void mpuRestart(boolean force)
 	mpuWait = (mpuReadVarLen() << 1) + 2;		// (ticks + 1) * 2 -- the ones place is reserved for the running status flag
 }
 
+word mpuReadFile(byte *filename)
+{
+	int handle;
+	long size;
+
+	if ((handle = open(filename, O_RDONLY | O_BINARY, S_IREAD)) == -1)
+		return 0;
+
+	size = filelength(handle);
+	if (size > 65535 || ! CA_FarRead(handle, mpuBuffer, size))
+	{
+		close(handle);
+		return 0;
+	}
+	close(handle);
+	return size;
+}
+
+word mpuReadInfo(byte *filename, word songId)
+{
+	byte infoBuffer[10];
+	int infoHandle;
+	long infoSize;
+	int handle;
+	long size;
+	int maxSize = 0;
+
+	// believe it or not, initializing like this instead of using a string constant will *save* bytes in the data segment!
+	filename[0] = 'M';
+	filename[1] = 'U';
+	filename[2] = 'S';
+	filename[3] = 'I';
+	filename[4] = 'C';
+	filename[5] = '\\';
+	filename[6] = '_';
+	filename[7] = 'I';
+	filename[8] = 'N';
+	filename[9] = 'F';
+	filename[10] = 'O';
+	filename[11] = 0;
+
+	if ((infoHandle = open(filename, O_RDONLY | O_BINARY, S_IREAD)) == -1)
+		return 0;
+
+	// match the reported songId with the first song stored in MUSIC\_INFO with the same songId
+	infoSize = filelength(infoHandle) / 10 * 10;
+	CA_FarRead(infoHandle, infoBuffer, 10);
+	while (infoSize > 0 && *((word *) infoBuffer) != 0)
+	{
+		if (songId == 0 || *((word far *) infoBuffer) == songId)
+		{
+			// grab the filename
+			int j;
+			for (j = 0; j < 8 && infoBuffer[j + 2] != 0; j++)
+				filename[6 + j] = infoBuffer[j + 2];
+			filename[6 + j] = 0;
+
+			if (songId == 0)
+			{
+				// track largest file
+				if ((handle = open(filename, O_RDONLY | O_BINARY, S_IREAD)) == -1)
+					continue;
+				size = filelength(handle);
+				close(handle);
+				if (size <= 65535 && maxSize < size)
+					maxSize = size;
+			}
+			else
+			{
+				// found the song we want; skip the rest
+				close(infoHandle);
+				return 1;
+			}
+		}
+
+		infoSize -= 10;
+		CA_FarRead(infoHandle, infoBuffer, 10);
+	}
+
+	close(infoHandle);
+	if (songId == 0)
+		return maxSize;
+	else
+		return 0;
+}
+
 void mpuStart(word songId)
 {
 	byte filename[15];
-	word i, j;
+	byte b;
+	word i;
+	word size;
 
 	if (mpuPos == 0)
 	{
-		byte b;
-
 		// ensure valid mpuPort
 		if (mpuPort < 0x200 || mpuPort > 0x3FF)
 			mpuPort = 0x330;
@@ -309,42 +395,10 @@ void mpuStart(word songId)
 
 	mpuPos = 1;
 
-	// believe it or not, initializing like this instead of using a string constant will *save* bytes in the data segment!
-	filename[0] = 'M';
-	filename[1] = 'U';
-	filename[2] = 'S';
-	filename[3] = 'I';
-	filename[4] = 'C';
-	filename[5] = '\\';
-	filename[6] = '_';
-	filename[7] = 'I';
-	filename[8] = 'N';
-	filename[9] = 'F';
-	filename[10] = 'O';
-	filename[11] = 0;
-
-	// load MUSIC\_INFO
-	if (! CA_ReadFile(filename, (memptr *) &mpuBuffer))
+	// load the requested file
+	if (! mpuReadInfo(filename, songId))
 		return;
-
-	// match the reported length with the first song stored in MUSIC\_INFO that is the same length
-	for (i = 0; *((word far *) &mpuBuffer[i]) != 0; i += 10)
-	{
-		if (*((word far *) &mpuBuffer[i]) == songId)
-		{
-			for (j = 0; j < 8 && mpuBuffer[i + j + 2] != 0; j++)
-				filename[6 + j] = mpuBuffer[i + j + 2];
-			filename[6 + j] = 0;
-
-			if (CA_ReadFile(filename, (memptr *) &mpuBuffer))
-				break;
-			else
-				return;
-		}
-	}
-
-	// no songs matched
-	if (*((word far *) &mpuBuffer[i]) == 0)
+	if (! (size = mpuReadFile(filename)))
 		return;
 
 	// song matched; check if the header is valid
@@ -375,11 +429,10 @@ void mpuStart(word songId)
 	if (mpuBuffer[18] !=   0) return;	// only max length of 65535 supported, so high word is ignored
 	if (mpuBuffer[19] !=   0) return;
 
-	// get remaining file length from the header (must be 65535 - header length)
-	mpuLen = mpuBuffer[20] * ((word) 256) + mpuBuffer[21];
-	if (mpuLen > 65535 - 22)
+	// get remaining file length from the header (must equal the reported size)
+	mpuSize = mpuBuffer[20] * ((word) 256) + mpuBuffer[21] + 22;
+	if (mpuSize != size)
 		return;
-	mpuLen += 22;	// add the header
 
 	mpuRestart(true);
 }
@@ -435,7 +488,7 @@ void mpuTick()
 				mpuPos += 3;
 			}
 		}
-		if (mpuPos >= mpuLen)
+		if (mpuPos >= mpuSize)
 			mpuPos = 22;
 		mpuWait |= mpuReadVarLen() << 1;
 	}
@@ -443,23 +496,16 @@ void mpuTick()
 
 void mpuInit()
 {
-	if (! mpuBuffer)
-	{
-		MM_GetPtr((memptr *) &mpuBuffer, 65536);
-		MM_SetLock((memptr *) &mpuBuffer, true);
-		mpuPort = 0x330;
-		mpuPos = 0;
-	}
+	byte filename[15];
+	mpuBuffer = (byte far *) farmalloc(mpuReadInfo(filename, 0));
+	mpuPort = 0x330;
+	mpuPos = 0;
 }
 
 void mpuDestroy()
 {
-	if (mpuBuffer)
-	{
-		MM_SetLock((memptr *) &mpuBuffer, false);
-		MM_FreePtr((memptr *) &mpuBuffer);
-		mpuBuffer = 0;
-	}
+	farfree(mpuBuffer);
+	mpuPos = 0;
 }
 
 #endif // WOLFDOSMPU
@@ -2221,10 +2267,6 @@ SD_Startup(void)
 
 	LocalTime = TimeCount = alTimeCount = 0;
 
-#ifdef WOLFDOSMPU
-	mpuInit();
-#endif // WOLFDOSMPU
-
 	SD_SetSoundMode(sdm_Off);
 	SD_SetMusicMode(smm_Off);
 
@@ -2393,10 +2435,6 @@ SD_Shutdown(void)
 	setvect(8,t0OldService);
 
 	asm	popf
-
-#ifdef WOLFDOSMPU
-	mpuDestroy();
-#endif // WOLFDOSMPU
 
 	SD_Started = false;
 }

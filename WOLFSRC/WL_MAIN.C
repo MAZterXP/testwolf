@@ -563,6 +563,9 @@ void ShutdownId (void)
 	VW_Shutdown ();
 	CA_Shutdown ();
 	MM_Shutdown ();
+#ifdef WOLFDOSMPU
+	mpuDestroy();
+#endif // WOLFDOSMPU
 }
 
 
@@ -1151,6 +1154,10 @@ void InitGame (void)
 		virtualreality = true;
 	else
 		virtualreality = false;
+
+#ifdef WOLFDOSMPU
+	mpuInit();
+#endif // WOLFDOSMPU
 
 	MM_Startup ();                  // so the signon screen can be freed
 

@@ -29,6 +29,10 @@ THIS MOD IS CURRENTLY IN BETA. It has been tested in emulation (via DOSBox), but
 Version History
 ===============
 
+1.25 BETA (2021-09-30)
+----------------------
+- Now prevents id's memory manager from messing with wolfdosmpu's buffer, increasing compatibility with EMM TSRs (EMM386 and QEMM).
+
 1.24 BETA (2021-09-28)
 ----------------------
 - REALLY fixed the regression this time. (Thanks to Gmlb256 for testing!)
@@ -110,11 +114,11 @@ Don't hurt MIDI.
 
 example: SET BLASTER=A220 I7 D1 T6 P330 H5
 ```
-3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 96K more RAM (estimated) than the original Wolf3D, needed for MIDI file caching and parsing. Also, TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) are known to crash the game unless you run with the NOXMS command line parameter (e.g., "WOLF3DCM.EXE NOXMS"). In such a case, it might help to load any other required TSRs in the upper memory area (using the LOADHIGH command) and to load Microsoft's EMM386.
+3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 24K more conventional RAM (estimated) than the original Wolf3D. This memory is used for MIDI file caching and parsing, and the amount needed will increase if you use longer custom songs. TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) will eat up this conventional memory, so load as few TSRs as possible (or load them into the upper memory area by using LOADHIGH).
 
 4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
-5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu executables and the originals, except for WOLF3DCM.EXE (which happens to generate the same layout for the data segment as the Activision version of WOLF3D.EXE). id's savegame code is fully dependent on the data segment's layout.
+5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu executables and the originals, except for WOLF3DCM.EXE (which happens to generate the same layout for the data segment as the Activision version of WOLF3D.EXE, _but don't rely on this_). id's savegame code is fully dependent on the data segment's layout.
 
 Bring "M" on!
 -------------
