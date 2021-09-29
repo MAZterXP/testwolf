@@ -31,7 +31,7 @@ Version History
 
 1.25 BETA (2021-09-30)
 ----------------------
-- Now prevents id's memory manager from messing with wolfdosmpu's buffer, increasing compatibility with EMM TSRs (EMM386 and QEMM).
+- Now prevents id's memory manager from messing with wolfdosmpu's buffer, increasing compatibility with AWEUTIL (the NOXMS parameter is not needed anymore) as well as EMM386 and QEMM.
 
 1.24 BETA (2021-09-28)
 ----------------------
@@ -118,9 +118,9 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 ```
 3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 24K more conventional RAM (estimated) than the original Wolf3D. This memory is used for MIDI file caching and parsing, and the amount needed will increase if you use longer custom songs. Be forewarned that TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) will consume part of this conventional memory.
 
-   As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH.
+   As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
 
-   One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use EMM. You can check your available conventional memory using the MEM command.
+   One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
 
 4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
