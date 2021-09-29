@@ -105,7 +105,9 @@ In case you're wondering, the MUSIC\ directory contains all the tracks for _both
 Don't hurt MIDI.
 ----------------
 
-1. If you use wolfdosmpu inside DOSBox, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
+Here are some tips and suggestions for some common problems:
+
+1. If you use wolfdosmpu inside DOSBox, wolfdosmpu will sometimes play on a different MIDI device than you intended (or will not play anything at all). In this case, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
 
 2. If your hardware MPU-401 is not being detected, try to set the port via the P option of the BLASTER environment variable. Try this even if you don't have a Sound Blaster card. (Some Roland MPU-401s and clones may be configured to use a different address instead of the default 330, e.g., 300, 332, etc.)
 
@@ -114,11 +116,15 @@ Don't hurt MIDI.
 
 example: SET BLASTER=A220 I7 D1 T6 P330 H5
 ```
-3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 24K more conventional RAM (estimated) than the original Wolf3D. This memory is used for MIDI file caching and parsing, and the amount needed will increase if you use longer custom songs. TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) will eat up this conventional memory, so load as few TSRs as possible (or load them into the upper memory area by using LOADHIGH).
+3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 24K more conventional RAM (estimated) than the original Wolf3D. This memory is used for MIDI file caching and parsing, and the amount needed will increase if you use longer custom songs. Be forewarned that TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) will consume part of this conventional memory.
+
+   As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH.
+
+   One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use EMM. You can check your available conventional memory using the MEM command.
 
 4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
-5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu executables and the originals, except for WOLF3DCM.EXE (which happens to generate the same layout for the data segment as the Activision version of WOLF3D.EXE, _but don't rely on this_). id's savegame code is fully dependent on the data segment's layout.
+5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu executables and the originals. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global variables may/will break future savegames. (However, wolfdosmpu ensures that no additional global variables are introduced since id's original source code release, to at least facilitate adding MPU-401 support to other mods.)
 
 Bring "M" on!
 -------------
