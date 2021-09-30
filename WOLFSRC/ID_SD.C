@@ -173,22 +173,14 @@ static	word			sqMode,sqFadeStep;
 
 #ifdef WOLFDOSMPU
 
-#if 0
-// the actual state variables used by WOLFDOSMPU
-byte far *	mpuBuffer;
-word		mpuPort;
-word		mpuSize;
-word		mpuPos;
-word		mpuWait;
-#else
 // we're reusing the sqHack variables in order not to use up precious data segment bytes for further mods;
 // this is, after all, a hack ;)
-#define mpuBuffer	((byte far *)	sqHackTime)
-#define mpuPort		((word)			sqHack)
-#define mpuSize		((word)			sqHackPtr)
+#define mpuBuffer	((byte far *)	sqHack)
+#define mpuPort		((word)			sqHackPtr)
+#define mpuSize		((word)			sqHackTime)
 #define mpuPos						sqHackLen
 #define mpuWait						sqHackSeqLen
-#endif
+#define MPU_DATA_FOUND	((sqHackTime & 0x80000000L) != 0)
 
 void mpuSend(byte length, byte far *buffer, word pos)
 {
@@ -497,18 +489,32 @@ void mpuTick()
 void mpuInit()
 {
 	byte filename[15];
-	mpuBuffer = (byte far *) farmalloc(mpuReadInfo(filename, 0));
-	mpuPort = 0x330;
-	mpuPos = 0;
+	word maxSize = mpuReadInfo(filename, 0);
+	if (maxSize > 0)
+	{
+		sqHackTime = 0x80000000L;	// set MPU_DATA_FOUND to true
+		mpuBuffer = (byte far *) farmalloc(maxSize);
+		mpuPort = 0x330;
+		mpuPos = 0;
+	}
 }
 
 void mpuDestroy()
 {
-	farfree(mpuBuffer);
-	mpuPos = 0;
+	if (MPU_DATA_FOUND)
+	{
+		farfree(mpuBuffer);
+		mpuPos = 0;
+	}
+}
+
+int mpuIsEnabled()
+{
+	return MPU_DATA_FOUND;
 }
 
 #endif // WOLFDOSMPU
+
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -1958,9 +1964,9 @@ asm	loop usecloop
 	}
 	else
 #ifdef WOLFDOSMPU
-		// always return true to allow systems without AdLib to anyway use MPU
+		// allow systems without an AdLib card to anyway use the MPU if we have the necessary files
 		// (but if the AdLib is present, it must be initialized)
-		return true;
+		return MPU_DATA_FOUND;
 #else  // WOLFDOSMPU
 		return(false);
 #endif // WOLFDOSMPU
@@ -2650,8 +2656,11 @@ SD_MusicOff(void)
 	}
 	sqActive = false;
 #ifdef WOLFDOSMPU
-	mpuStop();
-	mpuRestart(false);
+	if (MPU_DATA_FOUND)
+	{
+		mpuStop();
+		mpuRestart(false);
+	}
 #endif // WOLFDOSMPU
 }
 
@@ -2670,12 +2679,17 @@ asm	cli
 	if (MusicMode == smm_AdLib)
 	{
 #ifdef WOLFDOSMPU
-		mpuStart(music->length);
-#else  // WOLFDOSMPU
+		if (MPU_DATA_FOUND)
+			mpuStart(music->length);
+		else
+		{
+#endif // WOLFDOSMPU
 		sqHackPtr = sqHack = music->values;
 		sqHackSeqLen = sqHackLen = music->length;
 		sqHackTime = 0;
 		alTimeCount = 0;
+#ifdef WOLFDOSMPU
+		}
 #endif // WOLFDOSMPU
 		SD_MusicOn();
 	}

@@ -388,8 +388,19 @@ extreme		dw	?
 	jz	@@nosq
 
 IFDEF	WOLFDOSMPU
+	; check if MPU is enabled (stored in the sqHackTime high bit)
+	mov	ax,[WORD PTR sqHackTime+2]
+	test ax,8000h
+
+	; if not, use the original OPL routine
+	jz	@@revert
+
+	; otherwise, use the MPU routine
 	call mpuTick
-ELSE	; WOLFDOSMPU
+	jmp	@@nosq
+@@revert:
+ENDIF	; WOLFDOSMPU
+
 	mov	ax,[sqHackLen]
 	or	ax,ax
 	jz	@@sqdone
@@ -442,7 +453,6 @@ ELSE	; WOLFDOSMPU
 	mov	[WORD PTR alTimeCount+2],ax
 	mov	[WORD PTR sqHackTime],ax
 	mov	[WORD PTR sqHackTime+2],ax
-ENDIF	; WOLFDOSMPU
 @@nosq:
 
 	les	di,[ssSample]			; Get pointer to Sound Source sample

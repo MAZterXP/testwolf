@@ -1144,6 +1144,11 @@ void CP_Sound(void)
 {
 	int which,i;
 
+#ifdef WOLFDOSMPU
+	// if no MUSIC\_INFO file was found, revert option string to AdLib/Sound Blaster
+	if (! mpuIsEnabled())
+		_fstrcpy(SndMenu[11].string, SndMenu[2].string);
+#endif
 
 #ifdef SPEAR
 	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
