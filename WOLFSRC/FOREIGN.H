@@ -43,7 +43,7 @@
 #define	STR_DISNEY	"Disney Sound Source"
 #define	STR_SB		"Sound Blaster"
 #ifdef WOLFDOSMPU
-#define	STR_MPU		"MPU-401 (General MIDI)"
+#define	STR_MPU		"MPU-401/General MIDI"
 #endif // WOLFDOSMPU
 
 #define	STR_MOUSEEN	"Mouse Enabled"
