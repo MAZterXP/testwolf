@@ -884,7 +884,7 @@ void CheckKeys (void)
 	}
 	else
 	{
-		if (tabstate == 1)
+		if (tabstate == 1 && tabshowskststats)
 		{
 			char sz[80];
 			int killspaces = 2, secretspaces = 2, treasurespaces = 2;
