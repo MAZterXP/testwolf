@@ -907,6 +907,14 @@ extern	int			viewsize;
 extern	int			controlx,controly;		// range from -100 to 100
 extern	boolean		buttonstate[NUMBUTTONS];
 
+#ifdef WASD
+extern	int			controlmouse;
+extern	boolean		leftrightkeysstrafe;
+extern	boolean		mouseyaxisdisabled;
+extern	boolean		tabshowskststats;
+extern	boolean		tabstate;
+#endif // WASD
+
 extern	boolean		demorecord,demoplayback;
 extern	char		far *demoptr, far *lastdemoptr;
 extern	memptr		demobuffer;

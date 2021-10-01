@@ -8,3 +8,4 @@
 #define CARMACIZED
 //#define UPLOAD
 #define WOLFDOSMPU
+#define WASD

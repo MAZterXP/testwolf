@@ -57,9 +57,15 @@ byte		update[UPDATESIZE];
 //
 boolean		mouseenabled,joystickenabled,joypadenabled,joystickprogressive;
 int			joystickport;
+#ifdef WASD
+int			dirscan[4] = {sc_W,sc_D,sc_S,sc_A};
+int			buttonscan[NUMBUTTONS] =
+			{sc_Control,sc_Alt,sc_LShift,sc_Space,sc_1,sc_2,sc_3,sc_4};
+#else  // WASD
 int			dirscan[4] = {sc_UpArrow,sc_RightArrow,sc_DownArrow,sc_LeftArrow};
 int			buttonscan[NUMBUTTONS] =
 			{sc_Control,sc_Alt,sc_RShift,sc_Space,sc_1,sc_2,sc_3,sc_4};
+#endif // WASD
 int			buttonmouse[4]={bt_attack,bt_strafe,bt_use,bt_nobutton};
 int			buttonjoy[4]={bt_attack,bt_strafe,bt_use,bt_run};
 
@@ -77,6 +83,13 @@ memptr		demobuffer;
 int			controlx,controly;		// range from -100 to 100 per tic
 boolean		buttonstate[NUMBUTTONS];
 
+#ifdef WASD
+int			controlmouse;
+boolean		leftrightkeysstrafe;
+boolean		mouseyaxisdisabled;
+boolean		tabshowskststats;
+boolean		tabstate;
+#endif // WASD
 
 
 //===========================================================================
@@ -340,6 +353,13 @@ void PollJoystickButtons (void)
 
 void PollKeyboardMove (void)
 {
+#ifdef WASD
+	// pressing left/right automatically engages strafe
+	// (doing it this way preserves demo compatibility)
+	if (leftrightkeysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]))
+		buttonstate[bt_strafe] = true;
+#endif // WASD
+
 	if (buttonstate[bt_run])
 	{
 		if (Keyboard[dirscan[di_north]])
@@ -381,7 +401,16 @@ void PollMouseMove (void)
 	mousexmove = _CX;
 	mouseymove = _DX;
 
+#ifdef WASD
+	// if key-strafe is engaged, and we're not recording a demo, store mouse movement in aux variable so we can still account for it later
+	if (leftrightkeysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]) && ! demorecord)
+		controlmouse += mousexmove*10/(13-mouseadjustment);
+	else
+#endif // WASD
 	controlx += mousexmove*10/(13-mouseadjustment);
+#ifdef WASD
+	if (! mouseyaxisdisabled)
+#endif // WASD
 	controly += mouseymove*20/(13-mouseadjustment);
 }
 
@@ -484,6 +513,9 @@ void PollControls (void)
 
 	controlx = 0;
 	controly = 0;
+#ifdef WASD
+	controlmouse = 0;
+#endif // WASD
 	memcpy (buttonheld,buttonstate,sizeof(buttonstate));
 	memset (buttonstate,0,sizeof(buttonstate));
 
@@ -820,18 +852,111 @@ void CheckKeys (void)
 //
 // TAB-? debug keys
 //
+#ifdef WASD
+	if (tabstate != 0)
+#endif
 	if (Keyboard[sc_Tab] && DebugOk)
 	{
 		CA_CacheGrChunk (STARTFONT);
 		fontnumber=0;
 		SETFONTCOLOR(0,15);
+#ifdef WASD
+		if (DebugKeys())
+			tabstate = 2;	// if a debug is triggerred, don't show kst on release
+#else  // WASD
 		DebugKeys();
+#endif // WASD
 		if (MousePresent)
 			Mouse(MDelta);	// Clear accumulated mouse movement
 		lasttimecount = TimeCount;
 		return;
 	}
 
+#ifdef WASD
+	if (Keyboard[sc_Tab])
+	{
+		if (tabstate == 0)
+		{
+			tabstate = 1;
+			IN_ClearKeysDown();
+			Keyboard[sc_Tab] = true;
+		}
+	}
+	else
+	{
+		if (tabstate == 1)
+		{
+			char sz[80];
+			int killspaces = 2, secretspaces = 2, treasurespaces = 2;
+
+			tabstate = 2;
+
+			// test code
+			/*
+			gamestate.treasurecount = 999;
+			gamestate.treasuretotal = 999;
+			gamestate.secretcount = 111;
+			gamestate.secrettotal = 111;
+			*/
+
+			if (gamestate.killcount >= 100)
+				killspaces++;
+			if (gamestate.killcount >= 10)
+				killspaces++;
+			if (gamestate.killtotal >= 100)
+				killspaces++;
+			if (gamestate.killtotal >= 10)
+				killspaces++;
+			if (gamestate.secretcount >= 100)
+				secretspaces++;
+			if (gamestate.secretcount >= 10)
+				secretspaces++;
+			if (gamestate.secrettotal >= 100)
+				secretspaces++;
+			if (gamestate.secrettotal >= 10)
+				secretspaces++;
+			if (gamestate.treasurecount >= 100)
+				treasurespaces++;
+			if (gamestate.treasurecount >= 10)
+				treasurespaces++;
+			if (gamestate.treasuretotal >= 100)
+				treasurespaces++;
+			if (gamestate.treasuretotal >= 10)
+				treasurespaces++;
+
+			if (killspaces < treasurespaces)
+				killspaces = treasurespaces;
+			if (secretspaces > killspaces)
+				secretspaces = 0;
+			else
+				secretspaces = killspaces - secretspaces;
+
+			sprintf(sz, "           Kills: %d/%d\n:      Secrets: %d/%d    %*s:\n    Treasures: %d/%d",
+					gamestate.killcount,
+					gamestate.killtotal,
+					gamestate.secretcount,
+					gamestate.secrettotal,
+					secretspaces,
+					"",
+					gamestate.treasurecount,
+					gamestate.treasuretotal);
+
+			ClearMemory();
+			CA_CacheGrChunk(STARTFONT+1);
+			ClearSplitVWB();
+			VW_ScreenToScreen(displayofs,bufferofs,80,160);
+			Message(sz);
+			UNCACHEGRCHUNK(STARTFONT+1);
+			PM_CheckMainMem();
+			IN_Ack();
+			DrawAllPlayBorder();
+			if (MousePresent)
+				Mouse(MDelta);	// Clear accumulated mouse movement
+		}
+		else
+			tabstate = 0;
+	}
+#endif // WASD
 }
 
 

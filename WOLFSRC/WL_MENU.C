@@ -53,7 +53,11 @@ CP_iteminfo
 	MainItems={MENU_X,MENU_Y,10,STARTITEM,24},
 	SndItems={SM_X,SM_Y1,12,0,52},
 	LSItems={LSM_X,LSM_Y,10,0,24},
+#ifdef WASD
+	CtlItems={CTL_X,CTL_Y,9,-1,56},
+#else  // WASD
 	CtlItems={CTL_X,CTL_Y,6,-1,56},
+#endif // WASD
 	CusItems={8,CST_Y+13*2,9,-1,0},
 	NewEitems={NE_X,NE_Y,11,0,88},
 	NewItems={NM_X,NM_Y,4,2,24};
@@ -151,6 +155,12 @@ far CtlMenu[]=
 	{0,STR_GAMEPAD,0},
 	{0,STR_SENS,MouseSensitivity},
 	{1,STR_CUSTOM,CustomControls}
+#ifdef WASD
+	,
+	{1,STR_STRAFE,0},
+	{1,STR_MOUSEY,0},
+	{1,STR_TAB,0}
+#endif // WASD
 #endif
 },
 
@@ -292,7 +302,15 @@ int EpisodeSelect[6]={1};
 
 
 int SaveGamesAvail[10],StartGame,SoundStatus=1,pickquick;
+#ifdef WOLFDOSMPU
+#ifdef WASD
+char SaveGameNames[10][32],SaveName[13]="SAVEGMW?.";
+#else  // WASD
+char SaveGameNames[10][32],SaveName[13]="SAVEGMM?.";
+#endif // WASD
+#else
 char SaveGameNames[10][32],SaveName[13]="SAVEGAM?.";
+#endif // WOLFDOSMPU
 
 
 ////////////////////////////////////////////////////////////////////
@@ -1148,7 +1166,7 @@ void CP_Sound(void)
 	// if no MUSIC\_INFO file was found, revert option string to AdLib/Sound Blaster
 	if (! mpuIsEnabled())
 		_fstrcpy(SndMenu[11].string, SndMenu[2].string);
-#endif
+#endif // WOLFDOSMPU
 
 #ifdef SPEAR
 	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
@@ -1774,7 +1792,11 @@ int CalibrateJoystick(void)
 void CP_Control(void)
 {
 	#define CTL_SPC	70
+#ifdef WASD
+	enum {MOUSEENABLE,JOYENABLE,USEPORT2,PADENABLE,MOUSESENS,CUSTOMIZE,STRAFE,MOUSEY,TAB};
+#else  // WASD
 	enum {MOUSEENABLE,JOYENABLE,USEPORT2,PADENABLE,MOUSESENS,CUSTOMIZE};
+#endif // WASD
 	int i,which;
 
 
@@ -1829,6 +1851,26 @@ void CP_Control(void)
 				MenuFadeIn();
 				WaitKeyUp();
 				break;
+
+#ifdef WASD
+			case STRAFE:
+				leftrightkeysstrafe^=1;
+				DrawCtlScreen();
+				ShootSnd();
+				break;
+
+			case MOUSEY:
+				mouseyaxisdisabled^=1;
+				DrawCtlScreen();
+				ShootSnd();
+				break;
+
+			case TAB:
+				tabshowskststats^=1;
+				DrawCtlScreen();
+				ShootSnd();
+				break;
+#endif // WASD
 		}
 	} while(which>=0);
 
@@ -1882,8 +1924,13 @@ void DrawMouseSens(void)
 
 	VWB_Bar(60,97,200,10,TEXTCOLOR);
 	DrawOutline(60,97,200,10,0,HIGHLIGHT);
+#ifdef WASD
+	DrawOutline(60+15*mouseadjustment,97,20,10,0,READCOLOR);
+	VWB_Bar(61+15*mouseadjustment,98,19,9,READHCOLOR);
+#else  // WASD
 	DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 	VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
+#endif // WASD
 
 	VW_UpdateScreen();
 	MenuFadeIn();
@@ -1914,8 +1961,13 @@ void MouseSensitivity(void)
 					mouseadjustment--;
 					VWB_Bar(60,97,200,10,TEXTCOLOR);
 					DrawOutline(60,97,200,10,0,HIGHLIGHT);
+#ifdef WASD
+					DrawOutline(60+15*mouseadjustment,97,20,10,0,READCOLOR);
+					VWB_Bar(61+15*mouseadjustment,98,19,9,READHCOLOR);
+#else  // WASD
 					DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
+#endif // WASD
 					VW_UpdateScreen();
 					SD_PlaySound(MOVEGUN1SND);
 					while(Keyboard[sc_LeftArrow]);
@@ -1925,13 +1977,22 @@ void MouseSensitivity(void)
 
 			case dir_South:
 			case dir_East:
+#ifdef WASD
+				if (mouseadjustment<12)
+#else  // WASD
 				if (mouseadjustment<9)
+#endif // WASD
 				{
 					mouseadjustment++;
 					VWB_Bar(60,97,200,10,TEXTCOLOR);
 					DrawOutline(60,97,200,10,0,HIGHLIGHT);
+#ifdef WASD
+					DrawOutline(60+15*mouseadjustment,97,20,10,0,READCOLOR);
+					VWB_Bar(61+15*mouseadjustment,98,19,9,READHCOLOR);
+#else  // WASD
 					DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
+#endif // WASD
 					VW_UpdateScreen();
 					SD_PlaySound(MOVEGUN1SND);
 					while(Keyboard[sc_RightArrow]);
@@ -2034,11 +2095,35 @@ void DrawCtlScreen(void)
  else
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
 
+#ifdef WASD
+ y=CTL_Y+81;
+ if (leftrightkeysstrafe)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
+ y=CTL_Y+94;
+ if (mouseyaxisdisabled)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
+ y=CTL_Y+107;
+ if (tabshowskststats)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+#endif // WASD
+
  //
  // PICK FIRST AVAILABLE SPOT
  //
  if (CtlItems.curpos<0 || !CtlMenu[CtlItems.curpos].active)
+#ifdef WASD
+   for (i=0;i<9;i++)
+#else  // WASD
    for (i=0;i<6;i++)
+#endif // WASD
 	 if (CtlMenu[i].active)
 	 {
 	  CtlItems.curpos=i;

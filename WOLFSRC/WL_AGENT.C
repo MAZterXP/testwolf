@@ -182,12 +182,22 @@ void ControlMovement (objtype *ob)
 			Thrust (angle,-controlx*MOVESCALE);	// move to right
 		}
 	}
+#ifdef WASD
+	if (! buttonstate[bt_strafe] || controlmouse != 0)
+#else  // WASD
 	else
+#endif // WASD
 	{
 	//
 	// not strafing
 	//
+#ifdef WASD
+		if (controlmouse == 0)
+			controlmouse = controlx;
+		anglefrac += controlmouse;
+#else  // WASD
 		anglefrac += controlx;
+#endif // WASD
 		angleunits = anglefrac/ANGLESCALE;
 		anglefrac -= angleunits*ANGLESCALE;
 		ob->angle -= angleunits;

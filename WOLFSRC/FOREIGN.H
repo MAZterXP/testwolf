@@ -52,6 +52,11 @@
 #define	STR_GAMEPAD	"Gravis GamePad Enabled"
 #define	STR_SENS	"Mouse Sensitivity"
 #define	STR_CUSTOM	"Customize controls"
+#ifdef WASD
+#define	STR_STRAFE	"Left/Right keys strafe"
+#define	STR_MOUSEY	"Mouse Y-axis disabled"
+#define	STR_TAB		"Tab shows K/S/T stats"
+#endif // WASD
 
 #define	STR_DADDY	"Can I play, Daddy?"
 #define	STR_HURTME	"Don't hurt me."

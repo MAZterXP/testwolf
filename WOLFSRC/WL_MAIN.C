@@ -67,7 +67,11 @@ void            Quit (char *error);
 boolean         startgame,loadedgame,virtualreality;
 int             mouseadjustment;
 
+#ifdef WASD
+char	configname[13]="CONFIG_.";
+#else  // WASD
 char	configname[13]="CONFIG.";
+#endif // WASD
 
 
 /*
@@ -119,6 +123,12 @@ void ReadConfig(void)
 
 		read(file,&viewsize,sizeof(viewsize));
 		read(file,&mouseadjustment,sizeof(mouseadjustment));
+
+#ifdef WASD
+		read(file,&leftrightkeysstrafe,sizeof(leftrightkeysstrafe));
+		read(file,&mouseyaxisdisabled,sizeof(mouseyaxisdisabled));
+		read(file,&tabshowskststats,sizeof(tabshowskststats));
+#endif // WASD
 
 		close(file);
 
@@ -173,6 +183,12 @@ void ReadConfig(void)
 
 		viewsize = 15;
 		mouseadjustment=5;
+
+#ifdef WASD
+		leftrightkeysstrafe = true;
+		mouseyaxisdisabled = true;
+		tabshowskststats = true;
+#endif // WASD
 	}
 
 	SD_SetMusicMode (sm);
@@ -218,6 +234,12 @@ void WriteConfig(void)
 
 		write(file,&viewsize,sizeof(viewsize));
 		write(file,&mouseadjustment,sizeof(mouseadjustment));
+
+#ifdef WASD
+		write(file,&leftrightkeysstrafe,sizeof(leftrightkeysstrafe));
+		write(file,&mouseyaxisdisabled,sizeof(mouseyaxisdisabled));
+		write(file,&tabshowskststats,sizeof(tabshowskststats));
+#endif // WASD
 
 		close(file);
 	}
