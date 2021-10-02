@@ -664,6 +664,12 @@ void CheckKeys (void)
 		Keyboard[sc_G] &&
 		Keyboard[sc_F10])
 	{
+#ifdef WASD
+		tabstate = 2;
+#endif
+#ifdef WOLFDOSMPU
+		ClearMemory();
+#endif
 		WindowH = 160;
 		if (godmode)
 		{
@@ -677,6 +683,9 @@ void CheckKeys (void)
 		}
 
 		IN_Ack();
+#ifdef WOLFDOSMPU
+		PM_CheckMainMem();
+#endif
 		godmode ^= 1;
 		DrawAllPlayBorderSides ();
 		IN_ClearKeysDown();
@@ -878,8 +887,13 @@ void CheckKeys (void)
 		if (tabstate == 0)
 		{
 			tabstate = 1;
-			IN_ClearKeysDown();
-			Keyboard[sc_Tab] = true;
+			if (tabshowskststats && DebugOk)
+			{
+				// workaround for debug keys; if the code was already pressed BEFORE the tab,
+				// ignore it (or else our own WASD movement code triggers it)
+				IN_ClearKeysDown();
+				Keyboard[sc_Tab] = true;
+			}
 		}
 	}
 	else
@@ -942,14 +956,11 @@ void CheckKeys (void)
 					gamestate.treasuretotal);
 
 			ClearMemory();
-			CA_CacheGrChunk(STARTFONT+1);
-			ClearSplitVWB();
-			VW_ScreenToScreen(displayofs,bufferofs,80,160);
+			WindowH = 160;
 			Message(sz);
-			UNCACHEGRCHUNK(STARTFONT+1);
-			PM_CheckMainMem();
 			IN_Ack();
-			DrawAllPlayBorder();
+			PM_CheckMainMem();
+			DrawAllPlayBorderSides();
 			if (MousePresent)
 				Mouse(MDelta);	// Clear accumulated mouse movement
 		}
