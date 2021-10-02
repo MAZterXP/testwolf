@@ -31,6 +31,10 @@ THIS MOD IS CURRENTLY IN BETA. It has been tested in emulation (via DOSBox), but
 Version History
 ===============
 
+1.31 BETA (2021-10-02)
+----------------------
+- Fixed Tab option setting being ignored.
+
 1.30 BETA (2021-10-01)
 ----------------------
 - Support for WASD-style modern controls is added. These options can be turned off in the Options menu. Alternatively, you can download a version that does not have these options at all, if you consider these "cheating".
