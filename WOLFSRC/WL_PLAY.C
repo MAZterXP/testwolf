@@ -666,10 +666,11 @@ void CheckKeys (void)
 	{
 #ifdef WASD
 		tabstate = 2;
-#endif
+#endif // WASD
 #ifdef WOLFDOSMPU
 		ClearMemory();
-#endif
+		VW_ScreenToScreen (displayofs,bufferofs,80,160);
+#endif // WOLFDOSMPU
 		WindowH = 160;
 		if (godmode)
 		{
@@ -685,7 +686,7 @@ void CheckKeys (void)
 		IN_Ack();
 #ifdef WOLFDOSMPU
 		PM_CheckMainMem();
-#endif
+#endif // WOLFDOSMPU
 		godmode ^= 1;
 		DrawAllPlayBorderSides ();
 		IN_ClearKeysDown();
@@ -956,6 +957,7 @@ void CheckKeys (void)
 					gamestate.treasuretotal);
 
 			ClearMemory();
+			VW_ScreenToScreen(displayofs,bufferofs,80,160);
 			WindowH = 160;
 			Message(sz);
 			IN_Ack();
