@@ -84,11 +84,12 @@ int			controlx,controly;		// range from -100 to 100 per tic
 boolean		buttonstate[NUMBUTTONS];
 
 #ifdef WASD
-int			controlmouse;
-boolean		leftrightkeysstrafe;
-boolean		mouseyaxisdisabled;
-boolean		tabshowskststats;
-boolean		tabstate;
+int		far	controlmouse;
+boolean	far	tabstate;
+
+boolean	far	leftrightkeysstrafe;
+boolean	far	mouseyaxisdisabled;
+boolean	far	tabshowskststats;
 #endif // WASD
 
 
@@ -901,60 +902,82 @@ void CheckKeys (void)
 	{
 		if (tabstate == 1 && tabshowskststats)
 		{
-			char sz[80];
-			int killspaces = 2, secretspaces = 2, treasurespaces = 2;
+			char sz[76];
+			int i;
 
 			tabstate = 2;
 
-			// test code
-			/*
-			gamestate.treasurecount = 999;
-			gamestate.treasuretotal = 999;
-			gamestate.secretcount = 111;
-			gamestate.secrettotal = 111;
-			*/
+			// ref string:  "           Kills: 000/000_:      Secrets: 000/000  :_    Treasures: 000/000"
+			// we don't actually declare it as a string though, because BC++ will put it in the data segment
+			memset(sz, ' ', 76);
+			sz[11] = 'K';
+			sz[12] = 'i';
+			sz[13] = 'l';
+			sz[14] = 'l';
+			sz[15] = 's';
+			sz[16] = ':';
+			sz[25] = '\n';
+			sz[26] = ':';
+			sz[33] = 'S';
+			sz[34] = 'e';
+			sz[35] = 'c';
+			sz[36] = 'r';
+			sz[37] = 'e';
+			sz[38] = 't';
+			sz[39] = 's';
+			sz[40] = ':';
+			sz[51] = ':';
+			sz[52] = '\n';
+			sz[57] = 'T';
+			sz[58] = 'r';
+			sz[59] = 'e';
+			sz[60] = 'a';
+			sz[61] = 's';
+			sz[62] = 'u';
+			sz[63] = 'r';
+			sz[64] = 'e';
+			sz[65] = 's';
+			sz[66] = ':';
+			sz[75] = 0;
 
+			i = 18;
 			if (gamestate.killcount >= 100)
-				killspaces++;
+				sz[i++] = '0' + gamestate.killcount / 100;
 			if (gamestate.killcount >= 10)
-				killspaces++;
+				sz[i++] = '0' + (gamestate.killcount % 100) / 10;
+			sz[i++] = '0' + (gamestate.killcount % 10);
+			sz[i++] = '/';
 			if (gamestate.killtotal >= 100)
-				killspaces++;
+				sz[i++] = '0' + gamestate.killtotal / 100;
 			if (gamestate.killtotal >= 10)
-				killspaces++;
+				sz[i++] = '0' + (gamestate.killtotal % 100) / 10;
+			sz[i++] = '0' + (gamestate.killtotal % 10);
+
+			i = 42;
 			if (gamestate.secretcount >= 100)
-				secretspaces++;
+				sz[i++] = '0' + gamestate.secretcount / 100;
 			if (gamestate.secretcount >= 10)
-				secretspaces++;
+				sz[i++] = '0' + (gamestate.secretcount % 100) / 10;
+			sz[i++] = '0' + (gamestate.secretcount % 10);
+			sz[i++] = '/';
 			if (gamestate.secrettotal >= 100)
-				secretspaces++;
+				sz[i++] = '0' + gamestate.secrettotal / 100;
 			if (gamestate.secrettotal >= 10)
-				secretspaces++;
+				sz[i++] = '0' + (gamestate.secrettotal % 100) / 10;
+			sz[i++] = '0' + (gamestate.secrettotal % 10);
+
+			i = 68;
 			if (gamestate.treasurecount >= 100)
-				treasurespaces++;
+				sz[i++] = '0' + gamestate.treasurecount / 100;
 			if (gamestate.treasurecount >= 10)
-				treasurespaces++;
+				sz[i++] = '0' + (gamestate.treasurecount % 100) / 10;
+			sz[i++] = '0' + (gamestate.treasurecount % 10);
+			sz[i++] = '/';
 			if (gamestate.treasuretotal >= 100)
-				treasurespaces++;
+				sz[i++] = '0' + gamestate.treasuretotal / 100;
 			if (gamestate.treasuretotal >= 10)
-				treasurespaces++;
-
-			if (killspaces < treasurespaces)
-				killspaces = treasurespaces;
-			if (secretspaces > killspaces)
-				secretspaces = 0;
-			else
-				secretspaces = killspaces - secretspaces;
-
-			sprintf(sz, "           Kills: %d/%d\n:      Secrets: %d/%d    %*s:\n    Treasures: %d/%d",
-					gamestate.killcount,
-					gamestate.killtotal,
-					gamestate.secretcount,
-					gamestate.secrettotal,
-					secretspaces,
-					"",
-					gamestate.treasurecount,
-					gamestate.treasuretotal);
+				sz[i++] = '0' + (gamestate.treasuretotal % 100) / 10;
+			sz[i++] = '0' + (gamestate.treasuretotal % 10);
 
 			ClearMemory();
 			VW_ScreenToScreen(displayofs,bufferofs,80,160);

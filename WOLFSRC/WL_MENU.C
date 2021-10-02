@@ -303,11 +303,7 @@ int EpisodeSelect[6]={1};
 
 int SaveGamesAvail[10],StartGame,SoundStatus=1,pickquick;
 #ifdef WOLFDOSMPU
-#ifdef WASD
-char SaveGameNames[10][32],SaveName[13]="SAVEGMW?.";
-#else  // WASD
-char SaveGameNames[10][32],SaveName[13]="SAVEGMM?.";
-#endif // WASD
+char SaveGameNames[10][32],SaveName[13]="SAVEGM_?.";
 #else
 char SaveGameNames[10][32],SaveName[13]="SAVEGAM?.";
 #endif // WOLFDOSMPU
@@ -640,9 +636,9 @@ void CP_ReadThis(void)
 
 /*
 #ifndef SPEAR
-*/
 #ifndef GOODTIMES
 #else
+*/
 ////////////////////////////////////////////////////////////////////
 //
 // BOSS KEY
@@ -663,8 +659,8 @@ void BossKey(void)
 	VL_SetPalette (&gamepal);
 	LoadLatchMem();
 }
-#endif
 /*
+#endif
 #endif
 */
 

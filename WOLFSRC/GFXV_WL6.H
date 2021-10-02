@@ -180,7 +180,12 @@ typedef enum {
 //
 // Amount of each data item
 //
+#ifdef WOLFDOSMPU
+// this hack makes wolfdosmpu registered savegames compatible with wolfdosmpu commercial
+#define NUMCHUNKS    161
+#else  // WOLFDOSMPU
 #define NUMCHUNKS    149
+#endif // WOLFDOSMPU
 #define NUMFONT      2
 #define NUMFONTM     0
 #define NUMPICS      132

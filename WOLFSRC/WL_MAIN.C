@@ -125,9 +125,15 @@ void ReadConfig(void)
 		read(file,&mouseadjustment,sizeof(mouseadjustment));
 
 #ifdef WASD
-		read(file,&leftrightkeysstrafe,sizeof(leftrightkeysstrafe));
-		read(file,&mouseyaxisdisabled,sizeof(mouseyaxisdisabled));
-		read(file,&tabshowskststats,sizeof(tabshowskststats));
+		{
+			boolean value;
+			read(file,&value,sizeof(value));
+			leftrightkeysstrafe = value;
+			read(file,&value,sizeof(value));
+			mouseyaxisdisabled = value;
+			read(file,&value,sizeof(value));
+			tabshowskststats = value;
+		}
 #endif // WASD
 
 		close(file);
@@ -236,9 +242,15 @@ void WriteConfig(void)
 		write(file,&mouseadjustment,sizeof(mouseadjustment));
 
 #ifdef WASD
-		write(file,&leftrightkeysstrafe,sizeof(leftrightkeysstrafe));
-		write(file,&mouseyaxisdisabled,sizeof(mouseyaxisdisabled));
-		write(file,&tabshowskststats,sizeof(tabshowskststats));
+		{
+			boolean value;
+			value = leftrightkeysstrafe;
+			write(file,&value,sizeof(value));
+			value = mouseyaxisdisabled;
+			write(file,&value,sizeof(value));
+			value = tabshowskststats;
+			write(file,&value,sizeof(value));
+		}
 #endif // WASD
 
 		close(file);
@@ -1419,6 +1431,33 @@ void Quit (char *error)
 //asm	mov ah,2
 //asm	int	0x10
 	}
+
+#ifdef WOLFDOSMPU
+	{
+		char sz[20];
+		int c = 0;
+		sz[c++] = 'w';
+		sz[c++] = 'o';
+		sz[c++] = 'l';
+		sz[c++] = 'f';
+		sz[c++] = 'd';
+		sz[c++] = 'o';
+		sz[c++] = 's';
+		sz[c++] = 'm';
+		sz[c++] = 'p';
+		sz[c++] = 'u';
+		sz[c++] = ' ';
+		sz[c++] = 'v';
+		sz[c++] = '0' + ((int) VERSION);
+		sz[c++] = '.';
+		sz[c++] = '0' + ((int) (VERSION * 10) % 10);
+		sz[c++] = '0' + ((int) (VERSION * 100) % 10);
+		sz[c++] = 0;
+		gotoxy(1,25);
+		puts(sz);
+		gotoxy(1,24);
+	}
+#endif // WOLFDOSMPU
 
 	exit(0);
 }

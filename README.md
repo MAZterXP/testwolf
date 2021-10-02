@@ -31,6 +31,12 @@ THIS MOD IS CURRENTLY IN BETA. It has been tested in emulation (via DOSBox), but
 Version History
 ===============
 
+1.32 BETA (2021-10-03)
+----------------------
+- Achieved savegame compatibility between the modern-controls and MPU-only versions (and even savegame compatibility between registered and commercial Wolf3D when using wolfdosmpu!), but this entails breaking savegame compatibility with previous versions of wolfdosmpu one last time. Hope you'll forgive me for this.
+- Added .cmd scripts for verifying .MAP files to ensure that the DATASEG layout is preserved. (These .cmd scripts uses unix commands internally -- unxutils or equivalent must be installed on your system.)
+- Fixed a memory issue with the SoD God Mode cheat (Tab+G+F10). In turn, the same code was applied to the KST stats display, eliminating flickering when it is being used.
+
 1.31 BETA (2021-10-02)
 ----------------------
 - Fixed Tab option setting being ignored.
@@ -132,9 +138,9 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 
    One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
 
-4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE; use WOLF3DRM.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
+4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE/WOLF3DCW.EXE; use WOLF3DRM.EXE/WOLF3DRW.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
-5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu executables and the originals. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global variables may/will break future savegames. (However, wolfdosmpu ensures that no additional global variables are introduced since id's original source code release, to at least facilitate adding MPU-401 support to other mods.)
+5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu executables and the originals. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global (non-far) variables or constant string literals WILL break future savegames.
 
 Bring "M" on!
 -------------
@@ -170,4 +176,4 @@ _SD.BAT -- SoD demo v1.0 (FormGen release)
 
 As of version 1.10, LZEXE has been integrated into the build system. Whenever you switch between versions, an LZEXE-compressed .EXE file is generated from the last built WOLF3D.EXE in the OBJ\ subdirectory, and renamed as appropriate (e.g., WOLF3DCM.EXE, SPEARCM.EXE, etc.). If you want LZEXE compression on your current build but don't want to switch between game versions, you can run VERSION.BAT to trigger the compression routine on its own.
 
-Also as of version 1.30, you can build the wolfdosmpu executables without modern control support by passing the "M" (MPU-only-version) argument to each batch file, or a completely clean version (equivalent to the original id source release, with only minimal modifications to compile SoD and the Apogee versions) by passing the "V" (vanilla) argument. You can build all 5 game versions (Wolf3D commercial, Wolf3D registered, Wolf3D shareware, SoD commercial, and SoD demo) of each variant at once by executing the _ALL.BAT file with the "V", "M", or "W" (WASD-version) argument, or no arguments to build all 15 executables.
+Also as of version 1.30, you can build the wolfdosmpu executables without modern control support by passing the "M" (MPU-only-version) argument to each batch file, or a completely clean version (equivalent to the original id source release, with only minimal modifications to compile SoD and the Apogee versions) by passing the "V" (vanilla) argument. You can build all 5 game versions (Wolf3D commercial, Wolf3D registered, Wolf3D shareware, SoD commercial, and SoD demo) of each variant at once by executing the _ALL.BAT file with the "V", "M", or "W" (WASD-version) argument, or with no arguments to build all 15 executables.
