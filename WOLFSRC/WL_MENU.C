@@ -304,7 +304,7 @@ int EpisodeSelect[6]={1};
 int SaveGamesAvail[10],StartGame,SoundStatus=1,pickquick;
 #ifdef WOLFDOSMPU
 char SaveGameNames[10][32],SaveName[13]="SAVEGM_?.";
-#else
+#else  // WOLFDOSMPU
 char SaveGameNames[10][32],SaveName[13]="SAVEGAM?.";
 #endif // WOLFDOSMPU
 

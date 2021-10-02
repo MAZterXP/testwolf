@@ -865,7 +865,7 @@ void CheckKeys (void)
 //
 #ifdef WASD
 	if (tabstate != 0)
-#endif
+#endif // WASD
 	if (Keyboard[sc_Tab] && DebugOk)
 	{
 		CA_CacheGrChunk (STARTFONT);
