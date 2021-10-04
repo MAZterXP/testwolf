@@ -221,7 +221,7 @@ int songs[]=
  XFUNKIE_MUS,
  XDEATH_MUS,
  XGETYOU_MUS,		// DON'T KNOW
- ULTIMATE_MUS,	// Trans Grï¿½sse
+ ULTIMATE_MUS,	// Trans Gr”sse
 
  DUNGEON_MUS,
  GOINGAFT_MUS,
