@@ -909,7 +909,7 @@ extern	boolean		buttonstate[NUMBUTTONS];
 
 #ifdef WASD
 extern	int		far	controlmouse;
-extern	boolean	far	tabstate;
+extern	int		far	tabstate;
 
 extern	boolean	far	leftrightkeysstrafe;
 extern	boolean	far	mouseyaxisdisabled;

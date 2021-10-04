@@ -173,6 +173,16 @@ static	boolean	special;
 			CurCode = LastScan = k;
 			Keyboard[k] = true;
 
+#ifdef WASD
+			{
+				// if Tab is held, and another key is pressed,
+				// do not allow Tab release to show KST stats
+				extern int far tabstate;
+				if (tabstate == 1 && k != sc_Tab)
+					tabstate = 2;
+			}
+#endif // WASD
+
 			if (special)
 				c = SpecialNames[k];
 			else

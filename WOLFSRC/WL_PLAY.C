@@ -85,7 +85,7 @@ boolean		buttonstate[NUMBUTTONS];
 
 #ifdef WASD
 int		far	controlmouse;
-boolean	far	tabstate;
+int		far	tabstate;
 
 boolean	far	leftrightkeysstrafe;
 boolean	far	mouseyaxisdisabled;
@@ -221,7 +221,7 @@ int songs[]=
  XFUNKIE_MUS,
  XDEATH_MUS,
  XGETYOU_MUS,		// DON'T KNOW
- ULTIMATE_MUS,	// Trans Gr”sse
+ ULTIMATE_MUS,	// Trans Grï¿½sse
 
  DUNGEON_MUS,
  GOINGAFT_MUS,
@@ -665,9 +665,6 @@ void CheckKeys (void)
 		Keyboard[sc_G] &&
 		Keyboard[sc_F10])
 	{
-#ifdef WASD
-		tabstate = 2;
-#endif // WASD
 #ifdef WOLFDOSMPU
 		ClearMemory();
 		VW_ScreenToScreen (displayofs,bufferofs,80,160);
@@ -864,19 +861,14 @@ void CheckKeys (void)
 // TAB-? debug keys
 //
 #ifdef WASD
-	if (tabstate != 0)
+	if (tabstate == 2)	// only if Tab was pressed before and *another* key is pressed...
 #endif // WASD
 	if (Keyboard[sc_Tab] && DebugOk)
 	{
 		CA_CacheGrChunk (STARTFONT);
 		fontnumber=0;
 		SETFONTCOLOR(0,15);
-#ifdef WASD
-		if (DebugKeys())
-			tabstate = 2;	// if a debug is triggerred, don't show kst on release
-#else  // WASD
 		DebugKeys();
-#endif // WASD
 		if (MousePresent)
 			Mouse(MDelta);	// Clear accumulated mouse movement
 		lasttimecount = TimeCount;
@@ -887,16 +879,7 @@ void CheckKeys (void)
 	if (Keyboard[sc_Tab])
 	{
 		if (tabstate == 0)
-		{
 			tabstate = 1;
-			if (tabshowskststats && DebugOk)
-			{
-				// workaround for debug keys; if the code was already pressed BEFORE the tab,
-				// ignore it (or else our own WASD movement code triggers it)
-				IN_ClearKeysDown();
-				Keyboard[sc_Tab] = true;
-			}
-		}
 	}
 	else
 	{
@@ -905,7 +888,7 @@ void CheckKeys (void)
 			char sz[76];
 			int i;
 
-			tabstate = 2;
+			tabstate = 2;	// do not allow next tab press to show KST stats again
 
 			// ref string:  "           Kills: 000/000_:      Secrets: 000/000  :_    Treasures: 000/000"
 			// we don't actually declare it as a string though, because BC++ will put it in the data segment
@@ -984,6 +967,8 @@ void CheckKeys (void)
 			WindowH = 160;
 			Message(sz);
 			IN_Ack();
+			if (Keyboard[sc_Escape])
+				IN_ClearKeysDown();		// don't allow Escape to trigger menu
 			PM_CheckMainMem();
 			DrawAllPlayBorderSides();
 			if (MousePresent)

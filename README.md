@@ -132,9 +132,11 @@ Here are some tips and suggestions for some common problems:
 
 example: SET BLASTER=A220 I7 D1 T6 P330 H5
 ```
-3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 24K more conventional RAM (estimated) than the original Wolf3D. This memory is used for MIDI file caching and parsing, and the amount needed will increase if you use longer custom songs. Be forewarned that TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) will consume part of this conventional memory.
+3. __Note on memory and TSRs__: wolfdosmpu generally requires an additional 16 to 24 KB more conventional RAM (estimated) than the original Wolf3D engine. This memory is used for MIDI file caching and parsing, and has to be allocated in conventional memory for compatibility reasons. The amount needed will increase if you use longer custom songs. Be forewarned that TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) will consume part of this conventional memory.
 
    As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
+
+   My own testing with DOSBox-X indicates that SPEARCW.EXE (the most memory-hungry of the 10 variants) requires at least 564 KB of free conventional memory in order to run at all. (The Activision version of SPEAR.EXE requires 548 KB). The other executables will need somewhat less, but the differences are negligible. (In short, just aim for 564 KB as a target.)
 
    One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
 
