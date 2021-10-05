@@ -5,4 +5,3 @@
 //#define MYPROFILE
 //#define DEBCHECK
 //#define UPLOAD
-#define GOODTIMES

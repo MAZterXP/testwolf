@@ -1523,6 +1523,7 @@ void    DemoLoop (void)
 
 #ifndef DEMOTEST
 
+/*
 	#ifndef UPLOAD
 
 		#ifndef GOODTIMES
@@ -1542,6 +1543,7 @@ void    DemoLoop (void)
 		#endif
 		#endif
 	#endif
+*/
 
 	StartCPMusic(INTROSONG);
 
