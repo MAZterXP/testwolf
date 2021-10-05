@@ -48,11 +48,11 @@
 
 #ifdef WASD
 #define	STR_MOUSEEN	"Mouse enabled"
-#define	STR_MOUSEY	"Mouse for turning only"
-#define	STR_SENS	"Mouse sensitivity"
+#define	STR_SENS	"   Adjust sensitivity"
+#define	STR_TURN	"   Use for turning only"
 #define	STR_JOYEN	"Joystick enabled"
-#define	STR_PORT2	"Use joystick port 2"
-#define	STR_GAMEPAD	"Gravis GamePad enabled"
+#define	STR_PORT2	"   Use port 2"
+#define	STR_GAMEPAD	"   Gravis GamePad"
 #define	STR_STRAFE	"Keys always strafe"
 #define	STR_TAB		"Tab displays floor stats"
 #define	STR_CUSTOM	"Customize controls"

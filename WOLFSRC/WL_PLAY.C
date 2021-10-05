@@ -87,9 +87,9 @@ boolean		buttonstate[NUMBUTTONS];
 int		far	controlmouse;
 int		far	tabstate;
 
-boolean	far	leftrightkeysstrafe;
-boolean	far	mouseyaxisdisabled;
-boolean	far	tabshowskststats;
+boolean	far	keysalwaysstrafe;
+boolean	far	mouseturningonly;
+boolean	far	tabdisplaysfloorstats;
 #endif // WASD
 
 
@@ -357,7 +357,7 @@ void PollKeyboardMove (void)
 #ifdef WASD
 	// pressing left/right automatically engages strafe
 	// (doing it this way preserves demo compatibility)
-	if (leftrightkeysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]))
+	if (keysalwaysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]))
 		buttonstate[bt_strafe] = true;
 #endif // WASD
 
@@ -404,13 +404,13 @@ void PollMouseMove (void)
 
 #ifdef WASD
 	// if key-strafe is engaged, and we're not recording a demo, store mouse movement in aux variable so we can still account for it later
-	if (leftrightkeysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]) && ! demorecord)
+	if (keysalwaysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]) && ! demorecord)
 		controlmouse += mousexmove*10/(13-mouseadjustment);
 	else
 #endif // WASD
 	controlx += mousexmove*10/(13-mouseadjustment);
 #ifdef WASD
-	if (! mouseyaxisdisabled)
+	if (! mouseturningonly || buttonstate[bt_strafe] && ! (keysalwaysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]])))
 #endif // WASD
 	controly += mouseymove*20/(13-mouseadjustment);
 }
@@ -883,7 +883,7 @@ void CheckKeys (void)
 	}
 	else
 	{
-		if (tabstate == 1 && tabshowskststats)
+		if (tabstate == 1 && tabdisplaysfloorstats)
 		{
 			char sz[76];
 			int i;

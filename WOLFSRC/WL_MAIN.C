@@ -128,11 +128,11 @@ void ReadConfig(void)
 		{
 			boolean value;
 			read(file,&value,sizeof(value));
-			leftrightkeysstrafe = value;
+			keysalwaysstrafe = value;
 			read(file,&value,sizeof(value));
-			mouseyaxisdisabled = value;
+			mouseturningonly = value;
 			read(file,&value,sizeof(value));
-			tabshowskststats = value;
+			tabdisplaysfloorstats = value;
 		}
 #endif // WASD
 
@@ -191,9 +191,10 @@ void ReadConfig(void)
 		mouseadjustment=5;
 
 #ifdef WASD
-		leftrightkeysstrafe = true;
-		mouseyaxisdisabled = true;
-		tabshowskststats = true;
+		viewsize = 19;
+		keysalwaysstrafe = true;
+		mouseturningonly = true;
+		tabdisplaysfloorstats = true;
 #endif // WASD
 	}
 
@@ -244,11 +245,11 @@ void WriteConfig(void)
 #ifdef WASD
 		{
 			boolean value;
-			value = leftrightkeysstrafe;
+			value = keysalwaysstrafe;
 			write(file,&value,sizeof(value));
-			value = mouseyaxisdisabled;
+			value = mouseturningonly;
 			write(file,&value,sizeof(value));
-			value = tabshowskststats;
+			value = tabdisplaysfloorstats;
 			write(file,&value,sizeof(value));
 		}
 #endif // WASD

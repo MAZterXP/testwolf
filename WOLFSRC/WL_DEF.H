@@ -911,9 +911,9 @@ extern	boolean		buttonstate[NUMBUTTONS];
 extern	int		far	controlmouse;
 extern	int		far	tabstate;
 
-extern	boolean	far	leftrightkeysstrafe;
-extern	boolean	far	mouseyaxisdisabled;
-extern	boolean	far	tabshowskststats;
+extern	boolean	far	keysalwaysstrafe;
+extern	boolean	far	mouseturningonly;
+extern	boolean	far	tabdisplaysfloorstats;
 #endif // WASD
 
 extern	boolean		demorecord,demoplayback;

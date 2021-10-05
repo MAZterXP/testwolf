@@ -25,8 +25,6 @@ Optionally, you can also now play with modern controls (WASD keys for movement a
 
 This mod is forked directly from the official Wolf3d source release from id Software, with only the barest minimum of changes needed to get things working. I did this as a personal exercise in DOS 80x86 assembly and 16-bit C programming. (Segmented memory is such a FAR-out concept, man!)
 
-THIS MOD IS CURRENTLY IN BETA. It has been tested in emulation (via DOSBox), but since I currently don't have access to a real DOS machine from the era (with a 286 or 386 processor), I cannot yet guarantee that it works on real hardware. So please do test it and see if it works!
-
 
 Version History
 ===============
