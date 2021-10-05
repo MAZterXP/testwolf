@@ -46,7 +46,15 @@
 #define MENU_Y	55
 #define MENU_W	178
 #ifndef SPEAR
+#ifdef WASD
+#ifndef GOODTIMES
+#define MENU_H	(13*10+6)
+#else
+#define MENU_H	(13*9+6)
+#endif
+#else  // WASD
 #define MENU_H	13*10+6
+#endif // WASD
 #else
 #define MENU_H	13*9+6
 #endif
@@ -62,10 +70,14 @@
 #define SM_H3	3*13-7
 
 #define CTL_X	24
+#ifdef WASD
+#define CTL_Y	55
+#else  // WASD
 #define CTL_Y	70
+#endif // WASD
 #define CTL_W	284
 #ifdef WASD
-#define CTL_H	13*10-7
+#define CTL_H	13*9+4
 #else  // WASD
 #define CTL_H	13*7-7
 #endif // WASD

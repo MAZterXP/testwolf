@@ -46,16 +46,23 @@
 #define	STR_MPU		"MPU-401/General MIDI"
 #endif // WOLFDOSMPU
 
+#ifdef WASD
+#define	STR_MOUSEEN	"Mouse enabled"
+#define	STR_MOUSEY	"Mouse for turning only"
+#define	STR_SENS	"Mouse sensitivity"
+#define	STR_JOYEN	"Joystick enabled"
+#define	STR_PORT2	"Use joystick port 2"
+#define	STR_GAMEPAD	"Gravis GamePad enabled"
+#define	STR_STRAFE	"Keys always strafe"
+#define	STR_TAB		"Tab displays floor stats"
+#define	STR_CUSTOM	"Customize controls"
+#else  // WASD
 #define	STR_MOUSEEN	"Mouse Enabled"
 #define	STR_JOYEN	"Joystick Enabled"
 #define	STR_PORT2	"Use joystick port 2"
 #define	STR_GAMEPAD	"Gravis GamePad Enabled"
 #define	STR_SENS	"Mouse Sensitivity"
 #define	STR_CUSTOM	"Customize controls"
-#ifdef WASD
-#define	STR_STRAFE	"Left/Right keys strafe"
-#define	STR_MOUSEY	"Mouse Y-axis disabled"
-#define	STR_TAB		"Tab shows K/S/T stats"
 #endif // WASD
 
 #define	STR_DADDY	"Can I play, Daddy?"
