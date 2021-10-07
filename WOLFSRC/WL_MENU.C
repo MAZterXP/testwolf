@@ -54,7 +54,7 @@ CP_iteminfo
 	SndItems={SM_X,SM_Y1,12,0,52},
 	LSItems={LSM_X,LSM_Y,10,0,24},
 #ifdef WASD
-	CtlItems={CTL_X,CTL_Y,9,-1,56},
+	CtlItems={CTL_X,CTL_Y,9,-1,32},
 #else  // WASD
 	CtlItems={CTL_X,CTL_Y,6,-1,56},
 #endif // WASD
@@ -151,8 +151,8 @@ far CtlMenu[]=
 #else
 #ifdef WASD
 	{0,STR_MOUSEEN,0},
-	{0,STR_SENS,MouseSensitivity},
 	{0,STR_TURN,0},
+	{0,STR_SENS,MouseSensitivity},
 	{0,STR_JOYEN,0},
 	{0,STR_PORT2,0},
 	{0,STR_GAMEPAD,0},
@@ -1795,7 +1795,7 @@ void CP_Control(void)
 {
 	#define CTL_SPC	70
 #ifdef WASD
-	enum {MOUSEENABLE,MOUSESENS,MOUSETURN,JOYENABLE,USEPORT2,PADENABLE,STRAFE,TAB,CUSTOMIZE};
+	enum {MOUSEENABLE,MOUSETURN,MOUSESENS,JOYENABLE,USEPORT2,PADENABLE,STRAFE,TAB,CUSTOMIZE};
 #else  // WASD
 	enum {MOUSEENABLE,JOYENABLE,USEPORT2,PADENABLE,MOUSESENS,CUSTOMIZE};
 #endif // WASD
@@ -1882,7 +1882,7 @@ void CP_Control(void)
 				break;
 
 			case TAB:
-				tabdisplaysfloorstats^=1;
+				tabshowsfloorstats^=1;
 				DrawCtlScreen();
 				ShootSnd();
 				WaitKeyUp();
@@ -2109,6 +2109,54 @@ void DrawCtlScreen(void)
  DrawMenu(&CtlItems,&CtlMenu[0]);
 
 
+#ifdef WASD
+ x=CTL_X+32;
+ y=CTL_Y+3;
+ if (mouseenabled)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
+ x+=24;
+ y+=13;
+  if (mouseturningonly)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
+ x-=24;
+ y+=26;
+ if (joystickenabled)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
+ x+=24;
+ y+=13;
+ if (joystickport)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
+ y+=13;
+ if (joypadenabled)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
+ x-=24;
+ y+=13;
+ if (keysalwaysstrafe)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
+ y+=13;
+ if (tabshowsfloorstats)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+#else  // WASD
  x=CTL_X+CtlItems.indent-24;
  y=CTL_Y+3;
  if (mouseenabled)
@@ -2116,42 +2164,6 @@ void DrawCtlScreen(void)
  else
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
 
-#ifdef WASD
- y+=26;
- x+=24;
- if (mouseturningonly)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
- else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
- y+=13;
- x-=24;
- if (joystickenabled)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
- else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
- y+=13;
- x+=24;
- if (joystickport)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
- else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
- y+=13;
- if (joypadenabled)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
- else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
- y+=13;
- x-=24;
- if (keysalwaysstrafe)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
- else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
- y+=13;
- if (tabdisplaysfloorstats)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
- else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
-#else  // WASD
  y=CTL_Y+16;
  if (joystickenabled)
    VWB_DrawPic(x,y,C_SELECTEDPIC);

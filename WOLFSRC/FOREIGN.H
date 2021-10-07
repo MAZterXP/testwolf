@@ -48,15 +48,15 @@
 #endif // WOLFDOSMPU
 
 #ifdef WASD
-#define	STR_MOUSEEN	"Mouse enabled"
-#define	STR_SENS	"   Adjust sensitivity"
-#define	STR_TURN	"   Use for turning only"
-#define	STR_JOYEN	"Joystick enabled"
-#define	STR_PORT2	"   Use port 2"
-#define	STR_GAMEPAD	"   Gravis GamePad"
-#define	STR_STRAFE	"Keys always strafe"
-#define	STR_TAB		"Tab displays floor stats"
-#define	STR_CUSTOM	"Customize controls"
+#define	STR_MOUSEEN	"   Mouse enabled"
+#define	STR_TURN	"      Use for turning only"
+#define	STR_SENS	"      Adjust sensitivity..."
+#define	STR_JOYEN	"   Joystick enabled"
+#define	STR_PORT2	"      Use port 2"
+#define	STR_GAMEPAD	"      Gravis GamePad"
+#define	STR_STRAFE	"   Keys always strafe"
+#define	STR_TAB		"   Tab shows floor stats"
+#define	STR_CUSTOM	"   Customize controls..."
 #else  // WASD
 #define	STR_MOUSEEN	"Mouse Enabled"
 #define	STR_JOYEN	"Joystick Enabled"

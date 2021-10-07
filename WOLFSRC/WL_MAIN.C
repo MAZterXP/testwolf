@@ -132,7 +132,7 @@ void ReadConfig(void)
 			read(file,&value,sizeof(value));
 			mouseturningonly = value;
 			read(file,&value,sizeof(value));
-			tabdisplaysfloorstats = value;
+			tabshowsfloorstats = value;
 		}
 #endif // WASD
 
@@ -194,7 +194,7 @@ void ReadConfig(void)
 		viewsize = 19;
 		keysalwaysstrafe = true;
 		mouseturningonly = true;
-		tabdisplaysfloorstats = true;
+		tabshowsfloorstats = true;
 #endif // WASD
 	}
 
@@ -249,7 +249,7 @@ void WriteConfig(void)
 			write(file,&value,sizeof(value));
 			value = mouseturningonly;
 			write(file,&value,sizeof(value));
-			value = tabdisplaysfloorstats;
+			value = tabshowsfloorstats;
 			write(file,&value,sizeof(value));
 		}
 #endif // WASD

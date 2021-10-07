@@ -913,7 +913,7 @@ extern	int		far	tabstate;
 
 extern	boolean	far	keysalwaysstrafe;
 extern	boolean	far	mouseturningonly;
-extern	boolean	far	tabdisplaysfloorstats;
+extern	boolean	far	tabshowsfloorstats;
 #endif // WASD
 
 extern	boolean		demorecord,demoplayback;

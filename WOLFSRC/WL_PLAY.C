@@ -89,7 +89,7 @@ int		far	tabstate;
 
 boolean	far	keysalwaysstrafe;
 boolean	far	mouseturningonly;
-boolean	far	tabdisplaysfloorstats;
+boolean	far	tabshowsfloorstats;
 #endif // WASD
 
 
@@ -636,6 +636,136 @@ void	CenterWindow(word w,word h)
 //===========================================================================
 
 
+#ifdef WASD
+unsigned	far	killaccessible;
+unsigned	far	secretaccessible;
+unsigned	far	treasureaccessible;
+
+#define STACKITEM(x, y, z) ((z << 12) + (x << 6) + y)
+
+void PushCell(unsigned x, unsigned y, unsigned z, controldir_t dir, unsigned far **stackptr)
+{
+	unsigned check = (unsigned) actorat[x][y];
+	if (check == 1 && tilemap[x][y] == 0)  // blocking static objects have an actorat value of 1 but do not contain anything in the tilemap
+		*(*stackptr)++ = STACKITEM(x, y, 1);
+	else if (! check || check > 255)       // flood through spaces and other actors
+		*(*stackptr)++ = STACKITEM(x, y, z);
+	else if (check > 127)
+	{
+		int doornum = tilemap[x][y] & ~0x80;
+		int lock = doorobjlist[doornum].lock;
+		if (lock < dr_lock1 || lock > dr_lock4 || gamestate.keys & (1 << (lock - dr_lock1)))
+			*(*stackptr)++ = STACKITEM(x, y, z);
+	}
+	else if (spotvis[x][y] == 0
+			 && *(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE
+			 && (dir == di_west && ! tilemap[x - 1][y]
+		         || dir == di_east && ! tilemap[x + 1][y]
+		         || dir == di_north && ! tilemap[x][y - 1]
+		         || dir == di_south && ! tilemap[x][y + 1]))
+	{
+		// count an adjacent secret
+		spotvis[x][y] = 5;
+		secretaccessible++;
+	}
+}
+
+void CheckAccessible()
+{
+	objtype *obj;
+	statobj_t *statptr;
+	unsigned far *stackptr;
+	memptr tempmem;
+
+	MM_GetPtr(&tempmem, 64 * 64 * sizeof(unsigned));
+	stackptr = (unsigned far *) tempmem;
+	memset(spotvis, 0, 4096);
+
+	killaccessible = gamestate.killcount;
+	secretaccessible = gamestate.secretcount;
+	treasureaccessible = gamestate.treasurecount;
+
+	*stackptr++ = STACKITEM(player->tilex, player->tiley, 2);
+	while (stackptr != (unsigned far *) tempmem)
+	{
+		unsigned current = *--stackptr;
+		unsigned x = (current >> 6) & 63;
+		unsigned y = current & 63;
+		unsigned z = (current >> 12);
+
+		if (spotvis[x][y] >= z)
+			continue;
+
+		spotvis[x][y] = z;
+		PushCell(x - 1, y, z, di_west, &stackptr);
+		PushCell(x + 1, y, z, di_east, &stackptr);
+		PushCell(x, y - 1, z, di_north, &stackptr);
+		PushCell(x, y + 1, z, di_south, &stackptr);
+	}
+
+	for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
+	{
+		if (statptr->shapenum != -1 && statptr->flags & FL_BONUS && *statptr->visspot == 2)
+		{
+			byte n = statptr->itemnumber;
+			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal)
+			{
+				treasureaccessible++;
+				*statptr->visspot = 3;
+			}
+		}
+	}
+
+	for (obj = player->next; obj; obj = obj->next)
+	{
+		if (obj->flags & FL_SHOOTABLE)
+		{
+			unsigned spotloc = (obj->tilex<<6) + obj->tiley;
+			if (*(&spotvis[0][0] + spotloc))
+			{
+				// enemies have precedence over treasure in the map
+				killaccessible++;
+				*(&spotvis[0][0] + spotloc) = 4;
+			}
+		}
+	}
+
+#if 0
+	{
+		int i, j;
+		unsigned mapfilesize = 0;
+		char sz[2];
+		sz[0] = 'M';
+		sz[1] = 0;
+		for (j = 0; j < 64; j++)
+		{
+			for (i = 0; i < 64; i++)
+			{
+				if (spotvis[i][j] == 5)
+					((char _seg *) tempmem)[mapfilesize++] = 'S';
+				else if (spotvis[i][j] == 4)
+					((char _seg *) tempmem)[mapfilesize++] = 'K';
+				else if (spotvis[i][j] == 3)
+					((char _seg *) tempmem)[mapfilesize++] = 'T';
+				else if (spotvis[i][j] == 2)
+					((char _seg *) tempmem)[mapfilesize++] = ' ';
+				else if (spotvis[i][j] == 1)
+					((char _seg *) tempmem)[mapfilesize++] = '.';
+				else
+					((char _seg *) tempmem)[mapfilesize++] = '#';
+			}
+			((char _seg *) tempmem)[mapfilesize++] = '\n';
+		}
+		CA_WriteFile(sz, tempmem, mapfilesize);
+	}
+#endif
+
+	MM_FreePtr(&tempmem);
+}
+
+#endif // WASD
+
+
 /*
 =====================
 =
@@ -883,12 +1013,22 @@ void CheckKeys (void)
 	}
 	else
 	{
-		if (tabstate == 1 && tabdisplaysfloorstats)
+		if (tabstate == 1 && tabshowsfloorstats)
 		{
 			char sz[76];
 			int i;
+			int oldview = viewwidth;
 
 			tabstate = 2;	// do not allow next tab press to show KST stats again
+
+			// CheckAccessible can potentially use memory that normally goes to the view window;
+			// since the memory manager shrinks the view window to accommodate these requests,
+			// reclaim the view window
+			ClearMemory();
+			CheckAccessible();
+			MM_SortMem();
+			if (oldview != viewwidth)
+				NewViewSize(oldview / 16);
 
 			// ref string:  "           Kills: 000/000_:      Secrets: 000/000  :_    Treasures: 000/000"
 			// we don't actually declare it as a string though, because BC++ will put it in the data segment
@@ -930,11 +1070,13 @@ void CheckKeys (void)
 				sz[i++] = '0' + (gamestate.killcount % 100) / 10;
 			sz[i++] = '0' + (gamestate.killcount % 10);
 			sz[i++] = '/';
-			if (gamestate.killtotal >= 100)
-				sz[i++] = '0' + gamestate.killtotal / 100;
-			if (gamestate.killtotal >= 10)
-				sz[i++] = '0' + (gamestate.killtotal % 100) / 10;
-			sz[i++] = '0' + (gamestate.killtotal % 10);
+			if (killaccessible >= 100)
+				sz[i++] = '0' + killaccessible / 100;
+			if (killaccessible >= 10)
+				sz[i++] = '0' + (killaccessible % 100) / 10;
+			sz[i++] = '0' + (killaccessible % 10);
+			if (killaccessible < gamestate.killtotal)
+				sz[i++] = '^';
 
 			i = 42;
 			if (gamestate.secretcount >= 100)
@@ -943,11 +1085,13 @@ void CheckKeys (void)
 				sz[i++] = '0' + (gamestate.secretcount % 100) / 10;
 			sz[i++] = '0' + (gamestate.secretcount % 10);
 			sz[i++] = '/';
-			if (gamestate.secrettotal >= 100)
-				sz[i++] = '0' + gamestate.secrettotal / 100;
-			if (gamestate.secrettotal >= 10)
-				sz[i++] = '0' + (gamestate.secrettotal % 100) / 10;
-			sz[i++] = '0' + (gamestate.secrettotal % 10);
+			if (secretaccessible >= 100)
+				sz[i++] = '0' + secretaccessible / 100;
+			if (secretaccessible >= 10)
+				sz[i++] = '0' + (secretaccessible % 100) / 10;
+			sz[i++] = '0' + (secretaccessible % 10);
+			if (secretaccessible < gamestate.secrettotal)
+				sz[i++] = '^';
 
 			i = 68;
 			if (gamestate.treasurecount >= 100)
@@ -956,11 +1100,13 @@ void CheckKeys (void)
 				sz[i++] = '0' + (gamestate.treasurecount % 100) / 10;
 			sz[i++] = '0' + (gamestate.treasurecount % 10);
 			sz[i++] = '/';
-			if (gamestate.treasuretotal >= 100)
-				sz[i++] = '0' + gamestate.treasuretotal / 100;
-			if (gamestate.treasuretotal >= 10)
-				sz[i++] = '0' + (gamestate.treasuretotal % 100) / 10;
-			sz[i++] = '0' + (gamestate.treasuretotal % 10);
+			if (treasureaccessible >= 100)
+				sz[i++] = '0' + treasureaccessible / 100;
+			if (treasureaccessible >= 10)
+				sz[i++] = '0' + (treasureaccessible % 100) / 10;
+			sz[i++] = '0' + (treasureaccessible % 10);
+			if (treasureaccessible < gamestate.treasuretotal)
+				sz[i++] = '^';
 
 			ClearMemory();
 			VW_ScreenToScreen(displayofs,bufferofs,80,160);
