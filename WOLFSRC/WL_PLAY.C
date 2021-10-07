@@ -645,6 +645,7 @@ unsigned	far	treasureaccessible;
 
 void PushCell(unsigned x, unsigned y, unsigned z, controldir_t dir, unsigned far **stackptr)
 {
+	// TODO mark undiscovered areas differently
 	unsigned check = (unsigned) actorat[x][y];
 	if (check == 1 && tilemap[x][y] == 0)  // blocking static objects have an actorat value of 1 but do not contain anything in the tilemap
 		*(*stackptr)++ = STACKITEM(x, y, 1);
@@ -657,7 +658,8 @@ void PushCell(unsigned x, unsigned y, unsigned z, controldir_t dir, unsigned far
 		if (lock < dr_lock1 || lock > dr_lock4 || gamestate.keys & (1 << (lock - dr_lock1)))
 			*(*stackptr)++ = STACKITEM(x, y, z);
 	}
-	else if (spotvis[x][y] == 0
+	else if (z == 2
+	         && spotvis[x][y] == 0
 			 && *(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE
 			 && (dir == di_west && ! tilemap[x - 1][y]
 		         || dir == di_east && ! tilemap[x + 1][y]
@@ -676,6 +678,25 @@ void CheckAccessible()
 	statobj_t *statptr;
 	unsigned far *stackptr;
 	memptr tempmem;
+	unsigned x, y, z, current;
+
+#if 0
+    // note that the floodfill assumes that there are no holes on the borders of the map;
+	// uncomment this code to check for this condition on custom maps
+	// (this check actually fails on Wolf3D ep. 1 floor 3 and SoD floor 15, but because those
+	// wall gaps are plugged by secrets later on, the main code does not break)
+	for (x = 0; x < 64; x++)
+	{
+		if ((unsigned) actorat[x][0] == 0 || (unsigned) actorat[x][0] == 1 && tilemap[x][0] == 0 || (unsigned) actorat[x][0] >= 128 || *(mapsegs[1] + farmapylookup[0] + x) == PUSHABLETILE)
+			Quit(0);
+		if ((unsigned) actorat[x][63] == 0 || (unsigned) actorat[x][63] == 1 && tilemap[x][63] == 0 || (unsigned) actorat[x][63] >= 128 || *(mapsegs[1] + farmapylookup[63] + x) == PUSHABLETILE)
+			Quit(0);
+		if ((unsigned) actorat[0][x] == 0 || (unsigned) actorat[0][x] == 1 && tilemap[0][x] == 0 || (unsigned) actorat[0][x] >= 128 || *(mapsegs[1] + farmapylookup[x] + 0) == PUSHABLETILE)
+			Quit(0);
+		if ((unsigned) actorat[63][x] == 0 || (unsigned) actorat[63][x] == 1 && tilemap[63][x] == 0 || (unsigned) actorat[63][x] >= 128 || *(mapsegs[1] + farmapylookup[x] + 63) == PUSHABLETILE)
+			Quit(0);
+	}
+#endif
 
 	MM_GetPtr(&tempmem, 64 * 64 * sizeof(unsigned));
 	stackptr = (unsigned far *) tempmem;
@@ -688,10 +709,10 @@ void CheckAccessible()
 	*stackptr++ = STACKITEM(player->tilex, player->tiley, 2);
 	while (stackptr != (unsigned far *) tempmem)
 	{
-		unsigned current = *--stackptr;
-		unsigned x = (current >> 6) & 63;
-		unsigned y = current & 63;
-		unsigned z = (current >> 12);
+		current = *--stackptr;
+		x = (current >> 6) & 63;
+		y = current & 63;
+		z = (current >> 12);
 
 		if (spotvis[x][y] >= z)
 			continue;
