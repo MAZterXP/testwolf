@@ -84,12 +84,17 @@ int			controlx,controly;		// range from -100 to 100 per tic
 boolean		buttonstate[NUMBUTTONS];
 
 #ifdef WASD
-int		far	controlmouse;
-int		far	tabstate;
+int			far	controlmouse;
+int			far	tabstate;
 
-boolean	far	keysalwaysstrafe;
-boolean	far	mouseturningonly;
-boolean	far	tabshowsfloorstats;
+boolean		far	keysalwaysstrafe;
+boolean		far	mouseturningonly;
+int			far	tabfunction;
+
+unsigned	far	killaccessible;
+unsigned	far	secretaccessible;
+unsigned	far	treasureaccessible;
+
 #endif // WASD
 
 
@@ -637,38 +642,71 @@ void	CenterWindow(word w,word h)
 
 
 #ifdef WASD
-unsigned	far	killaccessible;
-unsigned	far	secretaccessible;
-unsigned	far	treasureaccessible;
 
-#define STACKITEM(x, y, z) ((z << 12) + (x << 6) + y)
+#define STACKITEM(x, y, z) ((z << 10) + (x << 6) + y)
 
 void PushCell(unsigned x, unsigned y, unsigned z, controldir_t dir, unsigned far **stackptr)
 {
-	// TODO mark undiscovered areas differently
-	unsigned check = (unsigned) actorat[x][y];
-	if (check == 1 && tilemap[x][y] == 0)  // blocking static objects have an actorat value of 1 but do not contain anything in the tilemap
-		*(*stackptr)++ = STACKITEM(x, y, 1);
-	else if (! check || check > 255)       // flood through spaces and other actors
+	unsigned actor;
+
+	// do not flood through already-visited cells
+	if ((spotvis[x][y] & 0x0c) >= z)
+		return;
+
+	actor = (unsigned) actorat[x][y];
+	if (actor == 1 && tilemap[x][y] == 0)
+	{
+		// blocking static objects have an actorat value of 1 but do not contain anything in the tilemap
+		spotvis[x][y] |= 0x74;
+
+		// flood through (but only as visible)
+		*(*stackptr)++ = STACKITEM(x, y, 0x04);
+	}
+	else if (! actor || actor > 255)
+	{
+		// blank spaces or actors
+		spotvis[x][y] |= z;
+
+		// flood through (whether accessible or visible)
 		*(*stackptr)++ = STACKITEM(x, y, z);
-	else if (check > 127)
+	}
+	else if (actor > 127)
 	{
 		int doornum = tilemap[x][y] & ~0x80;
 		int lock = doorobjlist[doornum].lock;
-		if (lock < dr_lock1 || lock > dr_lock4 || gamestate.keys & (1 << (lock - dr_lock1)))
+
+		// mark the door and whether it is locked
+		if (lock < dr_lock1 || lock > dr_lock4)
+			spotvis[x][y] |= 0x30 + z;
+		else
+			spotvis[x][y] |= 0x50 + z;
+
+		// flood through door only if accessible and unlocked or player has the key
+		if (z == 0x0c && (lock < dr_lock1 || lock > dr_lock4 || gamestate.keys & (1 << (lock - dr_lock1))))
 			*(*stackptr)++ = STACKITEM(x, y, z);
 	}
-	else if (z == 2
-	         && spotvis[x][y] == 0
-			 && *(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE
-			 && (dir == di_west && ! tilemap[x - 1][y]
-		         || dir == di_east && ! tilemap[x + 1][y]
-		         || dir == di_north && ! tilemap[x][y - 1]
-		         || dir == di_south && ! tilemap[x][y + 1]))
+	else if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE)
 	{
-		// count an adjacent secret
-		spotvis[x][y] = 5;
-		secretaccessible++;
+		// secret (does not flood through)
+		if (z == 0x0c
+			&& ! (spotvis[x][y] & 0x80)		// count an accessible secret only once
+			&& (dir == di_west && ! actorat[x - 1][y]
+				|| dir == di_east && ! actorat[x + 1][y]
+				|| dir == di_north && ! actorat[x][y - 1]
+				|| dir == di_south && ! actorat[x][y + 1]))
+		{
+			spotvis[x][y] |= 0x80;			// mark secret as accessible (must use different bit because the normal accessible bit will give the secret away)
+		}
+	}
+	else if (tilemap[x][y] == ELEVATORTILE && (dir == di_west || dir == di_east))
+	{
+		// elevator (does not flood through)
+		spotvis[x][y] |= 0x50 + z;
+	}
+	else
+	{
+		// wall (does not flood through)
+		spotvis[x][y] |= 0x7c;				// special case for walls: accessible bit is always 1 (that is, always bright)
 	}
 }
 
@@ -678,61 +716,79 @@ void CheckAccessible()
 	statobj_t *statptr;
 	unsigned far *stackptr;
 	memptr tempmem;
-	unsigned x, y, z, current;
-
-#if 0
-    // note that the floodfill assumes that there are no holes on the borders of the map;
-	// uncomment this code to check for this condition on custom maps
-	// (this check actually fails on Wolf3D ep. 1 floor 3 and SoD floor 15, but because those
-	// wall gaps are plugged by secrets later on, the main code does not break)
-	for (x = 0; x < 64; x++)
-	{
-		if ((unsigned) actorat[x][0] == 0 || (unsigned) actorat[x][0] == 1 && tilemap[x][0] == 0 || (unsigned) actorat[x][0] >= 128 || *(mapsegs[1] + farmapylookup[0] + x) == PUSHABLETILE)
-			Quit(0);
-		if ((unsigned) actorat[x][63] == 0 || (unsigned) actorat[x][63] == 1 && tilemap[x][63] == 0 || (unsigned) actorat[x][63] >= 128 || *(mapsegs[1] + farmapylookup[63] + x) == PUSHABLETILE)
-			Quit(0);
-		if ((unsigned) actorat[0][x] == 0 || (unsigned) actorat[0][x] == 1 && tilemap[0][x] == 0 || (unsigned) actorat[0][x] >= 128 || *(mapsegs[1] + farmapylookup[x] + 0) == PUSHABLETILE)
-			Quit(0);
-		if ((unsigned) actorat[63][x] == 0 || (unsigned) actorat[63][x] == 1 && tilemap[63][x] == 0 || (unsigned) actorat[63][x] >= 128 || *(mapsegs[1] + farmapylookup[x] + 63) == PUSHABLETILE)
-			Quit(0);
-	}
-#endif
+	unsigned current;
+	byte x, y, z;
 
 	MM_GetPtr(&tempmem, 64 * 64 * sizeof(unsigned));
 	stackptr = (unsigned far *) tempmem;
-	memset(spotvis, 0, 4096);
 
 	killaccessible = gamestate.killcount;
 	secretaccessible = gamestate.secretcount;
 	treasureaccessible = gamestate.treasurecount;
 
-	*stackptr++ = STACKITEM(player->tilex, player->tiley, 2);
+	*stackptr++ = STACKITEM(player->tilex, player->tiley, 0x0c);
+	spotvis[player->tilex][player->tiley] = 0x4d;
 	while (stackptr != (unsigned far *) tempmem)
 	{
 		current = *--stackptr;
-		x = (current >> 6) & 63;
-		y = current & 63;
-		z = (current >> 12);
+		x = (current >> 6) & 0x3f;
+		y = current & 0x3f;
+		z = (current >> 10) & 0x0c;
 
-		if (spotvis[x][y] >= z)
-			continue;
-
-		spotvis[x][y] = z;
-		PushCell(x - 1, y, z, di_west, &stackptr);
-		PushCell(x + 1, y, z, di_east, &stackptr);
-		PushCell(x, y - 1, z, di_north, &stackptr);
-		PushCell(x, y + 1, z, di_south, &stackptr);
+		if (x > 0)	PushCell(x - 1, y, z, di_west, &stackptr);
+		if (x < 63)	PushCell(x + 1, y, z, di_east, &stackptr);
+		if (y > 0)	PushCell(x, y - 1, z, di_north, &stackptr);
+		if (y < 63)	PushCell(x, y + 1, z, di_south, &stackptr);
 	}
 
 	for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
 	{
-		if (statptr->shapenum != -1 && statptr->flags & FL_BONUS && *statptr->visspot == 2)
+		if (statptr->shapenum != -1 && statptr->flags & FL_BONUS)
 		{
 			byte n = statptr->itemnumber;
-			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal)
+			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal || n == bo_key1 || n == bo_key2)
 			{
-				treasureaccessible++;
-				*statptr->visspot = 3;
+				if (*statptr->visspot & 0x08)
+				{
+					// keys get marked as treasure for convenience, but don't count to total
+					if (n != bo_key1 && n != bo_key2)
+						treasureaccessible++;
+				}
+				else if (tabfunction == 3)
+					*statptr->visspot |= 0x04;	// treasure on unseen tiles still gets marked in full map mode
+
+				if (*statptr->visspot != 0x4d)	// if player isn't there...
+					*statptr->visspot |= 0x60;	// mark the treasure
+			}
+			else if (n != block && n != dressing)
+			{
+				if (tabfunction == 3)
+					*statptr->visspot |= 0x04;	// bonuses on unseen tiles still gets marked in full map mode
+
+				if (*statptr->visspot != 0x4d)	// if player isn't there...
+					*statptr->visspot |= 0x10;	// mark the bonus
+			}
+		}
+	}
+
+	for (y = 0; y < 64; y++)
+	{
+		for (x = 0; x < 64; x++)
+		{
+			if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE)
+			{
+				if (spotvis[x][y] & 0x80)
+				{
+					if (tabfunction == 3)
+						spotvis[x][y] |= 0x28;	// mark the secret
+					else
+						spotvis[x][y] |= 0x7c;	// masquerade secret as a wall
+					secretaccessible++;
+				}
+				else if (tabfunction == 3)
+					spotvis[x][y] |= 0x24;	// secrets on unseen tiles still get marked in full map mode
+				else
+					spotvis[x][y] |= 0x7c;	// masquerade secret as a wall
 			}
 		}
 	}
@@ -741,45 +797,24 @@ void CheckAccessible()
 	{
 		if (obj->flags & FL_SHOOTABLE)
 		{
-			unsigned spotloc = (obj->tilex<<6) + obj->tiley;
-			if (*(&spotvis[0][0] + spotloc))
-			{
-				// enemies have precedence over treasure in the map
-				killaccessible++;
-				*(&spotvis[0][0] + spotloc) = 4;
-			}
-		}
-	}
+			byte *visspot = &spotvis[obj->tilex][obj->tiley];
 
-#if 0
-	{
-		int i, j;
-		unsigned mapfilesize = 0;
-		char sz[2];
-		sz[0] = 'M';
-		sz[1] = 0;
-		for (j = 0; j < 64; j++)
-		{
-			for (i = 0; i < 64; i++)
+			// enemies are accessible when visible
+			if (*visspot & 0x04)
+				killaccessible++;
+
+			*visspot &= ~0x08;		// enemy color is always dark red
+
+			if (tabfunction == 3)
+				*visspot |= 0x04;	// enemy on unseen tiles still gets marked in full map mode
+
+			if (tabfunction == 3 || *visspot & 0x01)	// if full map mode or player directly sees the enemy...
 			{
-				if (spotvis[i][j] == 5)
-					((char _seg *) tempmem)[mapfilesize++] = 'S';
-				else if (spotvis[i][j] == 4)
-					((char _seg *) tempmem)[mapfilesize++] = 'K';
-				else if (spotvis[i][j] == 3)
-					((char _seg *) tempmem)[mapfilesize++] = 'T';
-				else if (spotvis[i][j] == 2)
-					((char _seg *) tempmem)[mapfilesize++] = ' ';
-				else if (spotvis[i][j] == 1)
-					((char _seg *) tempmem)[mapfilesize++] = '.';
-				else
-					((char _seg *) tempmem)[mapfilesize++] = '#';
+				*visspot &= 0x0f;	// always draw enemy over treasure
+				*visspot |= 0x40;	// mark the enemy
 			}
-			((char _seg *) tempmem)[mapfilesize++] = '\n';
 		}
-		CA_WriteFile(sz, tempmem, mapfilesize);
 	}
-#endif
 
 	MM_FreePtr(&tempmem);
 }
@@ -1034,7 +1069,7 @@ void CheckKeys (void)
 	}
 	else
 	{
-		if (tabstate == 1 && tabshowsfloorstats)
+		if (tabstate == 1 && tabfunction)
 		{
 			char sz[76];
 			int i;
@@ -1051,95 +1086,199 @@ void CheckKeys (void)
 			if (oldview != viewwidth)
 				NewViewSize(oldview / 16);
 
-			// ref string:  "           Kills: 000/000_:      Secrets: 000/000  :_    Treasures: 000/000"
-			// we don't actually declare it as a string though, because BC++ will put it in the data segment
+#define PRINTCOUNT(c) {						\
+	if (c >= 100)							\
+		sz[i++] = '0' + c / 100;			\
+	if (c >= 10)							\
+		sz[i++] = '0' + (c % 100) / 10;		\
+	sz[i++] = '0' + (c % 10);				\
+}
+#define PRINTTOTAL(a, t) {					\
+	sz[i++] = '/';							\
+	if (a >= 100)							\
+		sz[i++] = '0' + a / 100;			\
+	if (a >= 10)							\
+		sz[i++] = '0' + (a % 100) / 10;		\
+	sz[i++] = '0' + (a % 10);				\
+	if (a < t)								\
+		sz[i++] = '^';						\
+}
+
+
 			memset(sz, ' ', 76);
-			sz[11] = 'K';
-			sz[12] = 'i';
-			sz[13] = 'l';
-			sz[14] = 'l';
-			sz[15] = 's';
-			sz[16] = ':';
-			sz[25] = '\n';
-			sz[26] = ':';
-			sz[33] = 'S';
-			sz[34] = 'e';
-			sz[35] = 'c';
-			sz[36] = 'r';
-			sz[37] = 'e';
-			sz[38] = 't';
-			sz[39] = 's';
-			sz[40] = ':';
-			sz[51] = ':';
-			sz[52] = '\n';
-			sz[57] = 'T';
-			sz[58] = 'r';
-			sz[59] = 'e';
-			sz[60] = 'a';
-			sz[61] = 's';
-			sz[62] = 'u';
-			sz[63] = 'r';
-			sz[64] = 'e';
-			sz[65] = 's';
-			sz[66] = ':';
-			sz[75] = 0;
 
-			i = 18;
-			if (gamestate.killcount >= 100)
-				sz[i++] = '0' + gamestate.killcount / 100;
-			if (gamestate.killcount >= 10)
-				sz[i++] = '0' + (gamestate.killcount % 100) / 10;
-			sz[i++] = '0' + (gamestate.killcount % 10);
-			sz[i++] = '/';
-			if (killaccessible >= 100)
-				sz[i++] = '0' + killaccessible / 100;
-			if (killaccessible >= 10)
-				sz[i++] = '0' + (killaccessible % 100) / 10;
-			sz[i++] = '0' + (killaccessible % 10);
-			if (killaccessible < gamestate.killtotal)
-				sz[i++] = '^';
+			if (tabfunction == 1)
+			{
+				// ref string:  "           Kills: 000/000_:      Secrets: 000/000  :_    Treasures: 000/000"
+				// we don't actually declare it as a string though, because BC++ will put it in the data segment
+				i = 11;
+				sz[i++] = 'K';
+				sz[i++] = 'i';
+				sz[i++] = 'l';
+				sz[i++] = 'l';
+				sz[i++] = 's';
+				sz[i++] = ':';
+				sz[i++] = ' ';
+				PRINTCOUNT(gamestate.killcount);
+				PRINTTOTAL(killaccessible, gamestate.killtotal);
+				i = 25;
+				sz[i++] = '\n';
+				sz[i++] = ':';
+				i = 33;
+				sz[i++] = 'S';
+				sz[i++] = 'e';
+				sz[i++] = 'c';
+				sz[i++] = 'r';
+				sz[i++] = 'e';
+				sz[i++] = 't';
+				sz[i++] = 's';
+				sz[i++] = ':';
+				sz[i++] = ' ';
+				PRINTCOUNT(gamestate.secretcount);
+				PRINTTOTAL(secretaccessible, gamestate.secrettotal);
+				i = 51;
+				sz[i++] = ':';
+				sz[i++] = '\n';
+				i = 57;
+				sz[i++] = 'T';
+				sz[i++] = 'r';
+				sz[i++] = 'e';
+				sz[i++] = 'a';
+				sz[i++] = 's';
+				sz[i++] = 'u';
+				sz[i++] = 'r';
+				sz[i++] = 'e';
+				sz[i++] = 's';
+				sz[i++] = ':';
+				sz[i++] = ' ';
+				PRINTCOUNT(gamestate.treasurecount);
+				PRINTTOTAL(treasureaccessible, gamestate.treasuretotal);
+				sz[75] = 0;
 
-			i = 42;
-			if (gamestate.secretcount >= 100)
-				sz[i++] = '0' + gamestate.secretcount / 100;
-			if (gamestate.secretcount >= 10)
-				sz[i++] = '0' + (gamestate.secretcount % 100) / 10;
-			sz[i++] = '0' + (gamestate.secretcount % 10);
-			sz[i++] = '/';
-			if (secretaccessible >= 100)
-				sz[i++] = '0' + secretaccessible / 100;
-			if (secretaccessible >= 10)
-				sz[i++] = '0' + (secretaccessible % 100) / 10;
-			sz[i++] = '0' + (secretaccessible % 10);
-			if (secretaccessible < gamestate.secrettotal)
-				sz[i++] = '^';
+				ClearMemory();
+				VW_ScreenToScreen(displayofs,bufferofs,80,160);
+				WindowH = 160;
+				Message(sz);
+				IN_Ack();
+				if (Keyboard[sc_Escape])
+					IN_ClearKeysDown();		// don't allow Escape to trigger menu
+				PM_CheckMainMem();
+				DrawAllPlayBorderSides();
+				if (MousePresent)
+					Mouse(MDelta);	// Clear accumulated mouse movement
+			}
+			else
+			{
+				byte x, y;
+				byte mask = 0x0c;
+				if (tabfunction < 3)
+					mask = 0x02;
 
-			i = 68;
-			if (gamestate.treasurecount >= 100)
-				sz[i++] = '0' + gamestate.treasurecount / 100;
-			if (gamestate.treasurecount >= 10)
-				sz[i++] = '0' + (gamestate.treasurecount % 100) / 10;
-			sz[i++] = '0' + (gamestate.treasurecount % 10);
-			sz[i++] = '/';
-			if (treasureaccessible >= 100)
-				sz[i++] = '0' + treasureaccessible / 100;
-			if (treasureaccessible >= 10)
-				sz[i++] = '0' + (treasureaccessible % 100) / 10;
-			sz[i++] = '0' + (treasureaccessible % 10);
-			if (treasureaccessible < gamestate.treasuretotal)
-				sz[i++] = '^';
+				ClearMemory();
 
-			ClearMemory();
-			VW_ScreenToScreen(displayofs,bufferofs,80,160);
-			WindowH = 160;
-			Message(sz);
-			IN_Ack();
-			if (Keyboard[sc_Escape])
-				IN_ClearKeysDown();		// don't allow Escape to trigger menu
-			PM_CheckMainMem();
-			DrawAllPlayBorderSides();
-			if (MousePresent)
-				Mouse(MDelta);	// Clear accumulated mouse movement
+				// clear screen except for floor display
+				VWB_Bar(0, 0, 320, 163, 127);
+				VWB_Bar(42, 163, 1, 35, 126);
+				VWB_Bar(43, 163, 277, 35, 127);
+
+				CA_CacheGrChunk(STARTFONT);
+				fontnumber = 0;
+				fontcolor = 12;
+				px = 6;
+				py = 4;
+				i = 0;
+				sz[i++] = 'K';
+				sz[i++] = ':';
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+				px = 14;
+				py = 16;
+				i = 0;
+				PRINTCOUNT(gamestate.killcount);
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+				px = 22;
+				py = 28;
+				i = 0;
+				PRINTTOTAL(killaccessible, gamestate.killtotal);
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+				fontcolor = 10;
+				px = 6;
+				py = 52;
+				i = 0;
+				sz[i++] = 'S';
+				sz[i++] = ':';
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+				px = 14;
+				py = 64;
+				i = 0;
+				PRINTCOUNT(gamestate.secretcount);
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+				px = 22;
+				py = 76;
+				i = 0;
+				PRINTTOTAL(secretaccessible, gamestate.secrettotal);
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+				fontcolor = 14;
+				px = 6;
+				py = 100;
+				i = 0;
+				sz[i++] = 'T';
+				sz[i++] = ':';
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+				px = 14;
+				py = 112;
+				i = 0;
+				PRINTCOUNT(gamestate.treasurecount);
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+				px = 22;
+				py = 124;
+				i = 0;
+				PRINTTOTAL(treasureaccessible, gamestate.treasuretotal);
+				sz[i++] = 0;
+				VWB_DrawPropString(sz);
+
+				for (y = 0; y < 64; y++)
+				{
+					for (x = 0; x < 64; x++)
+					{
+						if ((spotvis[x][y] ^ 0x02) & mask)
+							VWB_Bar(x * 4 + 60, y * 3 + 4, 4, 3, ((spotvis[x][y] & 0x70) >> 4) | (spotvis[x][y] & 0x08) & ((spotvis[x][y] & 0x01) << 3));
+					}
+				}
+
+				VW_UpdateScreen();
+				IN_Ack();
+				if (Keyboard[sc_Escape])
+					IN_ClearKeysDown();		// don't allow Escape to trigger menu
+				temp = bufferofs;
+				CA_CacheGrChunk (STATUSBARPIC);
+				for (i=0;i<3;i++)
+				{
+					bufferofs = screenloc[i];
+					DrawPlayBorder ();
+					VWB_DrawPic (0,200-STATUSLINES,STATUSBARPIC);
+				}
+				bufferofs = temp;
+				UNCACHEGRCHUNK (STATUSBARPIC);
+				DrawFace ();
+				DrawHealth ();
+				DrawLives ();
+				DrawLevel ();
+				DrawAmmo ();
+				DrawKeys ();
+				DrawWeapon ();
+				DrawScore ();
+				PM_CheckMainMem();
+				if (MousePresent)
+					Mouse(MDelta);	// Clear accumulated mouse movement
+			}
 		}
 		else
 			tabstate = 0;

@@ -150,15 +150,27 @@ far CtlMenu[]=
 	{1,"",CustomControls}
 #else
 #ifdef WASD
-	{0,STR_MOUSEEN,0},
-	{0,STR_TURN,0},
+	{0,STR_MOUSEDI,0},
+	{0,STR_TURNDI,0},
 	{0,STR_SENS,MouseSensitivity},
-	{0,STR_JOYEN,0},
+	{0,STR_JOYDI,0},
 	{0,STR_PORT2,0},
 	{0,STR_GAMEPAD,0},
-	{1,STR_STRAFE,0},
-	{1,STR_TAB,0},
-	{1,STR_CUSTOM,CustomControls}
+	{1,STR_STRAFE1,0},
+	{1,STR_TABDI,0},
+	{1,STR_CUSTOM,CustomControls},
+	{1,STR_MOUSEDI,0},
+	{1,STR_MOUSEEN,0},
+	{1,STR_TURNDI,0},
+	{1,STR_TURNEN,0},
+	{1,STR_JOYDI,0},
+	{1,STR_JOYEN,0},
+	{1,STR_STRAFE1,0},
+	{1,STR_STRAFE2,0},
+	{1,STR_TABDI,0},
+	{1,STR_TAB1,0},
+	{1,STR_TAB2,0},
+	{1,STR_TAB3,0}
 #else  // WASD
 	{0,STR_MOUSEEN,0},
 	{0,STR_JOYEN,0},
@@ -1823,9 +1835,9 @@ void CP_Control(void)
 				DrawCtlScreen();
 				CusItems.curpos=-1;
 				ShootSnd();
-#ifdef WASD
+#ifdef WOLFDOSMPU
 				WaitKeyUp();
-#endif // WASD
+#endif // WOLFDOSMPU
 				break;
 
 			case JOYENABLE:
@@ -1836,27 +1848,27 @@ void CP_Control(void)
 				DrawCtlScreen();
 				CusItems.curpos=-1;
 				ShootSnd();
-#ifdef WASD
+#ifdef WOLFDOSMPU
 				WaitKeyUp();
-#endif // WASD
+#endif // WOLFDOSMPU
 				break;
 
 			case USEPORT2:
 				joystickport^=1;
 				DrawCtlScreen();
 				ShootSnd();
-#ifdef WASD
+#ifdef WOLFDOSMPU
 				WaitKeyUp();
-#endif // WASD
+#endif // WOLFDOSMPU
 				break;
 
 			case PADENABLE:
 				joypadenabled^=1;
 				DrawCtlScreen();
 				ShootSnd();
-#ifdef WASD
+#ifdef WOLFDOSMPU
 				WaitKeyUp();
-#endif // WASD
+#endif // WOLFDOSMPU
 				break;
 
 			case MOUSESENS:
@@ -1882,7 +1894,7 @@ void CP_Control(void)
 				break;
 
 			case TAB:
-				tabshowsfloorstats^=1;
+				tabfunction = (tabfunction + 1) % 4;
 				DrawCtlScreen();
 				ShootSnd();
 				WaitKeyUp();
@@ -2088,6 +2100,12 @@ void DrawCtlScreen(void)
  }
 
  CtlMenu[1].active=CtlMenu[2].active=mouseenabled;
+
+ _fstrcpy(CtlMenu[0].string, CtlMenu[mouseenabled + 9].string);
+ _fstrcpy(CtlMenu[1].string, CtlMenu[mouseturningonly + 11].string);
+ _fstrcpy(CtlMenu[3].string, CtlMenu[joystickenabled + 13].string);
+ _fstrcpy(CtlMenu[6].string, CtlMenu[keysalwaysstrafe + 15].string);
+ _fstrcpy(CtlMenu[7].string, CtlMenu[tabfunction + 17].string);
 #else  // WASD
  if (JoysPresent[0])
    CtlMenu[1].active=
@@ -2152,7 +2170,7 @@ void DrawCtlScreen(void)
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
 
  y+=13;
- if (tabshowsfloorstats)
+ if (tabfunction)
    VWB_DrawPic(x,y,C_SELECTEDPIC);
  else
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);

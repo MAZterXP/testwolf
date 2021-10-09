@@ -1252,6 +1252,18 @@ restartgame:
 restart:
 	do
 	{
+#ifdef WOLFDOSMPU
+		// prevent any previous pushwall from pushing in prematurely
+		if (! loadedgame)
+			pwallstate = 0;
+#endif // WOLFDOSMPU
+#ifdef WASD
+		// reset the map (except if you died or loaded another game)
+		// (yes, you should get to keep your map when you die)
+		if (! died && ! loadedgame)
+			ResetSpotVis();
+#endif // WASD
+
 		if (!loadedgame)
 		  gamestate.score = gamestate.oldscore;
 		DrawScore();

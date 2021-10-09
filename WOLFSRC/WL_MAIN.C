@@ -126,13 +126,13 @@ void ReadConfig(void)
 
 #ifdef WASD
 		{
-			boolean value;
+			int value;
 			read(file,&value,sizeof(value));
 			keysalwaysstrafe = value;
 			read(file,&value,sizeof(value));
 			mouseturningonly = value;
 			read(file,&value,sizeof(value));
-			tabshowsfloorstats = value;
+			tabfunction = value;
 		}
 #endif // WASD
 
@@ -194,7 +194,7 @@ void ReadConfig(void)
 		viewsize = 19;
 		keysalwaysstrafe = true;
 		mouseturningonly = true;
-		tabshowsfloorstats = true;
+		tabfunction = 1;
 #endif // WASD
 	}
 
@@ -244,12 +244,12 @@ void WriteConfig(void)
 
 #ifdef WASD
 		{
-			boolean value;
+			int value;
 			value = keysalwaysstrafe;
 			write(file,&value,sizeof(value));
 			value = mouseturningonly;
 			write(file,&value,sizeof(value));
-			value = tabshowsfloorstats;
+			value = tabfunction;
 			write(file,&value,sizeof(value));
 		}
 #endif // WASD
@@ -387,6 +387,17 @@ boolean SaveTheGame(int file,int x,int y)
 			sizeof(pwalldir) +
 			sizeof(pwallpos);
 
+#ifdef WOLFDOSMPU
+	// account for bytes that the original code did not consider
+#ifdef SPEAR
+	size += sizeof(LRstruct)*12;
+#endif
+	size += sizeof(doorobjlist) + sizeof(checksum);
+#endif // WOLFDOSMPU
+#ifdef WASD
+	size += sizeof(int) + sizeof(spotvis);
+#endif // WASD
+
 	if (avail < size)
 	{
 	 Message(STR_NOSPACE1"\n"
@@ -461,6 +472,15 @@ boolean SaveTheGame(int file,int x,int y)
 	// WRITE OUT CHECKSUM
 	//
 	CA_FarWrite (file,(void far *)&checksum,sizeof(checksum));
+
+#ifdef WASD
+	// try to save further information at the end of the file
+	{
+		int extraData = 1;
+		CA_FarWrite(file, (void far *) &extraData, sizeof(extraData));
+		WriteSpotVis(file);
+	}
+#endif // WASD
 
 	return(true);
 }
@@ -573,6 +593,18 @@ boolean LoadTheGame(int file,int x,int y)
 	   gamestate.bestweapon = wp_pistol;
 	 gamestate.ammo = 8;
 	}
+
+#ifdef WASD
+	// try to load further information from the end of the file
+	{
+		int extraData = 0;
+		CA_FarRead(file, (void far *) &extraData, sizeof(extraData));
+		if (extraData >= 1)
+			ReadSpotVis(file);
+		else
+			ResetSpotVis();
+	}
+#endif // WASD
 
 	return true;
 }

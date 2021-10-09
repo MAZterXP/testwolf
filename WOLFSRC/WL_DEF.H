@@ -908,12 +908,16 @@ extern	int			controlx,controly;		// range from -100 to 100
 extern	boolean		buttonstate[NUMBUTTONS];
 
 #ifdef WASD
-extern	int		far	controlmouse;
-extern	int		far	tabstate;
+extern	int			far	controlmouse;
+extern	int			far	tabstate;
 
-extern	boolean	far	keysalwaysstrafe;
-extern	boolean	far	mouseturningonly;
-extern	boolean	far	tabshowsfloorstats;
+extern	boolean		far	keysalwaysstrafe;
+extern	boolean		far	mouseturningonly;
+extern	int			far	tabfunction;
+
+extern	unsigned	far	killaccessible;
+extern	unsigned	far	secretaccessible;
+extern	unsigned	far	treasureaccessible;
 #endif // WASD
 
 extern	boolean		demorecord,demoplayback;

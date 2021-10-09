@@ -832,7 +832,12 @@ void MovePWalls (void)
 		//
 		// see if it should be pushed farther
 		//
+#ifdef WOLFDOSMPU
+		// make sure pwalls only move two spaces
+		if (pwallstate >= 256)
+#else  // WOLFDOSMPU
 		if (pwallstate>256)
+#endif // WOLFDOSMPU
 		{
 		//
 		// the block has been pushed two tiles

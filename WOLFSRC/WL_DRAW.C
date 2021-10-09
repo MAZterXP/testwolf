@@ -1090,7 +1090,11 @@ void DrawScaleds (void)
 		if ((visptr->shapenum = statptr->shapenum) == -1)
 			continue;						// object has been deleted
 
+#ifdef WASD
+		if (!(*statptr->visspot & 0x01))
+#else  // WASD
 		if (!*statptr->visspot)
+#endif // WASD
 			continue;						// not visable
 
 		if (TransformTile (statptr->tilex,statptr->tiley
@@ -1122,6 +1126,17 @@ void DrawScaleds (void)
 		//
 		// could be in any of the nine surrounding tiles
 		//
+#ifdef WASD
+		if (*visspot & 0x01
+		|| ( *(visspot-1) & 0x01 && !*(tilespot-1) )
+		|| ( *(visspot+1) & 0x01 && !*(tilespot+1) )
+		|| ( *(visspot-65) & 0x01 && !*(tilespot-65) )
+		|| ( *(visspot-64) & 0x01 && !*(tilespot-64) )
+		|| ( *(visspot-63) & 0x01 && !*(tilespot-63) )
+		|| ( *(visspot+65) & 0x01 && !*(tilespot+65) )
+		|| ( *(visspot+64) & 0x01 && !*(tilespot+64) )
+		|| ( *(visspot+63) & 0x01 && !*(tilespot+63) ) )
+#else  // WASD
 		if (*visspot
 		|| ( *(visspot-1) && !*(tilespot-1) )
 		|| ( *(visspot+1) && !*(tilespot+1) )
@@ -1131,6 +1146,7 @@ void DrawScaleds (void)
 		|| ( *(visspot+65) && !*(tilespot+65) )
 		|| ( *(visspot+64) && !*(tilespot+64) )
 		|| ( *(visspot+63) && !*(tilespot+63) ) )
+#endif // WASD
 		{
 			obj->active = true;
 			TransformActor (obj);
@@ -1325,6 +1341,26 @@ void WallRefresh (void)
 
 //==========================================================================
 
+#ifdef WASD
+
+void WriteSpotVis(int file)
+{
+	CA_FarWrite(file, (void far *) &spotvis[0][0], sizeof(spotvis));
+}
+
+void ReadSpotVis(int file)
+{
+	CA_FarRead(file, (void far *) &spotvis[0][0], sizeof(spotvis));
+}
+
+void ResetSpotVis()
+{
+	// spotvis must be reset to show nothing (second bit, persistent visibility, is flipped)
+	// do it in this module to prevent messing up the data segment
+	memset(spotvis, 0x02, sizeof(spotvis));
+}
+#endif // WASD
+
 /*
 ========================
 =
@@ -1343,12 +1379,25 @@ void	ThreeDRefresh (void)
 //
 // clear out the traced array
 //
+#ifdef WASD
+asm	xor	cx,cx
+	// WASD version uses second bit to store previously-visible (flipped);
+	// don't touch this bit when clearing
+	{
+		byte *vis = &spotvis[0][0];
+		byte *visend = &spotvis[63][63];
+
+		for (; vis <= visend; vis++)
+			*vis &= 0x02;
+	}
+#else  // WASD
 asm	mov	ax,ds
 asm	mov	es,ax
 asm	mov	di,OFFSET spotvis
 asm	xor	ax,ax
 asm	mov	cx,2048							// 64*64 / 2
 asm	rep stosw
+#endif // WASD
 
 	bufferofs += screenofs;
 

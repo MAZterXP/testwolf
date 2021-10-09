@@ -2,6 +2,8 @@
 	MODEL	MEDIUM,C
 	P286
 
+	INCLUDE 'VERSION.EQU'
+
 SCREENSEG	=	0a000h
 
 FINEANGLES	=	3600
@@ -455,6 +457,9 @@ passvert:
 
 	EVEN
 hitvert:
+IFDEF	WASD
+	mov	[BYTE spotvis+si],1			; also show wall hits in spotvis
+ENDIF	; WASD
 	mov	al,[BYTE tilemap+si]		; tilehit = *((byte *)tilemap+xspot);
 	mov	[BYTE tilehit],al
 	or	al,al						; set flags
@@ -496,6 +501,9 @@ passhoriz:
 
 	EVEN
 hithoriz:
+IFDEF	WASD
+	mov	[BYTE spotvis+di],1			; also show wall hits in spotvis
+ENDIF	; WASD
 	mov	al,[BYTE tilemap+di]		; tilehit = *((byte *)tilemap+yspot);
 	mov	[BYTE tilehit],al
 	or	al,al						; set flags

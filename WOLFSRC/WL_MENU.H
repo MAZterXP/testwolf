@@ -46,15 +46,15 @@
 #define MENU_Y	55
 #define MENU_W	178
 #ifndef SPEAR
-#ifdef WASD
+#ifdef WOLFDOSMPU
 #ifndef GOODTIMES
 #define MENU_H	(13*10+6)
 #else
 #define MENU_H	(13*9+6)
 #endif
-#else  // WASD
+#else  // WOLFDOSMPU
 #define MENU_H	13*10+6
-#endif // WASD
+#endif // WOLFDOSMPU
 #else
 #define MENU_H	13*9+6
 #endif
