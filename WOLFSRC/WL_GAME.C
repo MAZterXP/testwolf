@@ -1312,6 +1312,10 @@ startplayloop:
 			else
 				SD_WaitSoundDone();
 
+#ifdef WASD
+			ResetSpotVis();
+#endif // WASD
+
 			ClearMemory ();
 			gamestate.oldscore = gamestate.score;
 			gamestate.mapon = 20;
