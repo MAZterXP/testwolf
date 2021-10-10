@@ -61,8 +61,8 @@
 #define	STR_STRAFE2	"   Left/Right Keys Strafe"
 #define	STR_TABDI	"   Tab = Disabled"
 #define	STR_TAB1	"   Tab = Floor Stats"
-#define	STR_TAB2	"   Tab = Map (Explored)"
-#define	STR_TAB3	"   Tab = Map (Full)"
+#define	STR_TAB2	"   Tab = Auto-Map"
+#define	STR_TAB3	"   Tab = Full Map"
 #define	STR_CUSTOM	"   Customize Controls..."
 #else  // WASD
 #define	STR_MOUSEEN	"Mouse Enabled"

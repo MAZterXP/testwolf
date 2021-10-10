@@ -679,8 +679,8 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		int doornum = tilemap[x][y] & ~0x80;
 		int lock = doorobjlist[doornum].lock;
 
-		// mark the door and whether it is locked
-		if (lock < dr_lock1 || lock > dr_lock4)
+		// mark the door
+		if (lock == dr_normal)
 			spotvis[x][y] |= 0x30 + z;
 		else
 			spotvis[x][y] |= 0x50 + z;
@@ -702,7 +702,7 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 			spotvis[x][y] |= 0x80;			// mark secret as accessible (must use different bit because the normal accessible bit will give the secret away)
 		}
 	}
-	else if (tilemap[x][y] == ELEVATORTILE && (dir == di_west || dir == di_east))
+	else if (tilemap[x][y] == ELEVATORTILE)
 	{
 		// elevator (does not flood through)
 		spotvis[x][y] |= 0x50 + z;
