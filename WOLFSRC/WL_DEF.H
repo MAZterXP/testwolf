@@ -907,6 +907,9 @@ extern	int			viewsize;
 extern	int			controlx,controly;		// range from -100 to 100
 extern	boolean		buttonstate[NUMBUTTONS];
 
+#ifdef WOLFDOSMPU
+extern	int			far	savedviewsize;
+#endif // WOLFDOSMPU
 #ifdef WASD
 extern	int			far	controlmouse;
 extern	int			far	tabstate;

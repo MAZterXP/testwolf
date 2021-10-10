@@ -1319,6 +1319,11 @@ close(profilehandle);
 }
 #endif
 
+#ifdef WOLFDOSMPU
+	// shrinking screens fix
+	savedviewsize = viewsize;
+#endif // WOLFDOSMPU
+
 	NewViewSize (viewsize);
 
 

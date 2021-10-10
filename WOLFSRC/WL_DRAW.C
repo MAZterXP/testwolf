@@ -1373,6 +1373,20 @@ void	ThreeDRefresh (void)
 {
 	int tracedir;
 
+#ifdef WOLFDOSMPU
+	if (savedviewsize != viewsize)
+	{
+		// shrinking screens fix
+		ClearMemory();
+		MM_SortMem();
+		NewViewSize(savedviewsize);
+
+		// at this point, even if the view size shrunk, we have to accept it
+		savedviewsize = viewsize;
+		DrawAllPlayBorderSides();
+	}
+#endif // WOLFDOSMPU
+
 // this wouldn't need to be done except for my debugger/video wierdness
 	outportb (SC_INDEX,SC_MAPMASK);
 

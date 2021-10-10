@@ -2922,6 +2922,15 @@ void CP_ChangeView(void)
 	int exit=0,oldview,newview;
 	ControlInfo ci;
 
+#ifdef WOLFDOSMPU
+	if (savedviewsize != viewsize)
+	{
+		// shrinking screens fix
+		ClearMemory();
+		MM_SortMem();
+		NewViewSize(savedviewsize);
+	}
+#endif // WOLFDOSMPU
 
 	WindowX=WindowY=0;
 	WindowW=320;
@@ -2983,6 +2992,10 @@ void CP_ChangeView(void)
 	{
 		SD_PlaySound (SHOOTSND);
 		Message(STR_THINK"...");
+#ifdef WOLFDOSMPU
+		// shrinking screens fix
+		savedviewsize = newview;
+#endif // WOLFDOSMPU
 		NewViewSize(newview);
 	}
 

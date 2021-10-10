@@ -752,13 +752,6 @@ void HelpScreens (void)
 	char far 	*text;
 	memptr		layout;
 
-#ifdef WOLFDOSMPU
-	// REVERSE WOLF HACK -- Since help screens take a lot of memory, the "wolf hack" in id_mm.c tends to
-	// shrink the viewwidth down to compensate. This is an issue that goes back all the way to the original
-	// Apogee executables, but is not triggered very often. However, WOLFDOSMPU triggers it every time
-	// (because it uses 64K of heap memory up front), so we have to fix it in this case.
-	int oldview = viewwidth;
-#endif // WOLFDOSMPU
 
 	CA_UpLevel ();
 	MM_SortMem ();
@@ -800,12 +793,6 @@ void HelpScreens (void)
 	CA_DownLevel ();
 	MM_SortMem ();
 #endif
-
-#ifdef WOLFDOSMPU
-	// REVERSE WOLF HACK -- reclaim the original viewwidth
-	if (oldview != viewwidth)
-		NewViewSize(oldview / 16);
-#endif // WOLFDOSMPU
 }
 #endif
 
@@ -818,13 +805,6 @@ void EndText (void)
 	char far 	*text;
 	memptr		layout;
 
-#ifdef WOLFDOSMPU
-	// REVERSE WOLF HACK -- Since help screens take a lot of memory, the "wolf hack" in id_mm.c tends to
-	// shrink the viewwidth down to compensate. This is an issue that goes back all the way to the original
-	// Apogee executables, but is not triggered very often. However, WOLFDOSMPU triggers it every time
-	// (because it uses 64K of heap memory up front), so we have to fix it in this case.
-	int oldview = viewwidth;
-#endif // WOLFDOSMPU
 
 	ClearMemory ();
 
@@ -878,12 +858,6 @@ void EndText (void)
 	CA_DownLevel ();
 	MM_SortMem ();
 #endif
-
-#ifdef WOLFDOSMPU
-	// REVERSE WOLF HACK -- reclaim the original viewwidth
-	if (oldview != viewwidth)
-		NewViewSize(oldview / 16);
-#endif // WOLFDOSMPU
 }
 
 #endif

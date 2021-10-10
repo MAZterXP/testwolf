@@ -778,14 +778,35 @@ void DrawPlayBorderSides (void)
 {
 	int	xl,yl;
 
+#ifdef WOLFDOSMPU
+	if (savedviewsize != viewsize)
+	{
+		// shrinking screens fix
+		ClearMemory();
+		MM_SortMem();
+		NewViewSize(savedviewsize);
+	}
+#endif // WOLFDOSMPU
+
 	xl = 160-viewwidth/2;
 	yl = (200-STATUSLINES-viewheight)/2;
+
+#ifdef WOLFDOSMPU
+	VWB_Bar (xl-1,0,viewwidth+2,yl,127);
+	VWB_Bar (xl-1,yl+viewheight,viewwidth+2,yl,127);
+	VWB_Hlin (xl-1,xl+viewwidth,yl-1,0);
+	VWB_Hlin (xl-1,xl+viewwidth,yl+viewheight,125);
+#endif // WOLFDOSMPU
 
 	VWB_Bar (0,0,xl-1,200-STATUSLINES,127);
 	VWB_Bar (xl+viewwidth+1,0,xl-2,200-STATUSLINES,127);
 
 	VWB_Vlin (yl-1,yl+viewheight,xl-1,0);
 	VWB_Vlin (yl-1,yl+viewheight,xl+viewwidth,125);
+
+#ifdef WOLFDOSMPU
+	VWB_Plot (xl-1,yl+viewheight,124);
+#endif // WOLFDOSMPU
 }
 
 
@@ -841,6 +862,16 @@ void DrawAllPlayBorder (void)
 void DrawPlayBorder (void)
 {
 	int	xl,yl;
+
+#ifdef WOLFDOSMPU
+	if (savedviewsize != viewsize)
+	{
+		// shrinking screens fix
+		ClearMemory();
+		MM_SortMem();
+		NewViewSize(savedviewsize);
+	}
+#endif // WOLFDOSMPU
 
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
 

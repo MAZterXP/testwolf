@@ -83,6 +83,9 @@ memptr		demobuffer;
 int			controlx,controly;		// range from -100 to 100 per tic
 boolean		buttonstate[NUMBUTTONS];
 
+#ifdef WOLFDOSMPU
+int			far	savedviewsize;
+#endif // WOLFDOSMPU
 #ifdef WASD
 int			far	controlmouse;
 int			far	tabstate;
@@ -1075,18 +1078,11 @@ void CheckKeys (void)
 		{
 			char sz[76];
 			int i;
-			int oldview = viewwidth;
 
 			tabstate = 2;	// do not allow next tab press to show KST stats again
 
-			// CheckAccessible can potentially use memory that normally goes to the view window;
-			// since the memory manager shrinks the view window to accommodate these requests,
-			// reclaim the view window
 			ClearMemory();
 			CheckAccessible();
-			MM_SortMem();
-			if (oldview != viewwidth)
-				NewViewSize(oldview / 16);
 
 #define PRINTCOUNT(c) {						\
 	if (c >= 100)							\
@@ -1156,17 +1152,12 @@ void CheckKeys (void)
 				PRINTTOTAL(treasureaccessible, gamestate.treasuretotal);
 				sz[75] = 0;
 
-				ClearMemory();
 				VW_ScreenToScreen(displayofs,bufferofs,80,160);
 				WindowH = 160;
 				Message(sz);
 				IN_Ack();
 				if (Keyboard[sc_Escape])
 					IN_ClearKeysDown();		// don't allow Escape to trigger menu
-				PM_CheckMainMem();
-				DrawAllPlayBorderSides();
-				if (MousePresent)
-					Mouse(MDelta);	// Clear accumulated mouse movement
 			}
 			else
 			{
@@ -1175,11 +1166,9 @@ void CheckKeys (void)
 				if (tabfunction < 3)
 					mask = 0x02;
 
-				ClearMemory();
-
 				// clear screen except for floor display
 				VWB_Bar(0, 0, 320, 163, 127);
-				VWB_Bar(42, 163, 1, 35, 126);
+				VWB_Bar(42, 163, 1, 35, 125);
 				VWB_Bar(43, 163, 277, 35, 127);
 
 				CA_CacheGrChunk(STARTFONT);
@@ -1269,7 +1258,6 @@ void CheckKeys (void)
 				for (i=0;i<3;i++)
 				{
 					bufferofs = screenloc[i];
-					DrawPlayBorder ();
 					VWB_DrawPic (0,200-STATUSLINES,STATUSBARPIC);
 				}
 				bufferofs = temp;
@@ -1282,10 +1270,12 @@ void CheckKeys (void)
 				DrawKeys ();
 				DrawWeapon ();
 				DrawScore ();
-				PM_CheckMainMem();
-				if (MousePresent)
-					Mouse(MDelta);	// Clear accumulated mouse movement
 			}
+
+			PM_CheckMainMem();
+			DrawAllPlayBorderSides();
+			if (MousePresent)
+				Mouse(MDelta);	// Clear accumulated mouse movement
 		}
 		else
 			tabstate = 0;
