@@ -360,7 +360,7 @@ void PollJoystickButtons (void)
 void PollKeyboardMove (void)
 {
 #ifdef WASD
-	// pressing left/right automatically engages strafe
+	// pressing left/right automatically engages alwaysstrafe
 	// (doing it this way preserves demo compatibility)
 	if (keysalwaysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]))
 		buttonstate[bt_strafe] = true;
@@ -408,9 +408,13 @@ void PollMouseMove (void)
 	mouseymove = _DX;
 
 #ifdef WASD
-	// if key-strafe is engaged, and we're not recording a demo, store mouse movement in aux variable so we can still account for it later
-	if (keysalwaysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]) && ! demorecord)
-		controlmouse += mousexmove*10/(13-mouseadjustment);
+	// if alwaysstrafe is engaged, store mouse movement in aux variable so we can still account for it later
+	if (keysalwaysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]))
+	{
+		// but if recording a demo, filter the mouse movement out (to prevent "cancelling" between keyboard and mouse strafing)
+		if (! demorecord)
+			controlmouse += mousexmove*10/(13-mouseadjustment);
+	}
 	else
 #endif // WASD
 	controlx += mousexmove*10/(13-mouseadjustment);
