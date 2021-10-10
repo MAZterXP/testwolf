@@ -645,7 +645,7 @@ void	CenterWindow(word w,word h)
 
 #define STACKITEM(x, y, z) ((z << 10) + (x << 6) + y)
 
-void PushCell(unsigned x, unsigned y, unsigned z, controldir_t dir, unsigned far **stackptr)
+void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 {
 	unsigned actor;
 
@@ -775,7 +775,7 @@ void CheckAccessible()
 	{
 		for (x = 0; x < 64; x++)
 		{
-			if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE)
+			if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y])
 			{
 				if (spotvis[x][y] & 0x80)
 				{
@@ -1104,7 +1104,6 @@ void CheckKeys (void)
 		sz[i++] = '^';						\
 }
 
-
 			memset(sz, ' ', 76);
 
 			if (tabfunction == 1)
@@ -1183,7 +1182,7 @@ void CheckKeys (void)
 
 				CA_CacheGrChunk(STARTFONT);
 				fontnumber = 0;
-				fontcolor = 12;
+				fontcolor = 4;
 				px = 6;
 				py = 4;
 				i = 0;
@@ -1191,19 +1190,21 @@ void CheckKeys (void)
 				sz[i++] = ':';
 				sz[i++] = 0;
 				VWB_DrawPropString(sz);
+				fontcolor += 8;
 				px = 14;
 				py = 16;
 				i = 0;
 				PRINTCOUNT(gamestate.killcount);
 				sz[i++] = 0;
 				VWB_DrawPropString(sz);
+				fontcolor -= 8;
 				px = 22;
 				py = 28;
 				i = 0;
 				PRINTTOTAL(killaccessible, gamestate.killtotal);
 				sz[i++] = 0;
 				VWB_DrawPropString(sz);
-				fontcolor = 10;
+				fontcolor = 2;
 				px = 6;
 				py = 52;
 				i = 0;
@@ -1211,19 +1212,21 @@ void CheckKeys (void)
 				sz[i++] = ':';
 				sz[i++] = 0;
 				VWB_DrawPropString(sz);
+				fontcolor += 8;
 				px = 14;
 				py = 64;
 				i = 0;
 				PRINTCOUNT(gamestate.secretcount);
 				sz[i++] = 0;
 				VWB_DrawPropString(sz);
+				fontcolor -= 8;
 				px = 22;
 				py = 76;
 				i = 0;
 				PRINTTOTAL(secretaccessible, gamestate.secrettotal);
 				sz[i++] = 0;
 				VWB_DrawPropString(sz);
-				fontcolor = 14;
+				fontcolor = 6;
 				px = 6;
 				py = 100;
 				i = 0;
@@ -1231,12 +1234,14 @@ void CheckKeys (void)
 				sz[i++] = ':';
 				sz[i++] = 0;
 				VWB_DrawPropString(sz);
+				fontcolor += 8;
 				px = 14;
 				py = 112;
 				i = 0;
 				PRINTCOUNT(gamestate.treasurecount);
 				sz[i++] = 0;
 				VWB_DrawPropString(sz);
+				fontcolor -= 8;
 				px = 22;
 				py = 124;
 				i = 0;
