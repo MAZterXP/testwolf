@@ -750,25 +750,26 @@ void CheckAccessible()
 		if (statptr->shapenum != -1 && statptr->flags & FL_BONUS)
 		{
 			byte n = statptr->itemnumber;
+
+			// always show item in full map mode
+			if (tabfunction == 3)
+				*statptr->visspot |= 0x04;
+
 			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal || n == bo_key1 || n == bo_key2)
 			{
+				if (*statptr->visspot != 0x4d)	// if player isn't there...
+					*statptr->visspot |= 0x60;	// mark the treasure
+
+				// if it can be physically reached, treasure is accessible
 				if (*statptr->visspot & 0x08)
 				{
 					// keys get marked as treasure for convenience, but don't count to total
 					if (n != bo_key1 && n != bo_key2)
 						treasureaccessible++;
 				}
-				else if (tabfunction == 3)
-					*statptr->visspot |= 0x04;	// treasure on unseen tiles still gets marked in full map mode
-
-				if (*statptr->visspot != 0x4d)	// if player isn't there...
-					*statptr->visspot |= 0x60;	// mark the treasure
 			}
 			else if (n != block && n != dressing)
 			{
-				if (tabfunction == 3)
-					*statptr->visspot |= 0x04;	// bonuses on unseen tiles still gets marked in full map mode
-
 				if (*statptr->visspot != 0x4d)	// if player isn't there...
 					*statptr->visspot |= 0x10;	// mark the bonus
 			}
@@ -781,18 +782,20 @@ void CheckAccessible()
 		{
 			if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y])
 			{
-				if (spotvis[x][y] & 0x80)
-				{
-					if (tabfunction == 3)
-						spotvis[x][y] |= 0x28;	// mark the secret
-					else
-						spotvis[x][y] |= 0x7c;	// masquerade secret as a wall
-					secretaccessible++;
-				}
-				else if (tabfunction == 3)
-					spotvis[x][y] |= 0x24;	// secrets on unseen tiles still get marked in full map mode
-				else
+				if (tabfunction != 3)
 					spotvis[x][y] |= 0x7c;	// masquerade secret as a wall
+				else
+				{
+					spotvis[x][y] |= 0x24;	// mark the secret in full map mode
+
+					// if tile has been marked specially, mark it bright
+					if (spotvis[x][y] & 0x80)
+						spotvis[x][y] |= 0x08;
+				}
+
+				// if tile has been marked specially, secret is accessible
+				if (spotvis[x][y] & 0x80)
+					secretaccessible++;
 			}
 		}
 	}
@@ -803,19 +806,14 @@ void CheckAccessible()
 		{
 			byte *visspot = &spotvis[obj->tilex][obj->tiley];
 
-			// enemies are accessible when visible
+			// if it is visible, it can be shot, ergo, enemy is accessible
 			if (*visspot & 0x04)
 				killaccessible++;
 
-			*visspot &= ~0x08;		// enemy color is always dark red
-
-			if (tabfunction == 3)
-				*visspot |= 0x04;	// enemy on unseen tiles still gets marked in full map mode
-
-			if (tabfunction == 3 || *visspot & 0x01)	// if full map mode or player directly sees the enemy...
+			if (*visspot != 0x4d && (tabfunction == 3 || *visspot & 0x01))	// if player isn't there, and either full map mode or within player's viscone...
 			{
-				*visspot &= 0x0f;	// always draw enemy over treasure
-				*visspot |= 0x40;	// mark the enemy
+				*visspot &= 0x07;	// special case: enemy color is always dark to distinguish from player, and is drawn over everything else except player
+				*visspot |= 0x44;	// mark the enemy
 			}
 		}
 	}
