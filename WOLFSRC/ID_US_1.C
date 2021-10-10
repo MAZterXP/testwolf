@@ -183,6 +183,16 @@ US_Startup(void)
 		{
 		case 0:
 			compatability = true;
+#ifdef WOLFDOSMPU
+			{
+				extern int far compflags;
+
+				// actually use the COMP parameter for something useful
+				compflags = atoi(_argv[i + 1]);
+				if (compflags == 0)
+					compflags = 0xFFFF;
+			}
+#endif // WOLFDOSMPU
 			break;
 		case 1:
 			compatability = false;

@@ -907,22 +907,6 @@ extern	int			viewsize;
 extern	int			controlx,controly;		// range from -100 to 100
 extern	boolean		buttonstate[NUMBUTTONS];
 
-#ifdef WOLFDOSMPU
-extern	int			far	savedviewsize;
-#endif // WOLFDOSMPU
-#ifdef WASD
-extern	int			far	controlmouse;
-extern	int			far	tabstate;
-
-extern	boolean		far	keysalwaysstrafe;
-extern	boolean		far	mouseturningonly;
-extern	int			far	tabfunction;
-
-extern	unsigned	far	killaccessible;
-extern	unsigned	far	secretaccessible;
-extern	unsigned	far	treasureaccessible;
-#endif // WASD
-
 extern	boolean		demorecord,demoplayback;
 extern	char		far *demoptr, far *lastdemoptr;
 extern	memptr		demobuffer;
@@ -1290,3 +1274,32 @@ extern	char	helpfilename[],endfilename[];
 
 extern	void	HelpScreens(void);
 extern	void	EndText(void);
+
+
+#ifdef WOLFDOSMPU
+
+// flags for emulating bugs or features
+#define COMPFLAG_3TILE_PUSHWALLS		0x01
+#define COMPFLAG_FRAMERATE_FIREBALLS	0x02
+#define COMPFLAG_FLAWED_ITEM_PICKUP		0x04
+#define COMPFLAG_NO_CIRCLE_STRAFE		0x08
+
+extern	int			far compflags;
+extern	int			far	savedviewsize;
+
+#endif // WOLFDOSMPU
+
+#ifdef WASD
+
+extern	int			far	controlmouse;
+extern	int			far	tabstate;
+
+extern	boolean		far	keysalwaysstrafe;
+extern	boolean		far	mouseturningonly;
+extern	int			far	tabfunction;
+
+extern	unsigned	far	killaccessible;
+extern	unsigned	far	secretaccessible;
+extern	unsigned	far	treasureaccessible;
+
+#endif // WASD

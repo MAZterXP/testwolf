@@ -84,9 +84,14 @@ int			controlx,controly;		// range from -100 to 100 per tic
 boolean		buttonstate[NUMBUTTONS];
 
 #ifdef WOLFDOSMPU
+
+int			far	compflags = 0;
 int			far	savedviewsize;
+
 #endif // WOLFDOSMPU
+
 #ifdef WASD
+
 int			far	controlmouse;
 int			far	tabstate;
 
@@ -415,7 +420,7 @@ void PollMouseMove (void)
 	if (keysalwaysstrafe && (Keyboard[dirscan[di_west]] || Keyboard[dirscan[di_east]]))
 	{
 		// but if recording a demo, filter the mouse movement out (to prevent "cancelling" between keyboard and mouse strafing)
-		if (! demorecord)
+		if (! demorecord && ! (compflags & COMPFLAG_NO_CIRCLE_STRAFE))
 			controlmouse += mousexmove*10/(13-mouseadjustment);
 	}
 	else
@@ -733,8 +738,10 @@ void CheckAccessible()
 	secretaccessible = gamestate.secretcount;
 	treasureaccessible = gamestate.treasurecount;
 
-	*stackptr++ = STACKITEM(player->tilex, player->tiley, 0x0c);
-	spotvis[player->tilex][player->tiley] = 0x4d;
+	x = player->x >> TILESHIFT;
+	y = player->y >> TILESHIFT;
+	*stackptr++ = STACKITEM(x, y, 0x0c);
+	spotvis[x][y] = 0x4d;
 	while (stackptr != (unsigned far *) tempmem)
 	{
 		current = *--stackptr;
@@ -807,7 +814,10 @@ void CheckAccessible()
 	{
 		if (obj->flags & FL_SHOOTABLE)
 		{
-			byte *visspot = &spotvis[obj->tilex][obj->tiley];
+			byte *visspot;
+			x = obj->x >> TILESHIFT;
+			y = obj->y >> TILESHIFT;
+			visspot = &spotvis[x][y];
 
 			// if it is visible, it can be shot, ergo, enemy is accessible
 			if (*visspot & 0x04)

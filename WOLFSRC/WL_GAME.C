@@ -627,6 +627,28 @@ void SetupGameLevel (void)
 	int	x,y,i;
 	unsigned	far *map,tile,spot;
 
+#ifdef WOLFDOSMPU
+#ifndef SPEAR
+	extern statetype s_fire1;
+	extern statetype s_fire2;
+	extern void T_Projectile(objtype *);
+
+	if (! (compflags & COMPFLAG_FRAMERATE_FIREBALLS))
+	{
+		s_fire1.think 	= T_Projectile;
+		s_fire2.think 	= T_Projectile;
+		s_fire1.action 	= NULL;
+		s_fire2.action 	= NULL;
+	}
+	else
+	{
+		s_fire1.think 	= NULL;
+		s_fire2.think 	= NULL;
+		s_fire1.action 	= T_Projectile;
+		s_fire2.action 	= T_Projectile;
+	}
+#endif
+#endif // WOLFDOSMPU
 
 	if (!loadedgame)
 	{

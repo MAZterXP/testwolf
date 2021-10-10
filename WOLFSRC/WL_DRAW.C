@@ -1097,6 +1097,19 @@ void DrawScaleds (void)
 #endif // WASD
 			continue;						// not visable
 
+#ifdef WOLFDOSMPU
+		if (! (compflags & COMPFLAG_FLAWED_ITEM_PICKUP))
+		{
+			if ((TransformTile(statptr->tilex, statptr->tiley, &visptr->viewx, &visptr->viewheight)
+				 || (statptr->tilex == player->tilex && statptr->tiley == player->tiley))
+				&& statptr->flags & FL_BONUS)
+			{
+				GetBonus(statptr);
+				continue;
+			}
+		}
+		else
+#endif // WOLFDOSMPU
 		if (TransformTile (statptr->tilex,statptr->tiley
 			,&visptr->viewx,&visptr->viewheight) && statptr->flags & FL_BONUS)
 		{
