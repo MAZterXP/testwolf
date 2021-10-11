@@ -1372,6 +1372,7 @@ void ResetSpotVis()
 	// do it in this module to prevent messing up the data segment
 	memset(spotvis, 0x02, sizeof(spotvis));
 }
+
 #endif // WASD
 
 /*

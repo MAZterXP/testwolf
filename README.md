@@ -29,6 +29,23 @@ This mod is forked directly from the official Wolf3d source release from id Soft
 Version History
 ===============
 
+1.36 RC (2021-10-11)
+--------------------
+- Added compatibility flags to purposely enable classic bugs/limitations of the engine (primarily for mods that assume these bugs/limitations). Specify on the command line with the COMP parameter, i.e., "COMP _nn_" where _nn_ is the sum of the flags you want to enable:
+  ```
+  1: pushwalls move 3 tiles unless blocked
+     (note: default maps assume that pushwalls move 2 tiles maximum; this option renders them impossible to complete 100%)
+  2: make fake-Hitler fireballs framerate-dependent, effectively slowing them down on fast systems
+  4: pick up items using the original logic, which sometimes fails when walking backwards or sideways
+  8: disable circle-strafing (turning and strafing simultaneously) when playing on the modern-controls version
+     (note: circle-strafing is always disabled when recording a demo)
+  ```
+  For example, to mimic the original executables' behavior when they were run on a Pentium (or faster) system, specify COMP 15 (or just COMP). The parameter NOCOMP (or simply not specifying a parameter) disables all compatibility flags, which is the default.
+- Fixed map fog not getting reset when getting the spear.
+- Fixed phantom secret walls in the map after loading a savegame.
+- Now marks all special doors and elevator tiles as magenta to easily spot them on the map.
+- Implemented a workaround to reverse the engine's behavior of shrinking the play window in low memory conditions.
+
 1.35 RC (2021-10-09)
 --------------------
 - Implemented mapping support for the modern-controls version. You can still load savegames between modern-controls and MPU-only versions, but the unlocked areas of the map will be lost if you load a modern-controls savegame on the MPU-only version and subsequently save it (since the MPU-only version ignores any extra data).
