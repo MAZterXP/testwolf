@@ -793,6 +793,16 @@ void HelpScreens (void)
 	CA_DownLevel ();
 	MM_SortMem ();
 #endif
+
+#ifdef WOLFDOSMPU
+	if (savedviewsize != viewsize)
+	{
+		// shrinking screens fix
+		ClearMemory();
+		MM_SortMem();
+		NewViewSize(savedviewsize);
+	}
+#endif // WOLFDOSMPU
 }
 #endif
 
@@ -858,6 +868,16 @@ void EndText (void)
 	CA_DownLevel ();
 	MM_SortMem ();
 #endif
+
+#ifdef WOLFDOSMPU
+	if (savedviewsize != viewsize)
+	{
+		// shrinking screens fix
+		ClearMemory();
+		MM_SortMem();
+		NewViewSize(savedviewsize);
+	}
+#endif // WOLFDOSMPU
 }
 
 #endif

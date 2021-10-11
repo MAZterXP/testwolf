@@ -1178,7 +1178,7 @@ void CheckKeys (void)
 
 				// clear screen except for floor display
 				VWB_Bar(0, 0, 320, 163, 127);
-				VWB_Bar(42, 163, 1, 35, 125);
+				VWB_Bar(42, 163, 1, 35, 126);
 				VWB_Bar(43, 163, 277, 35, 127);
 
 				CA_CacheGrChunk(STARTFONT);

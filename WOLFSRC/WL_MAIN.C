@@ -1240,7 +1240,11 @@ void InitGame (void)
 
 
 #ifndef SPEAR
+#ifdef WOLFDOSMPU
+	if (mminfo.mainmem < 257000L && !MS_CheckParm("goobers"))
+#else  // WOLFDOSMPU
 	if (mminfo.mainmem < 235000L)
+#endif // WOLFDOSMPU
 #else
 	if (mminfo.mainmem < 257000L && !MS_CheckParm("debugmode"))
 #endif

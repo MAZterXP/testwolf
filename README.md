@@ -29,6 +29,11 @@ This mod is forked directly from the official Wolf3d source release from id Soft
 Version History
 ===============
 
+1.37 RC (2021-10-12)
+--------------------
+- Now enforces a 257000-byte memory minimum to the Wolf3D executables (previously only applied to the SoD executables), to help mitigate memory issues introduced by bug fixes. You can override this by using the debug mode command-line parameter "goobers". (SoD has always allowed overriding the memory minimum via "debugmode".)
+- Even better item pickup code, should now not miss anything when running straight through a one-tile-wide row of items. (You can see this in action in the first demo recording of Wolf3D registered/commercial, where one ammo clip in the middle of the row was skipped over on the original executable.)
+
 1.36 RC (2021-10-11)
 --------------------
 - Added compatibility flags to purposely enable classic bugs/limitations of the engine (primarily for mods that assume these bugs/limitations). See the note on the COMP parameter in the [tips section](#dont-hurt-midi).
@@ -147,9 +152,11 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 
    As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
 
-   My own testing with DOSBox-X indicates that SPEARCW.EXE (the most memory-hungry of the 10 variants) requires at least 568 KB of free conventional memory in order to run at all. In contrast, the Activision version of SPEAR.EXE requires 548 KB. The other executables will need somewhat less, but the differences are negligible. (In short, just aim for 568 KB as a target.)
+   My own testing with DOSBox-X indicates that the modern-controls executables requires at least 568 KB of free conventional memory in order to run at all. (In contrast, the Activision version of SPEAR.EXE requires 548 KB.) The MPU-only executables use about 4 to 8 KB less. With this in mind, just aim to free at least 568 KB of conventional memory for best results.
 
    One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
+
+   If you use the debug command-line parameter ("goobers" for Wolf3D and "debugmode" for SoD), you can force the wolfdosmpu executable to load regardless of available memory. THIS IS AN UNSUPPORTED FEATURE, and you risk all sorts of unexpected behavior, such as trigerring the mythical id Software copy protection code that erases your hard drive if you don't have a registered copy of v1.1. Don't say I didn't warn you.
 
 4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE/WOLF3DCW.EXE; use WOLF3DRM.EXE/WOLF3DRW.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
