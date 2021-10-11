@@ -1090,6 +1090,18 @@ void DrawScaleds (void)
 		if ((visptr->shapenum = statptr->shapenum) == -1)
 			continue;						// object has been deleted
 
+#ifdef WOLFDOSMPU
+		if (! (compflags & COMPFLAG_FLAWED_ITEM_PICKUP))
+		{
+			if (statptr->tilex == player->tilex && statptr->tiley == player->tiley
+				&& statptr->flags & FL_BONUS)
+			{
+				GetBonus(statptr);
+				continue;
+			}
+		}
+#endif // WOLFDOSMPU
+
 #ifdef WASD
 		if (!(*statptr->visspot & 0x01))
 #else  // WASD
@@ -1097,19 +1109,6 @@ void DrawScaleds (void)
 #endif // WASD
 			continue;						// not visable
 
-#ifdef WOLFDOSMPU
-		if (! (compflags & COMPFLAG_FLAWED_ITEM_PICKUP))
-		{
-			if ((TransformTile(statptr->tilex, statptr->tiley, &visptr->viewx, &visptr->viewheight)
-				 || (statptr->tilex == player->tilex && statptr->tiley == player->tiley))
-				&& statptr->flags & FL_BONUS)
-			{
-				GetBonus(statptr);
-				continue;
-			}
-		}
-		else
-#endif // WOLFDOSMPU
 		if (TransformTile (statptr->tilex,statptr->tiley
 			,&visptr->viewx,&visptr->viewheight) && statptr->flags & FL_BONUS)
 		{

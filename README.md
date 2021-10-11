@@ -31,16 +31,7 @@ Version History
 
 1.36 RC (2021-10-11)
 --------------------
-- Added compatibility flags to purposely enable classic bugs/limitations of the engine (primarily for mods that assume these bugs/limitations). Specify on the command line with the COMP parameter, i.e., "COMP _nn_" where _nn_ is the sum of the flags you want to enable:
-  ```
-  1: pushwalls move 3 tiles unless blocked
-     (note: default maps assume that pushwalls move 2 tiles maximum; this option renders them impossible to complete 100%)
-  2: make fake-Hitler fireballs framerate-dependent, effectively slowing them down on fast systems
-  4: pick up items using the original logic, which sometimes fails when walking backwards or sideways
-  8: disable circle-strafing (turning and strafing simultaneously) when playing on the modern-controls version
-     (note: circle-strafing is always disabled when recording a demo)
-  ```
-  For example, to mimic the original executables' behavior when they were run on a Pentium (or faster) system, specify COMP 15 (or just COMP). The parameter NOCOMP (or simply not specifying a parameter) disables all compatibility flags, which is the default.
+- Added compatibility flags to purposely enable classic bugs/limitations of the engine (primarily for mods that assume these bugs/limitations). See the note on the COMP parameter in the [tips section](#dont-hurt-midi).
 - Fixed map fog not getting reset when getting the spear.
 - Fixed phantom secret walls in the map after loading a savegame.
 - Now marks all special doors and elevator tiles as magenta to easily spot them on the map.
@@ -163,6 +154,18 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 4. Apogee version 1.4/1.4g's .WL6 data files are _NOT_ compatible with WOLF3DCM.EXE/WOLF3DCW.EXE; use WOLF3DRM.EXE/WOLF3DRW.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
 5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu executables and the originals. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global (non-far) variables or constant string literals WILL break future savegames.
+
+6. __Note on the COMP parameter__: You can enable specific quirks/bugs of the original executables using the COMP (compatibility) command-line parameter. Specify a number after COMP, which should be the sum of the flags you want to enable:
+   ```
+   1: pushwalls move 3 tiles unless blocked
+      (note: the default maps assume that pushwalls move 2 tiles maximum; this option renders these
+      maps impossible to complete 100%)
+   2: make fake-Hitler fireballs framerate-dependent, effectively slowing them down on fast systems
+   4: pick up items using the original logic, which sometimes fails when walking backwards or sideways
+   8: disable circle-strafing (turning and strafing simultaneously) when playing with modern controls
+      (note: circle-strafing is always disabled when recording a demo)
+   ```
+   For example, to mimic the original executables' behavior when they were run on a Pentium (or faster) system, specify COMP 15 (e.g., WOLF3DCM COMP 15). On the other hand, COMP 14 disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks. The parameter NOCOMP (or simply not specifying a parameter) disables all compatibility flags, which is the default.
 
 Bring "M" on!
 -------------
