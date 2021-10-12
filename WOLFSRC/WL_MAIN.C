@@ -1402,11 +1402,13 @@ void DoJukebox(void)
 			{
 				start = (which + 1) * 6;
 				MusicItems.curpos = 0;
+				DrawWindow (18,49,292,13*7,BKGDCOLOR);
 			}
 			else if (which == 5)
 			{
 				MusicItems.curpos = start / 6 - 1;
 				start = 0;
+				DrawWindow (18,49,292,13*7,BKGDCOLOR);
 			}
 			else
 			{
@@ -1416,7 +1418,6 @@ void DoJukebox(void)
 				StartCPMusic(MusicTracks[lastsong]);
 				MusicMenu[lastsong].active = 2;
 			}
-			DrawWindow (18,49,292,13*7,BKGDCOLOR);
 			DrawMenu (&MusicItems,&MusicMenu[start]);
 			VW_UpdateScreen();
 #else  // WOLFDOSMPU

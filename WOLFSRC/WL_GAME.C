@@ -814,21 +814,20 @@ void DrawPlayBorderSides (void)
 	yl = (200-STATUSLINES-viewheight)/2;
 
 #ifdef WOLFDOSMPU
-	VWB_Bar (xl-1,0,viewwidth+2,yl,127);
-	VWB_Bar (xl-1,yl+viewheight,viewwidth+2,yl,127);
-	VWB_Hlin (xl-1,xl+viewwidth,yl-1,0);
-	VWB_Hlin (xl-1,xl+viewwidth,yl+viewheight,125);
+	VWB_Bar (xl-1,0,viewwidth+2,yl-1,127);
+	VWB_Bar (xl-1,yl+viewheight+1,viewwidth+2,yl-1,127);
+	VWB_Hlin (xl,xl+viewwidth-1,yl-1,0);
+	VWB_Hlin (xl,xl+viewwidth-1,yl+viewheight,125);
 #endif // WOLFDOSMPU
 
 	VWB_Bar (0,0,xl-1,200-STATUSLINES,127);
 	VWB_Bar (xl+viewwidth+1,0,xl-2,200-STATUSLINES,127);
 
 	VWB_Vlin (yl-1,yl+viewheight,xl-1,0);
-	VWB_Vlin (yl-1,yl+viewheight,xl+viewwidth,125);
-
 #ifdef WOLFDOSMPU
 	VWB_Plot (xl-1,yl+viewheight,124);
 #endif // WOLFDOSMPU
+	VWB_Vlin (yl-1,yl+viewheight,xl+viewwidth,125);
 }
 
 
@@ -1365,6 +1364,9 @@ startplayloop:
 			else
 				SD_WaitSoundDone();
 
+#ifdef WOLFDOSMPU
+			pwallstate = 0;
+#endif // WOLFDOSMPU
 #ifdef WASD
 			ResetSpotVis();
 #endif // WASD
