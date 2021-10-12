@@ -173,7 +173,9 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
    8: disable circle-strafing (turning and strafing simultaneously) when playing with modern controls
       (note: circle-strafing is always disabled when recording a demo)
    ```
-   For example, to mimic the original executables' behavior when they were run on a Pentium (or faster) system, specify COMP 15 (e.g., WOLF3DCM COMP 15). On the other hand, COMP 14 disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks. The parameter NOCOMP (or simply not specifying a parameter) disables all compatibility flags, which is the default.
+   For example, to mimic the original executables' behavior when they were run on a Pentium (or faster) system, specify COMP 15 (e.g., WOLF3DCM COMP 15). On the other hand, COMP 14 disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
+
+   COMP by itself will enable all compatibility flags (including future ones); use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags (default setting).
 
 Bring "M" on!
 -------------
