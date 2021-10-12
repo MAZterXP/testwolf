@@ -32,7 +32,8 @@ Version History
 1.37 RC (2021-10-12)
 --------------------
 - Now enforces a 257000-byte memory minimum to the Wolf3D executables (previously only applied to the SoD executables), to help mitigate memory issues introduced by bug fixes. You can override this by using the debug mode command-line parameter "goobers". (SoD has always allowed overriding the memory minimum via "debugmode".)
-- Even better item pickup code, should now not miss anything when running straight through a one-tile-wide row of items. (You can see this in action in the first demo recording of Wolf3D registered/commercial, where one ammo clip in the middle of the row was skipped over on the original executable.)
+- Even better item pickup code, should now not miss anything when running straight through a one-tile-wide row of items. (You can see this in action in the first attract-mode demo of Wolf3D registered/commercial, where one ammo clip in the middle of the row was skipped over on the original executable.)
+- Improved Robert's Jukebox to show all tracks available in the game. To access Robert's Jukebox: Just after entering the command line to start the game (e.g. WOLF3DCM), the screen blanks and immediately shows the sign-on screen (the one with all the memory and hardware info). You have to press and hold M the moment the sign-on screen appears. (This also works on the original executables, but will show a smaller list of tracks.)
 
 1.36 RC (2021-10-11)
 --------------------
@@ -152,7 +153,7 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 
    As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
 
-   My own testing with DOSBox-X indicates that the modern-controls executables requires at least 568 KB of free conventional memory in order to run at all. (In contrast, the Activision version of SPEAR.EXE requires 548 KB.) The MPU-only executables use about 4 to 8 KB less. With this in mind, just aim to free at least 568 KB of conventional memory for best results.
+   My own testing with DOSBox-X indicates that the modern-controls executables require at least 568 KB of free conventional memory in order to run properly. The MPU-only executables use about 4 KB less, but I still recommend freeing at least 568 KB of conventional memory for the best results.
 
    One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
 

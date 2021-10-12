@@ -1040,6 +1040,214 @@ void InitDigiMap (void)
 }
 
 
+#ifdef WOLFDOSMPU
+#pragma warn -aus
+CP_iteminfo	MusicItems={24,55,6,0,32};
+CP_itemtype far MusicMenu[]=
+	{
+#ifndef SPEAR
+		{1,"Theme Music",0},
+		{1,"Episode 1",0},
+		{1,"Episode 2",0},
+		{1,"Episode 3",0},
+		{1,"Secret Levels",0},
+		{1,"Unused Music",0},
+
+		{1,"Horst-Wessel-Lied",0},
+		{1,"Wondering About Loved Ones",0},
+		{1,"End of Level",0},
+		{1,"U R A Hero",0},
+		{1,"Roster",0},
+		{1,"< Back",0},
+
+		{1,"Get Them!",0},
+		{1,"Searching",0},
+		{1,"P.O.W.",0},
+		{1,"Suspense",0},
+		{1,"War March",0},
+		{1,"< Back",0},
+
+		{1,"Nazi Anthem",0},
+		{1,"Lurking...",0},
+		{1,"Going After Hitler",0},
+		{1,"Pounding Headache",0},
+		{1,"War March",0},
+		{1,"< Back",0},
+
+		{1,"Kill the S.O.B.",0},
+		{1,"The Nazi Rap",0},
+		{1,"Twelfth Hour",0},
+		{1,"Zero Hour",0},
+		{1,"Ultimate Conquest",0},
+		{1,"< Back",0},
+
+		{1,"Around The Corner!",0},
+		{1,"Into the Dungeons",0},
+		{1,"Wolfpack",0},
+		{1,"Funk You!",0},
+		{0,"",0},
+		{1,"< Back",0},
+
+		{1,"Hitler Waltz",0},
+		{1,"Salute",0},
+		{1,"Victors",0},
+		{1,"Victory March",0},
+		{0,"",0},
+		{1,"< Back",0},
+#else
+		{1,"Theme Music",0},
+		{1,"Chapter 1",0},
+		{1,"Chapter 2",0},
+		{1,"Chapter 3",0},
+		{1,"Chapter 4",0},
+		{1,"Unused Music",0},
+
+		{1,"Towering Above",0},
+		{1,"Wondering About Loved Ones",0},
+		{1,"End of Level",0},
+		{1,"U R A Hero",0},
+		{1,"Award Ceremony",0},
+		{1,"< Back",0},
+
+		{1,"Tiptoeing Around",0},
+		{1,"Funky Colonel Bill",0},
+		{1,"Death To The Nazis",0},
+		{1,"The SS Gonna Get You",0},
+		{1,"Jazzin' Them Nazis",0},
+		{1,"< Back",0},
+
+		{1,"Into the Dungeons",0},
+		{1,"Going After Hitler",0},
+		{1,"P.O.W.",0},
+		{1,"Twelfth Hour",0},
+		{1,"Ultimate Conquest",0},
+		{1,"< Back",0},
+
+		{1,"Nazi Anthem",0},
+		{1,"Get Them!",0},
+		{1,"Suspense",0},
+		{1,"Searching",0},
+		{1,"Zero Hour",0},
+		{1,"< Back",0},
+
+		{1,"Puttin' It To The Enemy",0},
+		{1,"Ultimate Conquest",0},
+		{1,"Evil Incarnate",0},
+		{1,"Is This THE END?",0},
+		{0,"",0},
+		{1,"< Back",0},
+
+		{1,"Hitler Waltz",0},
+		{0,"",0},
+		{0,"",0},
+		{0,"",0},
+		{0,"",0},
+		{1,"< Back",0},
+#endif
+	};
+unsigned far MusicTracks[]=
+	{
+#ifndef SPEAR
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+
+		NAZI_NOR_MUS,
+		WONDERIN_MUS,
+		ENDLEVEL_MUS,
+		URAHERO_MUS,
+		ROSTER_MUS,
+		0,
+
+		GETTHEM_MUS,
+		SEARCHN_MUS,
+		POW_MUS,
+		SUSPENSE_MUS,
+		WARMARCH_MUS,
+		0,
+
+		NAZI_OMI_MUS,
+		PREGNANT_MUS,
+		GOINGAFT_MUS,
+		HEADACHE_MUS,
+		WARMARCH_MUS,
+		0,
+
+		INTROCW3_MUS,
+		NAZI_RAP_MUS,
+		TWELFTH_MUS,
+		ZEROHOUR_MUS,
+		ULTIMATE_MUS,
+		0,
+
+		CORNER_MUS,
+		DUNGEON_MUS,
+		PACMAN_MUS,
+		FUNKYOU_MUS,
+		0,
+		0,
+
+		HITLWLTZ_MUS,
+		SALUTE_MUS,
+		VICTORS_MUS,
+		VICMARCH_MUS,
+		0,
+		0
+#else
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+
+		XTOWER2_MUS,
+		WONDERIN_MUS,
+		ENDLEVEL_MUS,
+		URAHERO_MUS,
+		XAWARD_MUS,
+		0,
+
+		XTIPTOE_MUS,
+		XFUNKIE_MUS,
+		XDEATH_MUS,
+		XGETYOU_MUS,
+		XJAZNAZI_MUS,
+		0,
+
+		DUNGEON_MUS,
+		GOINGAFT_MUS,
+		POW_MUS,
+		TWELFTH_MUS,
+		ULTIMATE_MUS,
+		0,
+
+		NAZI_OMI_MUS,
+		GETTHEM_MUS,
+		SUSPENSE_MUS,
+		SEARCHN_MUS,
+		ZEROHOUR_MUS,
+		0,
+
+		XPUTIT_MUS,
+		ULTIMATE_MUS,
+		XEVIL_MUS,
+		XTHEEND_MUS,
+		0,
+		0,
+
+		COPYPRO_MUS,
+		0,
+		0,
+		0,
+		0,
+		0
+#endif
+	};
+#else  // WOLFDOSMPU
 #ifndef SPEAR
 CP_iteminfo	MusicItems={CTL_X,CTL_Y,6,0,32};
 CP_itemtype far MusicMenu[]=
@@ -1080,6 +1288,7 @@ CP_itemtype far MusicMenu[]=
 		{1,"Towering Above",0}
 	};
 #endif
+#endif // WOLFDOSMPU
 
 #ifndef SPEARDEMO
 void DoJukebox(void)
@@ -1131,6 +1340,9 @@ void DoJukebox(void)
 
 	MenuFadeOut();
 
+#ifdef WOLFDOSMPU
+	start = 0;
+#else  // WOLFDOSMPU
 #ifndef SPEAR
 #ifndef UPLOAD
 	_dos_gettime(&time);
@@ -1141,6 +1353,7 @@ void DoJukebox(void)
 #else
 	start = 0;
 #endif
+#endif // WOLFDOSMPU
 
 
 	CA_CacheGrChunk (STARTFONT+1);
@@ -1157,11 +1370,15 @@ void DoJukebox(void)
 	DrawStripes (10);
 	SETFONTCOLOR (TEXTCOLOR,BKGDCOLOR);
 
+#ifdef WOLFDOSMPU
+	DrawWindow (18,49,292,13*7,BKGDCOLOR);
+#else  // WOLFDOSMPU
 #ifndef SPEAR
 	DrawWindow (CTL_X-2,CTL_Y-6,280,13*7,BKGDCOLOR);
 #else
 	DrawWindow (CTL_X-2,CTL_Y-26,280,13*10,BKGDCOLOR);
 #endif
+#endif // WOLFDOSMPU
 
 	DrawMenu (&MusicItems,&MusicMenu[start]);
 
@@ -1180,6 +1397,29 @@ void DoJukebox(void)
 		which = HandleMenu(&MusicItems,&MusicMenu[start],NULL);
 		if (which>=0)
 		{
+#ifdef WOLFDOSMPU
+			if (start == 0)
+			{
+				start = (which + 1) * 6;
+				MusicItems.curpos = 0;
+			}
+			else if (which == 5)
+			{
+				MusicItems.curpos = start / 6 - 1;
+				start = 0;
+			}
+			else
+			{
+				if (lastsong != -1)
+					MusicMenu[lastsong].active = 1;
+				lastsong = start + which;
+				StartCPMusic(MusicTracks[lastsong]);
+				MusicMenu[lastsong].active = 2;
+			}
+			DrawWindow (18,49,292,13*7,BKGDCOLOR);
+			DrawMenu (&MusicItems,&MusicMenu[start]);
+			VW_UpdateScreen();
+#else  // WOLFDOSMPU
 			if (lastsong >= 0)
 				MusicMenu[start+lastsong].active = 1;
 
@@ -1188,6 +1428,7 @@ void DoJukebox(void)
 			DrawMenu (&MusicItems,&MusicMenu[start]);
 			VW_UpdateScreen();
 			lastsong = which;
+#endif // WOLFDOSMPU
 		}
 	} while(which>=0);
 
@@ -1200,6 +1441,9 @@ void DoJukebox(void)
 #endif
 }
 #endif
+#ifdef WOLFDOSMPU
+#pragma warn .aus
+#endif // WOLFDOSMPU
 
 
 /*

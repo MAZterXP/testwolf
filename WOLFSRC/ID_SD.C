@@ -388,6 +388,8 @@ void mpuStart(word songId)
 	mpuPos = 1;
 
 	// load the requested file
+	if (songId == 0)
+		return;
 	if (! mpuReadInfo(filename, songId))
 		return;
 	if (! (size = mpuReadFile(filename)))
