@@ -29,6 +29,14 @@ This mod is forked directly from the official Wolf3d source release from id Soft
 Version History
 ===============
 
+1.38 RC (2021-10-14)
+--------------------
+- Fixed more memory issues and crashing related to stats/map display, and reimplemented stats dialog to avoid using id's Message() routines (which seem to leak memory -- infamously, SoD's Tab+G+F10 God Mode cheat could crash the system randomly). I think I've eliminated the crashes for good, but you still experience crashes, I would appreciate it if you contact me with steps to reproduce and savegame if possible (your system's memory configuration as reported by MEM will also be handy).
+- Automap now pulsates the player's viewing area (via palette-cycling) for easier navigation.
+- Automap now does not give away the status of doors that the player currently cannot see.
+- Minor pwall special case after grabbing the spear. (Should not actually appear on unmodified SoD.)
+- Fixed COMP 0 being interpreted the same as COMP.
+
 1.37 RC (2021-10-12)
 --------------------
 - Now enforces a 257000-byte memory minimum to the Wolf3D executables (previously only applied to the SoD executables), to help mitigate memory issues introduced by bug fixes. You can override this by using the debug mode command-line parameter "goobers". (SoD has always allowed overriding the memory minimum via "debugmode".)

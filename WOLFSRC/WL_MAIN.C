@@ -1735,10 +1735,10 @@ void Quit (char *error)
 		sz[c++] = 'u';
 		sz[c++] = ' ';
 		sz[c++] = 'v';
-		sz[c++] = '0' + ((int) VERSION);
+		sz[c++] = '0' + ((int) (VERSION + 0.001));
 		sz[c++] = '.';
-		sz[c++] = '0' + ((int) (VERSION * 10) % 10);
-		sz[c++] = '0' + ((int) (VERSION * 100) % 10);
+		sz[c++] = '0' + ((int) ((VERSION + 0.001) * 10) % 10);
+		sz[c++] = '0' + ((int) ((VERSION + 0.001) * 100) % 10);
 		sz[c++] = 0;
 		gotoxy(1,25);
 		puts(sz);

@@ -398,6 +398,14 @@ void MM_Startup (void)
 	MM_GetPtr (&bufferseg,BUFFERSIZE);
 }
 
+#ifdef WASD
+// gets the bufferseg (doing it like this avoids changing the data segment layout)
+memptr MM_GetBuffer()
+{
+	return bufferseg;
+}
+#endif // WASD
+
 //==========================================================================
 
 /*

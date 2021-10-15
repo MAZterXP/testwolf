@@ -674,6 +674,33 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		// flood through (but only as visible)
 		*(*stackptr)++ = STACKITEM(x, y, 0x04);
 	}
+	else if (tilemap[x][y] & 0x80)
+	{
+		// doors
+		int doornum = tilemap[x][y] & ~0x80;
+		int lock = doorobjlist[doornum].lock;
+
+		if ((! actor || actor > 255) && (tabfunction == 3 || spotvis[x][y] & 0x01))
+		{
+			// door is open and is currently visible to the player; treat as blank space
+			spotvis[x][y] |= z;
+
+			// flood through (whether accessible or visible)
+			*(*stackptr)++ = STACKITEM(x, y, z);
+		}
+		else
+		{
+			// mark the door
+			if (lock == dr_normal)
+				spotvis[x][y] |= 0x30 + z;
+			else
+				spotvis[x][y] |= 0x50 + z;
+
+			// flood through door only if accessible and unlocked or player has the key
+			if (z == 0x0c && (lock < dr_lock1 || lock > dr_lock4 || gamestate.keys & (1 << (lock - dr_lock1))))
+				*(*stackptr)++ = STACKITEM(x, y, z);
+		}
+	}
 	else if (! actor || actor > 255)
 	{
 		// blank spaces or actors
@@ -681,21 +708,6 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 
 		// flood through (whether accessible or visible)
 		*(*stackptr)++ = STACKITEM(x, y, z);
-	}
-	else if (actor > 127)
-	{
-		int doornum = tilemap[x][y] & ~0x80;
-		int lock = doorobjlist[doornum].lock;
-
-		// mark the door
-		if (lock == dr_normal)
-			spotvis[x][y] |= 0x30 + z;
-		else
-			spotvis[x][y] |= 0x50 + z;
-
-		// flood through door only if accessible and unlocked or player has the key
-		if (z == 0x0c && (lock < dr_lock1 || lock > dr_lock4 || gamestate.keys & (1 << (lock - dr_lock1))))
-			*(*stackptr)++ = STACKITEM(x, y, z);
 	}
 	else if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE)
 	{
@@ -727,11 +739,10 @@ void CheckAccessible()
 	objtype *obj;
 	statobj_t *statptr;
 	unsigned far *stackptr;
-	memptr tempmem;
+	memptr tempmem = MM_GetBuffer();
 	unsigned current;
 	byte x, y, z;
 
-	MM_GetPtr(&tempmem, 64 * 64 * sizeof(unsigned));
 	stackptr = (unsigned far *) tempmem;
 
 	killaccessible = gamestate.killcount;
@@ -753,6 +764,10 @@ void CheckAccessible()
 		if (x < 63)	PushCell(x + 1, y, z, di_east, &stackptr);
 		if (y > 0)	PushCell(x, y - 1, z, di_north, &stackptr);
 		if (y < 63)	PushCell(x, y + 1, z, di_south, &stackptr);
+
+		// tempmem should never get exhausted, but if it ever does, it's a sign of something worse
+		if (stackptr >= (unsigned far *) tempmem + BUFFERSIZE / sizeof(unsigned))
+			Quit(0);
 	}
 
 	for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
@@ -768,7 +783,7 @@ void CheckAccessible()
 			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal || n == bo_key1 || n == bo_key2)
 			{
 				if (*statptr->visspot != 0x4d)	// if player isn't there...
-					*statptr->visspot |= 0x60;	// mark the treasure
+					*statptr->visspot = (*statptr->visspot & 0x0f) | 0x60;	// mark the treasure
 
 				// if it can be physically reached, treasure is accessible
 				if (*statptr->visspot & 0x08)
@@ -781,7 +796,7 @@ void CheckAccessible()
 			else if (n != block && n != dressing)
 			{
 				if (*statptr->visspot != 0x4d)	// if player isn't there...
-					*statptr->visspot |= 0x10;	// mark the bonus
+					*statptr->visspot = (*statptr->visspot & 0x0f) | 0x10;	// mark the bonus
 			}
 		}
 	}
@@ -825,13 +840,11 @@ void CheckAccessible()
 
 			if (*visspot != 0x4d && (tabfunction == 3 || *visspot & 0x01))	// if player isn't there, and either full map mode or within player's viscone...
 			{
-				*visspot &= 0x07;	// special case: enemy color is always dark to distinguish from player, and is drawn over everything else except player
-				*visspot |= 0x44;	// mark the enemy
+				// special case: enemy color is always dark to distinguish from player, and is drawn over everything else except player
+				*visspot = (*visspot & 0x07) | 0x44;
 			}
 		}
 	}
-
-	MM_FreePtr(&tempmem);
 }
 
 #endif // WASD
@@ -868,9 +881,12 @@ void CheckKeys (void)
 	{
 #ifdef WOLFDOSMPU
 		ClearMemory();
+		CA_CacheGrChunk(STARTFONT+1);
+		ClearSplitVWB ();
 		VW_ScreenToScreen (displayofs,bufferofs,80,160);
-#endif // WOLFDOSMPU
+#else  // WOLFDOSMPU
 		WindowH = 160;
+#endif // WOLFDOSMPU
 		if (godmode)
 		{
 			Message ("God mode OFF");
@@ -884,6 +900,7 @@ void CheckKeys (void)
 
 		IN_Ack();
 #ifdef WOLFDOSMPU
+		UNCACHEGRCHUNK(STARTFONT+1);
 		PM_CheckMainMem();
 #endif // WOLFDOSMPU
 		godmode ^= 1;
@@ -1086,12 +1103,18 @@ void CheckKeys (void)
 	{
 		if (tabstate == 1 && tabfunction)
 		{
-			char sz[76];
+			extern byte far palette1[256][3];
+			extern byte far palette2[256][3];
+			char sz[16];
 			int i;
+			byte x, y;
+			unsigned width, height;
+			byte mask = 0x02;
+			if (tabfunction == 3)
+				mask = 0x00;
 
 			tabstate = 2;	// do not allow next tab press to show KST stats again
 
-			ClearMemory();
 			CheckAccessible();
 
 #define PRINTCOUNT(c) {						\
@@ -1101,189 +1124,253 @@ void CheckKeys (void)
 		sz[i++] = '0' + (c % 100) / 10;		\
 	sz[i++] = '0' + (c % 10);				\
 }
-#define PRINTTOTAL(a, t) {					\
-	sz[i++] = '/';							\
-	if (a >= 100)							\
-		sz[i++] = '0' + a / 100;			\
-	if (a >= 10)							\
-		sz[i++] = '0' + (a % 100) / 10;		\
-	sz[i++] = '0' + (a % 10);				\
-	if (a < t)								\
-		sz[i++] = '^';						\
-}
 
-			memset(sz, ' ', 76);
+			memset(sz, ' ', sizeof(sz));
 
 			if (tabfunction == 1)
 			{
-				// ref string:  "           Kills: 000/000_:      Secrets: 000/000  :_    Treasures: 000/000"
-				// we don't actually declare it as a string though, because BC++ will put it in the data segment
-				i = 11;
-				sz[i++] = 'K';
-				sz[i++] = 'i';
-				sz[i++] = 'l';
-				sz[i++] = 'l';
-				sz[i++] = 's';
-				sz[i++] = ':';
-				sz[i++] = ' ';
-				PRINTCOUNT(gamestate.killcount);
-				PRINTTOTAL(killaccessible, gamestate.killtotal);
-				i = 25;
-				sz[i++] = '\n';
-				sz[i++] = ':';
-				i = 33;
-				sz[i++] = 'S';
-				sz[i++] = 'e';
-				sz[i++] = 'c';
-				sz[i++] = 'r';
-				sz[i++] = 'e';
-				sz[i++] = 't';
-				sz[i++] = 's';
-				sz[i++] = ':';
-				sz[i++] = ' ';
-				PRINTCOUNT(gamestate.secretcount);
-				PRINTTOTAL(secretaccessible, gamestate.secrettotal);
-				i = 51;
-				sz[i++] = ':';
-				sz[i++] = '\n';
-				i = 57;
-				sz[i++] = 'T';
-				sz[i++] = 'r';
-				sz[i++] = 'e';
-				sz[i++] = 'a';
-				sz[i++] = 's';
-				sz[i++] = 'u';
-				sz[i++] = 'r';
-				sz[i++] = 'e';
-				sz[i++] = 's';
-				sz[i++] = ':';
-				sz[i++] = ' ';
-				PRINTCOUNT(gamestate.treasurecount);
-				PRINTTOTAL(treasureaccessible, gamestate.treasuretotal);
-				sz[75] = 0;
-
 				VW_ScreenToScreen(displayofs,bufferofs,80,160);
-				WindowH = 160;
-				Message(sz);
-				IN_Ack();
-				if (Keyboard[sc_Escape])
-					IN_ClearKeysDown();		// don't allow Escape to trigger menu
+
+#define DW 40
+#define DH 36
+				// create dialog window
+				VWB_Bar(160 - DW, 80 - DH, DW * 2, DH * 2, 127);
+
+				VWB_Hlin(160 - DW, 160 + DW - 1, 80 - DH - 1, 125);
+				VWB_Hlin(160 - DW - 1, 160 + DW, 80 + DH, 0);
+				VWB_Vlin(80 - DH - 1, 80 + DH - 1, 160 - DW - 1, 125);
+				VWB_Vlin(80 - DH - 1, 80 + DH - 1, 160 + DW, 0);
 			}
 			else
 			{
-				byte x, y;
-				byte mask = 0x0c;
-				if (tabfunction < 3)
-					mask = 0x02;
-
 				// clear screen except for floor display
 				VWB_Bar(0, 0, 320, 163, 127);
-				VWB_Bar(42, 163, 1, 35, 126);
+				VWB_Vlin(163, 197, 42, 126);
 				VWB_Bar(43, 163, 277, 35, 127);
+			}
 
-				CA_CacheGrChunk(STARTFONT);
-				fontnumber = 0;
-				fontcolor = 4;
-				px = 6;
-				py = 4;
+#if 0
+			// layout testing code
+			{
+				static int count = 0;
+				count = (count + 1) % 10;
+				gamestate.treasurecount = 100 + count * 10 + count;
+				treasureaccessible = gamestate.treasurecount;
+				gamestate.treasuretotal = treasureaccessible + 1;
+			}
+#endif
+
+			fontnumber = 0;
+			fontcolor = 0;
+			for (x = 1; x <= 1; x--)
+			{
 				i = 0;
 				sz[i++] = 'K';
 				sz[i++] = ':';
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor = 16;
+				if (tabfunction == 1)
+				{
+					px = x + 128;
+					py = x + 49;
+				}
+				else
+				{
+					px = x + 6;
+					py = x + 4;
+				}
 				VWB_DrawPropString(sz);
-				fontcolor += 8;
-				px = 14;
-				py = 16;
 				i = 0;
 				PRINTCOUNT(gamestate.killcount);
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor = 12;
+				VW_MeasurePropString(sz, &width, &height);
+				px = x + (tabfunction == 1 ? 167 : 27) - width;
+				py += (tabfunction == 1 ? 0 : 12);
 				VWB_DrawPropString(sz);
-				fontcolor -= 8;
-				px = 22;
-				py = 28;
 				i = 0;
-				PRINTTOTAL(killaccessible, gamestate.killtotal);
+				sz[i++] = '/';
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor -= 8;
+				px -= 2;
+				py += 6;
 				VWB_DrawPropString(sz);
-				fontcolor = 2;
-				px = 6;
-				py = 52;
+				i = 0;
+				PRINTCOUNT(killaccessible);
+				if (killaccessible < gamestate.killtotal)
+					sz[i++] = '^';
+				sz[i++] = 0;
+				px -= 2;
+				py += 5;
+				VWB_DrawPropString(sz);
+
 				i = 0;
 				sz[i++] = 'S';
 				sz[i++] = ':';
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor = 16;
+				if (tabfunction == 1)
+				{
+					px = x + 128;
+					py += 10;
+				}
+				else
+				{
+					px = x + 6;
+					py += 24;
+				}
 				VWB_DrawPropString(sz);
-				fontcolor += 8;
-				px = 14;
-				py = 64;
 				i = 0;
 				PRINTCOUNT(gamestate.secretcount);
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor = 10;
+				VW_MeasurePropString(sz, &width, &height);
+				px = x + (tabfunction == 1 ? 167 : 27) - width;
+				py += (tabfunction == 1 ? 0 : 12);
 				VWB_DrawPropString(sz);
-				fontcolor -= 8;
-				px = 22;
-				py = 76;
 				i = 0;
-				PRINTTOTAL(secretaccessible, gamestate.secrettotal);
+				sz[i++] = '/';
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor -= 8;
+				px -= 2;
+				py += 6;
 				VWB_DrawPropString(sz);
-				fontcolor = 6;
-				px = 6;
-				py = 100;
+				i = 0;
+				PRINTCOUNT(secretaccessible);
+				if (secretaccessible < gamestate.secrettotal)
+					sz[i++] = '^';
+				sz[i++] = 0;
+				px -= 2;
+				py += 5;
+				VWB_DrawPropString(sz);
+
 				i = 0;
 				sz[i++] = 'T';
 				sz[i++] = ':';
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor = 16;
+				if (tabfunction == 1)
+				{
+					px = x + 128;
+					py += 10;
+				}
+				else
+				{
+					px = x + 6;
+					py += 24;
+				}
 				VWB_DrawPropString(sz);
-				fontcolor += 8;
-				px = 14;
-				py = 112;
 				i = 0;
 				PRINTCOUNT(gamestate.treasurecount);
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor = 14;
+				VW_MeasurePropString(sz, &width, &height);
+				px = x + (tabfunction == 1 ? 167 : 27) - width;
+				py += (tabfunction == 1 ? 0 : 12);
 				VWB_DrawPropString(sz);
-				fontcolor -= 8;
-				px = 22;
-				py = 124;
 				i = 0;
-				PRINTTOTAL(treasureaccessible, gamestate.treasuretotal);
+				sz[i++] = '/';
 				sz[i++] = 0;
+				if (x == 0)
+					fontcolor -= 8;
+				px -= 2;
+				py += 6;
 				VWB_DrawPropString(sz);
+				i = 0;
+				PRINTCOUNT(treasureaccessible);
+				if (treasureaccessible < gamestate.treasuretotal)
+					sz[i++] = '^';
+				sz[i++] = 0;
+				px -= 2;
+				py += 5;
+				VWB_DrawPropString(sz);
+			}
 
+			if (tabfunction > 1)
+			{
+				// draw the map itself
 				for (y = 0; y < 64; y++)
 				{
 					for (x = 0; x < 64; x++)
 					{
-						if ((spotvis[x][y] ^ 0x02) & mask)
+						if (! (spotvis[x][y] & mask) && spotvis[x][y] & 0x0c)
 							VWB_Bar(x * 4 + 60, y * 3 + 4, 4, 3, ((spotvis[x][y] & 0x70) >> 4) | (spotvis[x][y] & 0x08) & ((spotvis[x][y] & 0x01) << 3));
 					}
 				}
-
-				VW_UpdateScreen();
-				IN_Ack();
-				if (Keyboard[sc_Escape])
-					IN_ClearKeysDown();		// don't allow Escape to trigger menu
-				temp = bufferofs;
-				CA_CacheGrChunk (STATUSBARPIC);
-				for (i=0;i<3;i++)
-				{
-					bufferofs = screenloc[i];
-					VWB_DrawPic (0,200-STATUSLINES,STATUSBARPIC);
-				}
-				bufferofs = temp;
-				UNCACHEGRCHUNK (STATUSBARPIC);
-				DrawLevel ();
-				DrawFace ();
-				DrawHealth ();
-				DrawLives ();
-				DrawAmmo ();
-				DrawKeys ();
-				DrawWeapon ();
-				DrawScore ();
 			}
 
-			PM_CheckMainMem();
-			DrawAllPlayBorderSides();
+			// temporarily move to the new screen
+			asm	cli
+			asm	mov	cx,[bufferofs]
+			asm	mov	dx,3d4h		// CRTC address register
+			asm	mov	al,0ch		// start address high register
+			asm	out	dx,al
+			asm	inc	dx
+			asm	mov	al,ch
+			asm	out	dx,al   	// set the high byte
+			asm	sti
+
+			if (tabfunction == 1)
+			{
+				// should not do palette-cycling on stats mode because some graphics depend on the colors we touch
+				IN_Ack();
+			}
+			else
+			{
+				// palette-cycling
+				VL_GetPalette(&palette2[0][0]);
+				_fmemcpy(palette1,palette2,768);
+				IN_StartAck();
+				x = 0;
+				while (! IN_CheckAck())
+				{
+#define PULSERATE 35
+					int factor;
+					x = (x + 1) % (PULSERATE * 2);
+					if (x < PULSERATE)
+						factor = (PULSERATE - x) * 255 / PULSERATE;
+					else
+						factor = (x - PULSERATE) * 255 / PULSERATE;
+
+					for (y = 0; y < 8; y++)
+					{
+						palette1[8 + y][0] = ((255 - factor) * (int) palette2[y][0] + factor * (int) palette2[8 + y][0]) / 255;
+						palette1[8 + y][1] = ((255 - factor) * (int) palette2[y][1] + factor * (int) palette2[8 + y][1]) / 255;
+						palette1[8 + y][2] = ((255 - factor) * (int) palette2[y][2] + factor * (int) palette2[8 + y][2]) / 255;
+					}
+					VL_WaitVBL(1);
+					VL_SetPalette(&palette1[0][0]);
+				}
+				VL_WaitVBL(1);
+				VL_SetPalette(&palette2[0][0]);
+			}
+
+			if (Keyboard[sc_Escape])
+				IN_ClearKeysDown();		// don't allow Escape to trigger menu
+
+			// reshow the old screen
+			asm	cli
+			asm	mov	cx,[displayofs]
+			asm	mov	dx,3d4h		// CRTC address register
+			asm	mov	al,0ch		// start address high register
+			asm	out	dx,al
+			asm	inc	dx
+			asm	mov	al,ch
+			asm	out	dx,al   	// set the high byte
+			asm	sti
+
+			// copy the old screen over the new screen (overwriting the map)
+			VL_WaitVBL(1);
+			VW_ScreenToScreen(displayofs,bufferofs,80,200);
+
 			if (MousePresent)
 				Mouse(MDelta);	// Clear accumulated mouse movement
 		}

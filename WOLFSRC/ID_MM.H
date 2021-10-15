@@ -7,7 +7,11 @@
 #define SAVENEARHEAP	0x400		// space to leave in data segment
 #define SAVEFARHEAP		0			// space to leave in far heap
 
+#ifdef WASD
+#define	BUFFERSIZE		0x2000		// bigger buffer size for automap
+#else  // WASD
 #define	BUFFERSIZE		0x1000		// miscelanious, allways available buffer
+#endif // WASD
 
 #define MAXBLOCKS		700
 
@@ -76,6 +80,11 @@ extern	void		(* aftersort) (void);
 void MM_Startup (void);
 void MM_Shutdown (void);
 void MM_MapEMS (void);
+
+#ifdef WASD
+// gets the bufferseg (doing it like this avoids changing the data segment layout)
+memptr MM_GetBuffer();
+#endif // WASD
 
 void MM_GetPtr (memptr *baseptr,unsigned long size);
 void MM_FreePtr (memptr *baseptr);
