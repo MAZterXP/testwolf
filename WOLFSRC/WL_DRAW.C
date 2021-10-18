@@ -1363,13 +1363,32 @@ void WriteSpotVis(int file)
 void ReadSpotVis(int file)
 {
 	CA_FarRead(file, (void far *) &spotvis[0][0], sizeof(spotvis));
+	if (spotvis[0][0] & 0x02 && ! (spotvis[0][0] & 0x01))
+	{
+		// if second bit is flipped, we're loading an older version (< 1.39); flip the bit
+		int x, y;
+		for (x = 0; x < 64; x++)
+		{
+			for (y = 0; y < 64; y++)
+			{
+				spotvis[x][y] ^= 0x02;
+				if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && ! tilemap[x][y])
+				{
+					// if a pushable wall is empty, the player has already
+					// pushed it before, so reconstruct the relevant bit
+					// (the new format remembers the bit even after death)
+					spotvis[x][y] ^= 0x80;
+				}
+			}
+		}
+	}
 }
 
 void ResetSpotVis()
 {
-	// spotvis must be reset to show nothing (second bit, persistent visibility, is flipped)
+	// spotvis must be reset to show nothing
 	// do it in this module to prevent messing up the data segment
-	memset(spotvis, 0x02, sizeof(spotvis));
+	memset(spotvis, 0, sizeof(spotvis));
 }
 
 #endif // WASD
@@ -1408,14 +1427,14 @@ void	ThreeDRefresh (void)
 //
 #ifdef WASD
 asm	xor	cx,cx
-	// WASD version uses second bit to store previously-visible (flipped);
-	// don't touch this bit when clearing
+	// WASD version uses second bit to store previously-visible cells
+	// and eighth bit to store player-discovered secrets;
+	// clear everything but these bits between frames
 	{
 		byte *vis = &spotvis[0][0];
 		byte *visend = &spotvis[63][63];
-
 		for (; vis <= visend; vis++)
-			*vis &= 0x02;
+			*vis &= 0x82;
 	}
 #else  // WASD
 asm	mov	ax,ds

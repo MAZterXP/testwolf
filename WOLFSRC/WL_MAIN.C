@@ -136,6 +136,24 @@ void ReadConfig(void)
 		}
 #endif // WASD
 
+#ifdef WOLFDOSMPU
+		{
+			// if the config file does not have the midi volume value yet, set it to max
+			int value, bytesread;
+			bytesread = read(file,&value,sizeof(value));
+			if (bytesread < sizeof(value))
+				midivolume = 10;
+			else
+			{
+				midivolume = value;
+				if (midivolume < 0)
+					midivolume = 0;
+				if (midivolume > 10)
+					midivolume = 10;
+			}
+		}
+#endif // WOLFDOSMPU
+
 		close(file);
 
 		if (sd == sdm_AdLib && !AdLibPresent && !SoundBlasterPresent)
@@ -196,6 +214,10 @@ void ReadConfig(void)
 		mouseturningonly = true;
 		tabfunction = 1;
 #endif // WASD
+
+#ifdef WOLFDOSMPU
+		midivolume = 10;
+#endif // WOLFDOSMPU
 	}
 
 	SD_SetMusicMode (sm);
@@ -253,6 +275,15 @@ void WriteConfig(void)
 			write(file,&value,sizeof(value));
 		}
 #endif // WASD
+
+#ifdef WOLFDOSMPU
+		{
+			// this will be ignored by the original executable and would not actually change its value
+			int value;
+			value = midivolume;
+			write(file,&value,sizeof(value));
+		}
+#endif // WOLFDOSMPU
 
 		close(file);
 	}

@@ -85,6 +85,7 @@ boolean		buttonstate[NUMBUTTONS];
 
 #ifdef WOLFDOSMPU
 
+int			far	midivolume;
 int			far	compflags = 0;
 int			far	savedviewsize;
 
@@ -659,6 +660,7 @@ void	CenterWindow(word w,word h)
 
 void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 {
+	boolean pw = (pwallstate && x == pwallx && y == pwally);
 	unsigned actor;
 
 	// do not flood through already-visited cells
@@ -673,6 +675,19 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 
 		// flood through (but only as visible)
 		*(*stackptr)++ = STACKITEM(x, y, 0x04);
+	}
+	else if (pw || (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y]))
+	{
+		// secret (does not flood through)
+		if (pw || (dir == di_west && ! actorat[x - 1][y]
+					|| dir == di_east && ! actorat[x + 1][y]
+					|| dir == di_north && ! actorat[x][y - 1]
+					|| dir == di_south && ! actorat[x][y + 1]))
+		{
+			spotvis[x][y] |= 0x28;			// mark secret as accessible (and count it only once)
+		}
+		else
+			spotvis[x][y] |= 0x04;			// just mark it as visible (but don't use z as we want to try other directions); deal with color later
 	}
 	else if (tilemap[x][y] & 0x80)
 	{
@@ -692,9 +707,9 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		{
 			// mark the door
 			if (lock == dr_normal)
-				spotvis[x][y] |= 0x30 + z;
+				spotvis[x][y] |= 0x30 | z;
 			else
-				spotvis[x][y] |= 0x50 + z;
+				spotvis[x][y] |= 0x50 | z;
 
 			// flood through door only if accessible and unlocked or player has the key
 			if (z == 0x0c && (lock < dr_lock1 || lock > dr_lock4 || gamestate.keys & (1 << (lock - dr_lock1))))
@@ -709,23 +724,10 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		// flood through (whether accessible or visible)
 		*(*stackptr)++ = STACKITEM(x, y, z);
 	}
-	else if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE)
-	{
-		// secret (does not flood through)
-		if (z == 0x0c
-			&& ! (spotvis[x][y] & 0x80)		// count an accessible secret only once
-			&& (dir == di_west && ! actorat[x - 1][y]
-				|| dir == di_east && ! actorat[x + 1][y]
-				|| dir == di_north && ! actorat[x][y - 1]
-				|| dir == di_south && ! actorat[x][y + 1]))
-		{
-			spotvis[x][y] |= 0x80;			// mark secret as accessible (must use different bit because the normal accessible bit will give the secret away)
-		}
-	}
 	else if (tilemap[x][y] == ELEVATORTILE)
 	{
 		// elevator (does not flood through)
-		spotvis[x][y] |= 0x50 + z;
+		spotvis[x][y] |= 0x50 | z;
 	}
 	else
 	{
@@ -752,7 +754,7 @@ void CheckAccessible()
 	x = player->x >> TILESHIFT;
 	y = player->y >> TILESHIFT;
 	*stackptr++ = STACKITEM(x, y, 0x0c);
-	spotvis[x][y] = 0x4d;
+	spotvis[x][y] = (spotvis[x][y] & 0x80) | 0x4f;
 	while (stackptr != (unsigned far *) tempmem)
 	{
 		current = *--stackptr;
@@ -776,15 +778,12 @@ void CheckAccessible()
 		{
 			byte n = statptr->itemnumber;
 
-			// always show item in full map mode
-			if (tabfunction == 3)
+			// always show item in full map mode, or if player has seen it once
+			if (tabfunction == 3 || *statptr->visspot & 0x02)
 				*statptr->visspot |= 0x04;
 
 			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal || n == bo_key1 || n == bo_key2)
 			{
-				if (*statptr->visspot != 0x4d)	// if player isn't there...
-					*statptr->visspot = (*statptr->visspot & 0x0f) | 0x60;	// mark the treasure
-
 				// if it can be physically reached, treasure is accessible
 				if (*statptr->visspot & 0x08)
 				{
@@ -792,11 +791,14 @@ void CheckAccessible()
 					if (n != bo_key1 && n != bo_key2)
 						treasureaccessible++;
 				}
+
+				if ((*statptr->visspot & 0x7f) != 0x4f)	// if player isn't there...
+					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x60;	// mark the treasure
 			}
 			else if (n != block && n != dressing)
 			{
-				if (*statptr->visspot != 0x4d)	// if player isn't there...
-					*statptr->visspot = (*statptr->visspot & 0x0f) | 0x10;	// mark the bonus
+				if ((*statptr->visspot & 0x7f) != 0x4f)	// if player isn't there...
+					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x10;	// mark the bonus
 			}
 		}
 	}
@@ -805,29 +807,35 @@ void CheckAccessible()
 	{
 		for (x = 0; x < 64; x++)
 		{
-			if (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y])
+			boolean pw = (pwallstate && x == pwallx && y == pwally);
+			if (pw || (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y]))
 			{
-				if (tabfunction != 3)
-					spotvis[x][y] |= 0x7c;	// masquerade secret as a wall
-				else
-				{
-					spotvis[x][y] |= 0x24;	// mark the secret in full map mode
-
-					// if tile has been marked specially, mark it bright
-					if (spotvis[x][y] & 0x80)
-						spotvis[x][y] |= 0x08;
-				}
-
 				// if tile has been marked specially, secret is accessible
-				if (spotvis[x][y] & 0x80)
+				if (! pw && spotvis[x][y] & 0x20)
 					secretaccessible++;
+
+				if ((spotvis[x][y] & 0x7f) != 0x4f)	// if player isn't there...
+				{
+					if (pw || tabfunction == 3 || spotvis[x][y] & 0x80)
+					{
+						// inaccessible secrets are marked darker
+						if (! (spotvis[x][y] & 0x20))
+							spotvis[x][y] = (spotvis[x][y] & 0x83) | 0x24;
+					}
+					else
+					{
+						// if it's reachable, masquerade secret as a wall
+						if (spotvis[x][y] & 0x0c)
+							spotvis[x][y] |= 0x7c;
+					}
+				}
 			}
 		}
 	}
 
 	for (obj = player->next; obj; obj = obj->next)
 	{
-		if (obj->flags & FL_SHOOTABLE)
+		if (obj->flags & FL_SHOOTABLE || obj->obclass == ghostobj)		// mark ghosts even if they are not killable
 		{
 			byte *visspot;
 			x = obj->x >> TILESHIFT;
@@ -835,13 +843,13 @@ void CheckAccessible()
 			visspot = &spotvis[x][y];
 
 			// if it is visible, it can be shot, ergo, enemy is accessible
-			if (*visspot & 0x04)
+			if (*visspot & 0x04 && obj->flags & FL_SHOOTABLE)
 				killaccessible++;
 
-			if (*visspot != 0x4d && (tabfunction == 3 || *visspot & 0x01))	// if player isn't there, and either full map mode or within player's viscone...
+			if ((*visspot & 0x7f) != 0x4f && (tabfunction == 3 || *visspot & 0x01))	// if player isn't there, and either full map mode or within player's viscone...
 			{
 				// special case: enemy color is always dark to distinguish from player, and is drawn over everything else except player
-				*visspot = (*visspot & 0x07) | 0x44;
+				*visspot = (*visspot & 0x83) | 0x44;
 			}
 		}
 	}
@@ -1111,7 +1119,7 @@ void CheckKeys (void)
 			unsigned width, height;
 			byte mask = 0x02;
 			if (tabfunction == 3)
-				mask = 0x00;
+				mask = 0x0c;
 
 			tabstate = 2;	// do not allow next tab press to show KST stats again
 
@@ -1301,8 +1309,17 @@ void CheckKeys (void)
 				{
 					for (x = 0; x < 64; x++)
 					{
-						if (! (spotvis[x][y] & mask) && spotvis[x][y] & 0x0c)
-							VWB_Bar(x * 4 + 60, y * 3 + 4, 4, 3, ((spotvis[x][y] & 0x70) >> 4) | (spotvis[x][y] & 0x08) & ((spotvis[x][y] & 0x01) << 3));
+						if (spotvis[x][y] & mask && spotvis[x][y] & 0x0c)
+						{
+							if (! (spotvis[x][y] & 0x78) && spotvis[x][y] & 0x01)
+							{
+								// upgrade all unoccupied tiles that are in the player's viscone from black to gray so the automap can properly "see through" pillar-blocked areas
+								// (items in these areas are still highlighted according to accessibility; it is useful for the player to know if they can get them)
+								VWB_Bar(x * 4 + 60, y * 3 + 4, 4, 3, 8);
+							}
+							else
+								VWB_Bar(x * 4 + 60, y * 3 + 4, 4, 3, ((spotvis[x][y] & 0x70) >> 4) | (spotvis[x][y] & 0x08) & ((spotvis[x][y] & 0x01) << 3));
+						}
 					}
 				}
 			}

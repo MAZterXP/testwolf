@@ -188,9 +188,16 @@ US_Startup(void)
 				extern int far compflags;
 
 				// actually use the COMP parameter for something useful
-				compflags = atoi(_argv[i + 1]);
-				if (compflags == 0 && (i + 1 >= _argc || _argv[i + 1][0] != '0'))
+				if (i + 1 >= _argc)
 					compflags = 0xFFFF;
+				else if (_argv[i + 1][0] == '-')
+					compflags = 0xFFFF - atoi(&_argv[i + 1][1]);
+				else
+				{
+					compflags = atoi(_argv[i + 1]);
+ 					if (compflags == 0 && _argv[i + 1][0] != '0')
+						compflags = 0xFFFF;
+ 				}
 			}
 #endif // WOLFDOSMPU
 			break;

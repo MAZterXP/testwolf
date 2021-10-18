@@ -792,6 +792,10 @@ void PushWall (int checkx, int checky, int dir)
 	pwallpos = 0;
 	tilemap[pwallx][pwally] |= 0xc0;
 	*(mapsegs[1]+farmapylookup[pwally]+pwallx) = 0;	// remove P tile info
+#ifdef WASD
+	// mark the wall as a secret in the automap when the player dies
+	spotvis[pwallx][pwally] |= 0x80;
+#endif // WASD
 
 	SD_PlaySound (PUSHWALLSND);
 }

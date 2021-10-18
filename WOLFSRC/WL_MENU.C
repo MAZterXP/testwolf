@@ -51,7 +51,11 @@ char far endStrings[9][80]=
 
 CP_iteminfo
 	MainItems={MENU_X,MENU_Y,10,STARTITEM,24},
+#ifdef WOLFDOSMPU
+	SndItems={SM_X,SM_Y1,13,0,52},
+#else  // WOLFDOSMPU
 	SndItems={SM_X,SM_Y1,12,0,52},
+#endif // WOLFDOSMPU
 	LSItems={LSM_X,LSM_Y,10,0,24},
 #ifdef WASD
 	CtlItems={CTL_X,CTL_Y,9,-1,32},
@@ -132,7 +136,9 @@ far SndMenu[]=
 	{0,"",0},
 	{1,STR_NONE,0},
 #ifdef WOLFDOSMPU
-	{1,STR_MPU,0}
+	{1,STR_MPU,0},
+	{0,STR_VOLUME,MidiVolume},
+	{0,STR_MVOLUME,0}	// we just need the string to not occupy the data segment
 #else  // WOLFDOSMPU
 	{1,STR_ALSB,0}
 #endif // WOLFDOSMPU
@@ -157,7 +163,7 @@ far CtlMenu[]=
 	{0,STR_PORT2,0},
 	{0,STR_GAMEPAD,0},
 	{1,STR_STRAFE1,0},
-	{1,STR_TABDI,0},
+	{1,STR_TAB,TabKeyFunction},
 	{1,STR_CUSTOM,CustomControls},
 	{1,STR_MOUSEDI,0},
 	{1,STR_MOUSEEN,0},
@@ -167,10 +173,6 @@ far CtlMenu[]=
 	{1,STR_JOYEN,0},
 	{1,STR_STRAFE1,0},
 	{1,STR_STRAFE2,0},
-	{1,STR_TABDI,0},
-	{1,STR_TAB1,0},
-	{1,STR_TAB2,0},
-	{1,STR_TAB3,0}
 #else  // WASD
 	{0,STR_MOUSEEN,0},
 	{0,STR_JOYEN,0},
@@ -181,6 +183,17 @@ far CtlMenu[]=
 #endif // WASD
 #endif
 },
+
+#ifdef WASD
+far TabMenu[]=
+{
+	{1,STR_TAB0,0},
+	{1,STR_TAB1,0},
+	{1,STR_TAB2,0},
+	{1,STR_TAB3,0},
+	{1,STR_TABT,0}
+},
+#endif // WASD
 
 #pragma warn +sus
 
@@ -1177,9 +1190,16 @@ void CP_Sound(void)
 	int which,i;
 
 #ifdef WOLFDOSMPU
-	// if no MUSIC\_INFO file was found, revert option string to AdLib/Sound Blaster
 	if (! mpuIsEnabled())
+	{
+		// if no MUSIC\_INFO file was found, revert option string to AdLib/Sound Blaster
 		_fstrcpy(SndMenu[11].string, SndMenu[2].string);
+		SndMenu[12].active = 0;
+	}
+	else if (MusicMode == smm_AdLib)
+		SndMenu[12].active = 1;
+	else
+		SndMenu[12].active = 0;
 #endif // WOLFDOSMPU
 
 #ifdef SPEAR
@@ -1265,6 +1285,9 @@ void CP_Sound(void)
 				if (MusicMode!=smm_Off)
 				{
 					SD_SetMusicMode(smm_Off);
+#ifdef WOLFDOSMPU
+					SndMenu[12].active = 0;
+#endif // WOLFDOSMPU
 					DrawSoundMenu();
 					ShootSnd();
 				}
@@ -1273,11 +1296,23 @@ void CP_Sound(void)
 				if (MusicMode!=smm_AdLib)
 				{
 					SD_SetMusicMode(smm_AdLib);
+#ifdef WOLFDOSMPU
+					if (mpuIsEnabled())
+						SndMenu[12].active = 1;
+#endif // WOLFDOSMPU
 					DrawSoundMenu();
 					ShootSnd();
 					StartCPMusic(MENUSONG);
 				}
 				break;
+
+#ifdef WOLFDOSMPU
+			case 12:
+				DrawSoundMenu();
+				MenuFadeIn();
+				WaitKeyUp();
+				break;
+#endif // WOLFDOSMPU
 		}
 	} while(which>=0);
 
@@ -1310,7 +1345,11 @@ void DrawSoundMenu(void)
 
 	DrawWindow(SM_X-8,SM_Y1-3,SM_W,SM_H1,BKGDCOLOR);
 	DrawWindow(SM_X-8,SM_Y2-3,SM_W,SM_H2,BKGDCOLOR);
+#ifdef WOLFDOSMPU
+	DrawWindow(SM_X-8,SM_Y3-3,SM_W,SM_H2-1,BKGDCOLOR);
+#else  // WOLFDOSMPU
 	DrawWindow(SM_X-8,SM_Y3-3,SM_W,SM_H3,BKGDCOLOR);
+#endif // WOLFDOSMPU
 #endif
 
 	//
@@ -1341,6 +1380,9 @@ void DrawSoundMenu(void)
 #ifdef JAPAN
 		if (i!=3 && i!=4 && i!=8 && i!=9)
 #else
+#ifdef WOLFDOSMPU
+		if (i < 12)
+#endif // WOLFDOSMPU
 		if (SndMenu[i].string[0])
 #endif
 		{
@@ -1381,6 +1423,67 @@ void DrawSoundMenu(void)
 	VW_UpdateScreen();
 }
 
+#ifdef WASD
+void DrawTabMenu(CP_iteminfo TabItems)
+{
+	int i;
+	char sz[36];
+
+	ClearMScreen();
+	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+
+	WindowX=0;
+	WindowW=320;
+	PrintY=68;
+	SETFONTCOLOR(READHCOLOR,BKGDCOLOR);
+	_fstrcpy(sz, TabMenu[TabItems.amount].string);
+	US_CPrint(sz);
+
+	DrawWindow(NM_X-15,NM_Y-10,NM_W+20,NM_H,BKGDCOLOR);
+
+	DrawMenu(&TabItems,&TabMenu[0]);
+
+	for (i=0;i<TabItems.amount;i++)
+	{
+		if (tabfunction == i)
+			VWB_DrawPic(NM_X+26,NM_Y+i*13+2,C_SELECTEDPIC);
+		else
+			VWB_DrawPic(NM_X+26,NM_Y+i*13+2,C_NOTSELECTEDPIC);
+	}
+
+	DrawMenuGun(&TabItems);
+	VW_UpdateScreen();
+}
+
+void TabKeyFunction()
+{
+	int which;
+	CP_iteminfo	TabItems;
+	TabItems.x = NM_X - 4;
+	TabItems.y = NM_Y;
+	TabItems.amount = 4;
+	TabItems.curpos = tabfunction;
+	TabItems.indent = 52;
+	DrawTabMenu(TabItems);
+	MenuFadeIn();
+	WaitKeyUp();
+	do
+	{
+		which = HandleMenu(&TabItems,&TabMenu[0],NULL);
+		if (which >= 0)
+		{
+			tabfunction = which;
+			DrawTabMenu(TabItems);
+			ShootSnd();
+			WaitKeyUp();
+		}
+	}
+	while (which >= 0);
+
+	ShootSnd();
+	MenuFadeOut();
+}
+#endif // WASD
 
 //
 // DRAW LOAD/SAVE IN PROGRESS
@@ -1873,6 +1976,9 @@ void CP_Control(void)
 
 			case MOUSESENS:
 			case CUSTOMIZE:
+#ifdef WASD
+			case TAB:
+#endif // WASD
 				DrawCtlScreen();
 				MenuFadeIn();
 				WaitKeyUp();
@@ -1888,13 +1994,6 @@ void CP_Control(void)
 
 			case MOUSETURN:
 				mouseturningonly^=1;
-				DrawCtlScreen();
-				ShootSnd();
-				WaitKeyUp();
-				break;
-
-			case TAB:
-				tabfunction = (tabfunction + 1) % 4;
 				DrawCtlScreen();
 				ShootSnd();
 				WaitKeyUp();
@@ -1965,6 +2064,43 @@ void DrawMouseSens(void)
 	MenuFadeIn();
 }
 
+#ifdef WOLFDOSMPU
+void DrawMidiVolume()
+{
+	char sz[36];
+	ClearMScreen();
+	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+	DrawWindow(10,80,300,30,BKGDCOLOR);
+
+	WindowX=0;
+	WindowW=320;
+	PrintY=82;
+	SETFONTCOLOR(READCOLOR,BKGDCOLOR);
+	_fstrcpy(sz, SndMenu[13].string);
+	US_CPrint(sz);
+
+	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
+	PrintX=25;
+	PrintY=95;
+	sz[0] = 'M';
+	sz[1] = 'i';
+	sz[2] = 'n';
+	sz[3] = 0;
+	US_Print(sz);
+	PrintX=269;
+	sz[1] = 'a';
+	sz[2] = 'x';
+	US_Print(sz);
+
+	VWB_Bar(60,97,200,10,TEXTCOLOR);
+	DrawOutline(60,97,200,10,0,HIGHLIGHT);
+	DrawOutline(60+18*midivolume,97,20,10,0,READCOLOR);
+	VWB_Bar(61+18*midivolume,98,19,9,READHCOLOR);
+
+	VW_UpdateScreen();
+	MenuFadeIn();
+}
+#endif // WOLFDOSMPU
 
 ///////////////////////////
 //
@@ -2058,6 +2194,86 @@ void MouseSensitivity(void)
 }
 
 
+#ifdef WOLFDOSMPU
+void MidiVolume()
+{
+	ControlInfo ci;
+	int exit=0,oldvolume;
+
+	oldvolume = midivolume;
+	DrawMidiVolume();
+	do
+	{
+		ReadAnyControl(&ci);
+		switch(ci.dir)
+		{
+			case dir_North:
+			case dir_West:
+				if (midivolume)
+				{
+					midivolume--;
+					mpuRestart();
+					VWB_Bar(60,97,200,10,TEXTCOLOR);
+					DrawOutline(60,97,200,10,0,HIGHLIGHT);
+					DrawOutline(60+18*midivolume,97,20,10,0,READCOLOR);
+					VWB_Bar(61+18*midivolume,98,19,9,READHCOLOR);
+					VW_UpdateScreen();
+					SD_PlaySound(MOVEGUN1SND);
+					while(Keyboard[sc_LeftArrow]);
+					WaitKeyUp();
+				}
+				break;
+
+			case dir_South:
+			case dir_East:
+				if (midivolume<10)
+				{
+					midivolume++;
+					mpuRestart();
+					VWB_Bar(60,97,200,10,TEXTCOLOR);
+					DrawOutline(60,97,200,10,0,HIGHLIGHT);
+					DrawOutline(60+18*midivolume,97,20,10,0,READCOLOR);
+					VWB_Bar(61+18*midivolume,98,19,9,READHCOLOR);
+					VW_UpdateScreen();
+					SD_PlaySound(MOVEGUN1SND);
+					while(Keyboard[sc_RightArrow]);
+					WaitKeyUp();
+				}
+				break;
+		}
+
+		#ifndef SPEAR
+		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("goobers"))
+		#else
+		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("debugmode"))
+		#endif
+			PicturePause();
+
+		if (ci.button0 || Keyboard[sc_Space] || Keyboard[sc_Enter])
+			exit=1;
+		else
+		if (ci.button1 || Keyboard[sc_Escape])
+			exit=2;
+
+	} while(!exit);
+
+	if (exit==2)
+	{
+		if (midivolume != oldvolume)
+		{
+			midivolume = oldvolume;
+			mpuRestart();
+		}
+		SD_PlaySound(ESCPRESSEDSND);
+	}
+	else
+		SD_PlaySound(SHOOTSND);
+
+	WaitKeyUp();
+	MenuFadeOut();
+}
+#endif // WOLFDOSMPU
+
 ///////////////////////////
 //
 // DRAW CONTROL MENU SCREEN
@@ -2105,7 +2321,6 @@ void DrawCtlScreen(void)
  _fstrcpy(CtlMenu[1].string, CtlMenu[mouseturningonly + 11].string);
  _fstrcpy(CtlMenu[3].string, CtlMenu[joystickenabled + 13].string);
  _fstrcpy(CtlMenu[6].string, CtlMenu[keysalwaysstrafe + 15].string);
- _fstrcpy(CtlMenu[7].string, CtlMenu[tabfunction + 17].string);
 #else  // WASD
  if (JoysPresent[0])
    CtlMenu[1].active=
@@ -2165,12 +2380,6 @@ void DrawCtlScreen(void)
  x-=24;
  y+=13;
  if (keysalwaysstrafe)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
- else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
-
- y+=13;
- if (tabfunction)
    VWB_DrawPic(x,y,C_SELECTEDPIC);
  else
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);

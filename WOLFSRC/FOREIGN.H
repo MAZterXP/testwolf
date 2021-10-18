@@ -45,6 +45,8 @@
 
 #ifdef WOLFDOSMPU
 #define	STR_MPU		"MPU-401/General MIDI"
+#define STR_VOLUME	"   Adjust Volume..."
+#define STR_MVOLUME	"Adjust Music Volume"
 #endif // WOLFDOSMPU
 
 #ifdef WASD
@@ -59,11 +61,13 @@
 #define	STR_GAMEPAD	"      Gravis GamePad"
 #define	STR_STRAFE1	"   Left/Right Keys Turn"
 #define	STR_STRAFE2	"   Left/Right Keys Strafe"
-#define	STR_TABDI	"   Tab = Disabled"
-#define	STR_TAB1	"   Tab = Floor Stats"
-#define	STR_TAB2	"   Tab = Auto-Map"
-#define	STR_TAB3	"   Tab = Full Map w/ Hints"
+#define	STR_TAB		"   Tab Key Function..."
 #define	STR_CUSTOM	"   Customize Controls..."
+#define	STR_TABT	"Pressing the Tab key shows:"
+#define	STR_TAB0	"Nothing"
+#define	STR_TAB1	"Completion Ratios"
+#define	STR_TAB2	"Auto-Map"
+#define	STR_TAB3	"Full Map with Hints"
 #else  // WASD
 #define	STR_MOUSEEN	"Mouse Enabled"
 #define	STR_JOYEN	"Joystick Enabled"

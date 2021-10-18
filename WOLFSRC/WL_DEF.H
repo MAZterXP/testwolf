@@ -1284,7 +1284,8 @@ extern	void	EndText(void);
 #define COMPFLAG_FLAWED_ITEM_PICKUP		0x04
 #define COMPFLAG_NO_CIRCLE_STRAFE		0x08
 
-extern	int			far compflags;
+extern	int			far	midivolume;
+extern	int			far	compflags;
 extern	int			far	savedviewsize;
 
 #endif // WOLFDOSMPU

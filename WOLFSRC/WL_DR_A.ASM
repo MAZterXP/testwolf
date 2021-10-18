@@ -445,7 +445,11 @@ vertentry:
 	test [BYTE tilemap+si],0ffh		; tilehit = *((byte *)tilemap+xspot);
 	jnz	hitvert
 passvert:
+IFDEF	WASD
+	or	[BYTE spotvis+si],3			; *((byte *)spotvis+xspot) |= 0x03;
+ELSE	; WASD
 	mov	[BYTE spotvis+si],1			; *((byte *)spotvis+xspot) = true;
+ENDIF	; WASD
 	add	bx,[xtilestep]				; xtile+=xtilestep
 	mov	ax,[WORD ystep]
 	add	[WORD yintercept],ax		; yintercept += ystep
@@ -458,7 +462,7 @@ passvert:
 	EVEN
 hitvert:
 IFDEF	WASD
-	mov	[BYTE spotvis+si],1			; also show wall hits in spotvis
+	or	[BYTE spotvis+si],3			; also show wall hits in spotvis
 ENDIF	; WASD
 	mov	al,[BYTE tilemap+si]		; tilehit = *((byte *)tilemap+xspot);
 	mov	[BYTE tilehit],al
@@ -489,7 +493,11 @@ horizentry:
 	test [BYTE tilemap+di],0ffh		; tilehit = *((byte *)tilemap+yspot);
 	jnz	hithoriz
 passhoriz:
+IFDEF	WASD
+	or	[BYTE spotvis+di],3			; *((byte *)spotvis+yspot) |= 0x03;
+ELSE	; WASD
 	mov	[BYTE spotvis+di],1			; *((byte *)spotvis+yspot) = true;
+ENDIF	; WASD
 	add	bp,[ytilestep]				; ytile+=ytilestep
 	mov	ax,[WORD xstep]
 	add	[WORD xintercept],ax		; xintercept += xstep
@@ -502,7 +510,7 @@ passhoriz:
 	EVEN
 hithoriz:
 IFDEF	WASD
-	mov	[BYTE spotvis+di],1			; also show wall hits in spotvis
+	or	[BYTE spotvis+di],3			; also show wall hits in spotvis
 ENDIF	; WASD
 	mov	al,[BYTE tilemap+di]		; tilehit = *((byte *)tilemap+yspot);
 	mov	[BYTE tilehit],al

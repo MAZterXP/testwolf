@@ -29,9 +29,18 @@ This mod is forked directly from the official Wolf3d source release from id Soft
 Version History
 ===============
 
+1.39 RC (2021-10-18)
+--------------------
+- Added music volume control, to allow users to balance the loudness of the music with the sound effects (suggested by mOBSCENE). Note that sound effects volume (both digital and FM) can be changed through your sound card's mixer app. The MPU-401 device's volume, on the other hand, usually has no readily-available software-based control, justifying this feature.
+- Made Tab key functions a separate menu -- it was previously unclear that the menu option cycles through four possibilities.
+- Now supports negative parameters for COMP, to disable the specified options (and enable everything else).
+- Player respawn now properly marks pushwalls and bonuses that have been previously pushed/seen. This modifies the savegame format -- older savegames will be automatically updated to the new format, but newer savegames will not work properly with older versions of wolfdosmpu (which you should generally avoid anyway).
+- Added a special case to automap viscone rendering so that it "sees through" pillars and other block objects even if the area behind them is inaccessible. (Items in these inaccessible areas are still rendered in darker color.)
+- Added a special case for rendering E3M10's ghosts in the automap (since they are not shootable but they're quite dangerous).
+
 1.38 RC (2021-10-14)
 --------------------
-- Fixed more memory issues and crashing related to stats/map display, and reimplemented stats dialog to avoid using id's Message() routines (which seem to leak memory -- infamously, SoD's Tab+G+F10 God Mode cheat could crash the system randomly). I think I've eliminated the crashes for good, but you still experience crashes, I would appreciate it if you contact me with steps to reproduce and savegame if possible (your system's memory configuration as reported by MEM will also be handy).
+- Fixed more memory issues and crashing related to stats/map display, and reimplemented stats dialog to avoid using id's Message() routines (which seem to leak memory -- infamously, SoD's Tab+G+F10 God Mode cheat could crash the system randomly). I think I've eliminated the crashes for good, but if you still experience crashes, I would appreciate it if you contact me with steps to reproduce and savegame if possible (your system's memory configuration as reported by MEM will also be handy).
 - Automap now pulsates the player's viewing area (via palette-cycling) for easier navigation.
 - Automap now does not give away the status of doors that the player currently cannot see.
 - Minor pwall special case after grabbing the spear. (Should not actually appear on unmodified SoD.)
@@ -161,7 +170,7 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 
    As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
 
-   My own testing with DOSBox-X indicates that the modern-controls executables require at least 568 KB of free conventional memory in order to run properly. The MPU-only executables use about 4 KB less, but I still recommend freeing at least 568 KB of conventional memory for the best results.
+   My own testing with DOSBox-X indicates that the modern-controls executables require at least 569 KB of free conventional memory in order to run properly (with the default music). The MPU-only executables use about 6 KB less, but I still recommend freeing at least 569 KB of conventional memory for the best results.
 
    One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
 
@@ -171,7 +180,7 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 
 5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu executables and the originals. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global (non-far) variables or constant string literals WILL break future savegames.
 
-6. __Note on the COMP parameter__: You can enable specific quirks/bugs of the original executables using the COMP (compatibility) command-line parameter. Specify a number after COMP, which should be the sum of the flags you want to enable:
+6. __Note on the COMP parameter__: You can enable specific quirks/bugs of the original executables using the COMP (compatibility) command-line parameter. Specify a number after COMP, which should be the sum of the flags you want to enable (alternatively, specify a negative number to disable those flags and enable everything else):
    ```
    1: pushwalls move 3 tiles unless blocked
       (note: the default maps assume that pushwalls move 2 tiles maximum; this option renders these
@@ -181,9 +190,9 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
    8: disable circle-strafing (turning and strafing simultaneously) when playing with modern controls
       (note: circle-strafing is always disabled when recording a demo)
    ```
-   For example, to mimic the original executables' behavior when they were run on a Pentium (or faster) system, specify COMP 15 (e.g., WOLF3DCM COMP 15). On the other hand, COMP 14 disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
+   For example, to mimic the original executables' behavior when they were run on a Pentium (or faster) system, specify COMP 15 (e.g., WOLF3DCM COMP 15). On the other hand, COMP 14 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
 
-   COMP by itself will enable all compatibility flags (including future ones); use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags (default setting).
+   COMP by itself will enable all compatibility flags (including future ones; currently it is just equivalent to COMP 15). Use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags (default setting).
 
 Bring "M" on!
 -------------

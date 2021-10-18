@@ -181,6 +181,7 @@ static	word			sqMode,sqFadeStep;
 #define mpuPos						sqHackLen
 #define mpuWait						sqHackSeqLen
 #define MPU_DATA_FOUND	((sqHackTime & 0x80000000L) != 0)
+extern int far midivolume;
 
 void mpuSend(byte length, byte far *buffer, word pos)
 {
@@ -212,21 +213,24 @@ mpuCanWrite:
 	}
 }
 
-void mpuStop()
+void mpuStop(boolean exiting)
 {
-	byte turnOff[5];
+	byte turnOff[7];
 
 	// if not yet initialized, don't bother
 	if (mpuPos == 0)
 		return;
 
 	// turn off all controllers and all notes in all channels
+	// and reset the midi volume to the default setting
 	turnOff[1] = 0x79;
 	turnOff[2] = 0x00;
 	turnOff[3] = 0x7B;
 	turnOff[4] = 0x00;
+	turnOff[5] = 0x07;
+	turnOff[6] = (exiting ? 100 : (midivolume * 127) / 10);
 	for (turnOff[0] = 0xB0; turnOff[0] <= 0xBF; turnOff[0]++)
-		mpuSend(5, turnOff, 0);
+		mpuSend(7, turnOff, 0);
 }
 
 word mpuReadVarLen()
@@ -237,7 +241,7 @@ word mpuReadVarLen()
 	if (mpuBuffer[mpuPos] & 0x80)
 	{
 		// varlen values longer than 14 bits are currently not supported
-		mpuStop();
+		mpuStop(false);
 		mpuPos = 1;
 		return 1;	// ensure that mpuTick will exit its loop
 	}
@@ -245,10 +249,12 @@ word mpuReadVarLen()
 	return result;
 }
 
-void mpuRestart(boolean force)
+void mpuRestart()
 {
-	// don't allow restart if we're not playing
-	if (! force && mpuPos < 22)
+	mpuStop(false);
+
+	// don't actually restart if we're not playing
+	if (mpuPos < 22)
 		return;
 
 	// read the first varlen delay
@@ -428,7 +434,8 @@ void mpuStart(word songId)
 	if (mpuSize != size)
 		return;
 
-	mpuRestart(true);
+	mpuPos = 22;  // ensure that playback actually starts
+	mpuRestart();
 }
 
 void mpuTick()
@@ -478,7 +485,16 @@ void mpuTick()
 			else
 			{
 				mpuWait = 0;	// set running status to two bytes
-				mpuSend(3, mpuBuffer, mpuPos);
+				if (s == 0xB0 && mpuBuffer[mpuPos + 1] == 0x07)
+				{
+					// manipulate volume change messages
+					b = mpuBuffer[mpuPos + 2];
+					mpuBuffer[mpuPos + 2] = (midivolume * b) / 10;
+					mpuSend(3, mpuBuffer, mpuPos);
+					mpuBuffer[mpuPos + 2] = b;
+				}
+				else
+					mpuSend(3, mpuBuffer, mpuPos);
 				mpuPos += 3;
 			}
 		}
@@ -505,6 +521,7 @@ void mpuDestroy()
 {
 	if (MPU_DATA_FOUND)
 	{
+		mpuStop(true);
 		farfree(mpuBuffer);
 		mpuPos = 0;
 	}
@@ -2659,10 +2676,7 @@ SD_MusicOff(void)
 	sqActive = false;
 #ifdef WOLFDOSMPU
 	if (MPU_DATA_FOUND)
-	{
-		mpuStop();
-		mpuRestart(false);
-	}
+		mpuRestart();
 #endif // WOLFDOSMPU
 }
 

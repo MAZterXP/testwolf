@@ -199,6 +199,10 @@ int  CP_EndGame(void);
 int  CP_CheckQuick(unsigned scancode);
 void CustomControls(void);
 void MouseSensitivity(void);
+#ifdef WOLFDOSMPU
+void MidiVolume();
+void TabKeyFunction();
+#endif // WOLFDOSMPU
 
 void CheckForEpisodes(void);
 
