@@ -1131,11 +1131,11 @@ void CheckKeys (void)
 			CheckAccessible();
 
 #define PRINTCOUNT(c) {						\
-	if (c >= 100)							\
-		sz[i++] = '0' + c / 100;			\
-	if (c >= 10)							\
-		sz[i++] = '0' + (c % 100) / 10;		\
-	sz[i++] = '0' + (c % 10);				\
+	if ((c) >= 100)							\
+		sz[i++] = '0' + ((c) / 100) % 10;	\
+	if ((c) >= 10)							\
+		sz[i++] = '0' + ((c) / 10) % 10;	\
+	sz[i++] = '0' + ((c) % 10);				\
 }
 
 			memset(sz, ' ', sizeof(sz));
@@ -1200,7 +1200,7 @@ void CheckKeys (void)
 				if (x == 0)
 					fontcolor = 12;
 				VW_MeasurePropString(sz, &width, &height);
-				px = x + (tabfunction == 1 ? 167 : 27) - width;
+				px = x + (tabfunction == 1 ? 165 : 27) - width;
 				py += (tabfunction == 1 ? 0 : 12);
 				VWB_DrawPropString(sz);
 				i = 0;
@@ -1243,7 +1243,7 @@ void CheckKeys (void)
 				if (x == 0)
 					fontcolor = 10;
 				VW_MeasurePropString(sz, &width, &height);
-				px = x + (tabfunction == 1 ? 167 : 27) - width;
+				px = x + (tabfunction == 1 ? 165 : 27) - width;
 				py += (tabfunction == 1 ? 0 : 12);
 				VWB_DrawPropString(sz);
 				i = 0;
@@ -1286,7 +1286,7 @@ void CheckKeys (void)
 				if (x == 0)
 					fontcolor = 14;
 				VW_MeasurePropString(sz, &width, &height);
-				px = x + (tabfunction == 1 ? 167 : 27) - width;
+				px = x + (tabfunction == 1 ? 165 : 27) - width;
 				py += (tabfunction == 1 ? 0 : 12);
 				VWB_DrawPropString(sz);
 				i = 0;
