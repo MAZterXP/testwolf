@@ -1058,7 +1058,11 @@ int	CalcRotate (objtype *ob)
 =====================
 */
 
+#ifdef WOLFDOSMPU
+#define MAXVISABLE	MAXACTORS
+#else  // WOLFDOSMPU
 #define MAXVISABLE	50
+#endif // WOLFDOSMPU
 
 typedef struct
 {
@@ -1082,6 +1086,16 @@ void DrawScaleds (void)
 
 	visptr = &vislist[0];
 
+#ifdef WOLFDOSMPU
+	// make two passes:
+	// - first pass draws all animating actors (i.e., NOT corpses)
+	//   (since player needs to interact with them and we cannot have them disappear, ever)
+	// - second pass draws everything else
+	for (i = 0; i < 2; i++)
+	{
+		if (i != 0)		// skip the static objects for the first pass
+#endif // WOLFDOSMPU
+
 //
 // place static objects
 //
@@ -1091,6 +1105,7 @@ void DrawScaleds (void)
 			continue;						// object has been deleted
 
 #ifdef WOLFDOSMPU
+		// pick up items using better logic
 		if (! (compflags & COMPFLAG_FLAWED_ITEM_PICKUP))
 		{
 			if (statptr->tilex == player->tilex && statptr->tiley == player->tiley
@@ -1130,6 +1145,12 @@ void DrawScaleds (void)
 	{
 		if (!(visptr->shapenum = obj->state->shapenum))
 			continue;						// no shape
+
+#ifdef WOLFDOSMPU
+		// animating actors on the first pass, everything else on the second pass
+		if ((obj->state->think || obj->state->action || obj->state->next != obj->state) ? i : ! i)
+			continue;
+#endif // WOLFDOSMPU
 
 		spotloc = (obj->tilex<<6)+obj->tiley;	// optimize: keep in struct?
 		visspot = &spotvis[0][0]+spotloc;
@@ -1180,6 +1201,10 @@ void DrawScaleds (void)
 		else
 			obj->flags &= ~FL_VISABLE;
 	}
+
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 
 //
 // draw from back to front

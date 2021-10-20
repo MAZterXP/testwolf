@@ -195,9 +195,9 @@ US_Startup(void)
 				else
 				{
 					compflags = atoi(_argv[i + 1]);
- 					if (compflags == 0 && _argv[i + 1][0] != '0')
+					if (compflags == 0 && _argv[i + 1][0] != '0')
 						compflags = 0xFFFF;
- 				}
+				}
 			}
 #endif // WOLFDOSMPU
 			break;

@@ -1,6 +1,8 @@
 @echo off
+cls
 rem Compare DATASEG layout of commercial versions
 rem (Ignoring vanilla because we don't apply the "registered .WL6" savegame compatibility hack on vanilla)
+rem call %~dp0\diffmaps.cmd %~dp0\WOLFSRC\WOLF3DCV.MAP %~dp0\WOLFSRC\WOLF3DCM.MAP
 call %~dp0\diffmaps.cmd %~dp0\WOLFSRC\WOLF3DCM.MAP %~dp0\WOLFSRC\WOLF3DCW.MAP
 
 rem Compare DATASEG layout of registered versions
@@ -23,3 +25,11 @@ rem Compare DATASEG layout of commercial and registered versions
 rem (only difference should be "idle" tag in _helpfilename)
 call %~dp0\diffmaps.cmd %~dp0\WOLFSRC\WOLF3DCM.MAP %~dp0\WOLFSRC\WOLF3DRM.MAP
 call %~dp0\diffmaps.cmd %~dp0\WOLFSRC\WOLF3DCW.MAP %~dp0\WOLFSRC\WOLF3DRW.MAP
+
+echo ___
+echo Please ensure that the following variables do not appear above
+echo (or, if they do, that their locations did not change across versions):
+echo     anything that starts with _s_
+echo     _spotvis
+echo     _objlist
+echo     _statobjlist

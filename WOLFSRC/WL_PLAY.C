@@ -695,9 +695,12 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		int doornum = tilemap[x][y] & ~0x80;
 		int lock = doorobjlist[doornum].lock;
 
-		if ((! actor || actor > 255) && (tabfunction == 3 || spotvis[x][y] & 0x01))
+		if (actor > 255 && ! (((objtype *) actor)->state->think
+							  || ((objtype *) actor)->state->action
+							  || ((objtype *) actor)->state->next != ((objtype *) actor)->state)
+			|| ! actor && (tabfunction == 3 || spotvis[x][y] & 0x01))
 		{
-			// door is open and is currently visible to the player; treat as blank space
+			// door is open and is either occupied by a corpse or currently visible; treat as blank space
 			spotvis[x][y] |= z;
 
 			// flood through (whether accessible or visible)
@@ -751,8 +754,8 @@ void CheckAccessible()
 	secretaccessible = gamestate.secretcount;
 	treasureaccessible = gamestate.treasurecount;
 
-	x = player->x >> TILESHIFT;
-	y = player->y >> TILESHIFT;
+	x = player->tilex;
+	y = player->tiley;
 	*stackptr++ = STACKITEM(x, y, 0x0c);
 	spotvis[x][y] = (spotvis[x][y] & 0x80) | 0x4f;
 	while (stackptr != (unsigned far *) tempmem)
@@ -835,7 +838,9 @@ void CheckAccessible()
 
 	for (obj = player->next; obj; obj = obj->next)
 	{
-		if (obj->flags & FL_SHOOTABLE || obj->obclass == ghostobj)		// mark ghosts even if they are not killable
+		// anything that is animating is marked on the map as an enemy
+		// (this includes special cases like ghosts and projectiles)
+		if (obj->state->think || obj->state->action || obj->state->next != obj->state)
 		{
 			byte *visspot;
 			x = obj->x >> TILESHIFT;

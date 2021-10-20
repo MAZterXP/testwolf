@@ -217,10 +217,6 @@ void mpuStop(boolean exiting)
 {
 	byte turnOff[7];
 
-	// if not yet initialized, don't bother
-	if (mpuPos == 0)
-		return;
-
 	// turn off all controllers and all notes in all channels
 	// and reset the midi volume to the default setting
 	turnOff[1] = 0x79;
@@ -241,8 +237,8 @@ word mpuReadVarLen()
 	if (mpuBuffer[mpuPos] & 0x80)
 	{
 		// varlen values longer than 14 bits are currently not supported
-		mpuStop(false);
 		mpuPos = 1;
+		mpuStop(false);
 		return 1;	// ensure that mpuTick will exit its loop
 	}
 	result |= mpuBuffer[mpuPos++];
@@ -251,15 +247,15 @@ word mpuReadVarLen()
 
 void mpuRestart()
 {
-	mpuStop(false);
-
-	// don't actually restart if we're not playing
-	if (mpuPos < 22)
+	// don't do anything if we're not playing
+	if (mpuPos <= 1)
 		return;
 
-	// read the first varlen delay
+	mpuStop(false);
+
+	mpuWait = 200;		// start after 100 ticks of delay to let the MPU401 finish sending the turn-off messages
 	mpuPos = 22;
-	mpuWait = (mpuReadVarLen() << 1) + 2;		// (ticks + 1) * 2 -- the ones place is reserved for the running status flag
+	mpuReadVarLen();	// read the first varlen (ignore the actual length since we're just starting)
 }
 
 word mpuReadFile(byte *filename)
@@ -389,6 +385,8 @@ void mpuStart(word songId)
 				inportb(mpuPort);					// flush incoming messages
 		}
 		outportb(mpuPort + 1, 0x3F);				// write "set UART mode"
+
+		mpuStop(false);
 	}
 
 	mpuPos = 1;
@@ -434,13 +432,14 @@ void mpuStart(word songId)
 	if (mpuSize != size)
 		return;
 
-	mpuPos = 22;  // ensure that playback actually starts
-	mpuRestart();
+	mpuWait = 200;		// start after 100 ticks of delay to let the MPU401 finish sending the turn-off messages
+	mpuPos = 22;
+	mpuReadVarLen();	// read the first varlen (ignore the actual length since we're just starting)
 }
 
 void mpuTick()
 {
-	if (mpuPos < 22)
+	if (mpuPos <= 22)
 		return;
 
 	mpuWait -= 2;	// decrement 1 tick (again, the lowest bit is reserved for the running status flag)
@@ -456,8 +455,6 @@ void mpuTick()
 				mpuPos++;	// skip FF meta-event type
 			mpuPos++;
 			mpuPos += mpuReadVarLen();
-			if (mpuPos < 22)
-				return;
 		}
 		else if (b < 0x80)
 		{
@@ -498,7 +495,13 @@ void mpuTick()
 				mpuPos += 3;
 			}
 		}
-		if (mpuPos >= mpuSize)
+		if (mpuPos <= 22 || mpuPos > mpuSize)	// overflow indicates a malformed file
+		{
+			mpuPos = 1;
+			mpuStop(false);
+			return;
+		}
+		if (mpuPos == mpuSize)		// loop back to the start
 			mpuPos = 22;
 		mpuWait |= mpuReadVarLen() << 1;
 	}
@@ -521,7 +524,8 @@ void mpuDestroy()
 {
 	if (MPU_DATA_FOUND)
 	{
-		mpuStop(true);
+		if (mpuPos != 0)
+			mpuStop(true);
 		farfree(mpuBuffer);
 		mpuPos = 0;
 	}
