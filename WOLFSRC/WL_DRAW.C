@@ -1087,13 +1087,13 @@ void DrawScaleds (void)
 	visptr = &vislist[0];
 
 #ifdef WOLFDOSMPU
-	// make two passes:
-	// - first pass draws all animating actors (i.e., NOT corpses)
-	//   (since player needs to interact with them and we cannot have them disappear, ever)
-	// - second pass draws everything else
-	for (i = 0; i < 2; i++)
-	{
-		if (i != 0)		// skip the static objects for the first pass
+// make two passes:
+// - first pass draws all animating actors (i.e., NOT corpses)
+//   (since player needs to interact with them and we cannot have them disappear, ever)
+// - second pass draws everything else
+for (i = 0; i < 2; i++)
+{
+	if (i != 0)		// skip the static objects for the first pass
 #endif // WOLFDOSMPU
 
 //
@@ -1134,6 +1134,10 @@ void DrawScaleds (void)
 		if (!visptr->viewheight)
 			continue;						// to close to the object
 
+#ifdef WOLFDOSMPU
+		// if sprite limit enabled, check against the original limit
+		if (! (compflags & COMPFLAG_50_SPRITE_LIMIT) || visptr < &vislist[49])
+#endif // WOLFDOSMPU
 		if (visptr < &vislist[MAXVISABLE-1])	// don't let it overflow
 			visptr++;
 	}
@@ -1141,15 +1145,23 @@ void DrawScaleds (void)
 //
 // place active objects
 //
+#ifdef WOLFDOSMPU
+	// first pass is skipped entirely if sprite limit is enabled
+	if (! (compflags & COMPFLAG_50_SPRITE_LIMIT) || i != 0)
+#endif // WOLFDOSMPU
+
 	for (obj = player->next;obj;obj=obj->next)
 	{
 		if (!(visptr->shapenum = obj->state->shapenum))
 			continue;						// no shape
 
 #ifdef WOLFDOSMPU
-		// animating actors on the first pass, everything else on the second pass
-		if ((obj->state->think || obj->state->action || obj->state->next != obj->state) ? i : ! i)
-			continue;
+		if (! (compflags & COMPFLAG_50_SPRITE_LIMIT))
+		{
+			// animating actors on the first pass, everything else on the second pass
+			if ((obj->state->think || obj->state->action || obj->state->next != obj->state) ? i : ! i)
+				continue;
+		}
 #endif // WOLFDOSMPU
 
 		spotloc = (obj->tilex<<6)+obj->tiley;	// optimize: keep in struct?
@@ -1194,6 +1206,10 @@ void DrawScaleds (void)
 			if (obj->state->rotate)
 				visptr->shapenum += CalcRotate (obj);
 
+#ifdef WOLFDOSMPU
+			// if sprite limit enabled, check against the original limit
+			if (! (compflags & COMPFLAG_50_SPRITE_LIMIT) || visptr < &vislist[49])
+#endif // WOLFDOSMPU
 			if (visptr < &vislist[MAXVISABLE-1])	// don't let it overflow
 				visptr++;
 			obj->flags |= FL_VISABLE;
@@ -1203,7 +1219,7 @@ void DrawScaleds (void)
 	}
 
 #ifdef WOLFDOSMPU
-	}
+}
 #endif // WOLFDOSMPU
 
 //

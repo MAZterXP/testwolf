@@ -1279,10 +1279,11 @@ extern	void	EndText(void);
 #ifdef WOLFDOSMPU
 
 // flags for emulating bugs or features
-#define COMPFLAG_3TILE_PUSHWALLS		0x01
-#define COMPFLAG_FRAMERATE_FIREBALLS	0x02
-#define COMPFLAG_FLAWED_ITEM_PICKUP		0x04
-#define COMPFLAG_NO_CIRCLE_STRAFE		0x08
+#define COMPFLAG_3_TILE_PUSHWALLS		0x0001
+#define COMPFLAG_FRAMERATE_FIREBALLS	0x0002
+#define COMPFLAG_FLAWED_ITEM_PICKUP		0x0004
+#define COMPFLAG_NO_CIRCLE_STRAFE		0x0008
+#define COMPFLAG_50_SPRITE_LIMIT		0x0010
 
 extern	int			far	midivolume;
 extern	int			far	compflags;
