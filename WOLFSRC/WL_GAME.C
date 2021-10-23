@@ -629,6 +629,10 @@ void SetupGameLevel (void)
 
 #ifdef WOLFDOSMPU
 #ifndef SPEAR
+#ifndef UPLOAD
+	// to fix the framerate-dependent fireballs, the T_Projectile function needs to be reassigned to the
+	// "think" state function pointer (called at every tic of the state) instead of the
+	// "action" state function pointer (called at the end of the state)
 	extern statetype s_fire1;
 	extern statetype s_fire2;
 	extern void T_Projectile(objtype *);
@@ -647,6 +651,7 @@ void SetupGameLevel (void)
 		s_fire1.action 	= T_Projectile;
 		s_fire2.action 	= T_Projectile;
 	}
+#endif
 #endif
 #endif // WOLFDOSMPU
 

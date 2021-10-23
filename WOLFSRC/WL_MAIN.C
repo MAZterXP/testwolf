@@ -126,13 +126,27 @@ void ReadConfig(void)
 
 #ifdef WASD
 		{
-			int value;
+			byte value;
 			read(file,&value,sizeof(value));
 			keysalwaysstrafe = value;
+			if (keysalwaysstrafe > 1)
+				keysalwaysstrafe = 1;
+			read(file,&value,sizeof(value));
+			// skip one byte for compatibility
 			read(file,&value,sizeof(value));
 			mouseturningonly = value;
+			if (mouseturningonly > 1)
+				mouseturningonly = 1;
+			read(file,&value,sizeof(value));
+			// skip one byte for compatibility
 			read(file,&value,sizeof(value));
 			tabfunction = value;
+			if (tabfunction > 2)
+				tabfunction = 2;
+			read(file,&value,sizeof(value));
+			automapmode = value;
+			if (automapmode > 3)
+				automapmode = 3;
 		}
 #endif // WASD
 
@@ -213,6 +227,7 @@ void ReadConfig(void)
 		keysalwaysstrafe = true;
 		mouseturningonly = true;
 		tabfunction = 1;
+		automapmode = 0;
 #endif // WASD
 
 #ifdef WOLFDOSMPU
@@ -266,12 +281,18 @@ void WriteConfig(void)
 
 #ifdef WASD
 		{
-			int value;
+			byte value;
 			value = keysalwaysstrafe;
+			write(file,&value,sizeof(value));
+			value = 0;
 			write(file,&value,sizeof(value));
 			value = mouseturningonly;
 			write(file,&value,sizeof(value));
+			value = 0;
+			write(file,&value,sizeof(value));
 			value = tabfunction;
+			write(file,&value,sizeof(value));
+			value = automapmode;
 			write(file,&value,sizeof(value));
 		}
 #endif // WASD
@@ -420,6 +441,7 @@ boolean SaveTheGame(int file,int x,int y)
 
 #ifdef WOLFDOSMPU
 	// account for bytes that the original code did not consider
+	size += 32;	// savegame name, written outside the call to SaveTheGame
 #ifdef SPEAR
 	size += sizeof(LRstruct)*12;
 #endif

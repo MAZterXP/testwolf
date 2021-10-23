@@ -1156,9 +1156,9 @@ for (i = 0; i < 2; i++)
 			continue;						// no shape
 
 #ifdef WOLFDOSMPU
+		// if sprite limit disabled, draw animating actors on the first pass, everything else on the second pass
 		if (! (compflags & COMPFLAG_50_SPRITE_LIMIT))
 		{
-			// animating actors on the first pass, everything else on the second pass
 			if ((obj->state->think || obj->state->action || obj->state->next != obj->state) ? i : ! i)
 				continue;
 		}

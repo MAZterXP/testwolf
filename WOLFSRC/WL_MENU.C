@@ -190,8 +190,15 @@ far TabMenu[]=
 	{1,STR_TAB0,0},
 	{1,STR_TAB1,0},
 	{1,STR_TAB2,0},
-	{1,STR_TAB3,0},
-	{1,STR_TABT,0}
+	{0,"",0},
+	{0,"",0},
+	{0,"",0},
+	{0,STR_MAP0,0},
+	{0,STR_MAP1,0},
+	{0,STR_MAP2,0},
+	{0,STR_MAP3,0},
+	{1,STR_TABT,0},
+	{1,STR_MAPT,0}
 },
 #endif // WASD
 
@@ -1434,21 +1441,28 @@ void DrawTabMenu(CP_iteminfo TabItems)
 
 	WindowX=0;
 	WindowW=320;
-	PrintY=68;
+	PrintY=24;
 	SETFONTCOLOR(READHCOLOR,BKGDCOLOR);
 	_fstrcpy(sz, TabMenu[TabItems.amount].string);
 	US_CPrint(sz);
+	PrintY=24 + 13*6;
+	_fstrcpy(sz, TabMenu[TabItems.amount + 1].string);
+	US_CPrint(sz);
 
-	DrawWindow(NM_X-15,NM_Y-10,NM_W+20,NM_H,BKGDCOLOR);
+	DrawWindow(NM_X-25,NM_Y-6-13*4,NM_W+45,NM_H-6-13,BKGDCOLOR);
+	DrawWindow(NM_X-25,NM_Y-6+13*2,NM_W+45,NM_H-6,BKGDCOLOR);
+
+	TabMenu[6].active = TabMenu[7].active = TabMenu[8].active = TabMenu[9].active =
+		(tabfunction == 2);
 
 	DrawMenu(&TabItems,&TabMenu[0]);
 
 	for (i=0;i<TabItems.amount;i++)
 	{
-		if (tabfunction == i)
-			VWB_DrawPic(NM_X+26,NM_Y+i*13+2,C_SELECTEDPIC);
-		else
-			VWB_DrawPic(NM_X+26,NM_Y+i*13+2,C_NOTSELECTEDPIC);
+		if (tabfunction == i || automapmode + 6 == i)
+			VWB_DrawPic(NM_X+20,NM_Y-13*4+i*13+2,C_SELECTEDPIC);
+		else if (i < 3 || i > 5)
+			VWB_DrawPic(NM_X+20,NM_Y-13*4+i*13+2,C_NOTSELECTEDPIC);
 	}
 
 	DrawMenuGun(&TabItems);
@@ -1459,10 +1473,10 @@ void TabKeyFunction()
 {
 	int which;
 	CP_iteminfo	TabItems;
-	TabItems.x = NM_X - 4;
-	TabItems.y = NM_Y;
-	TabItems.amount = 4;
-	TabItems.curpos = tabfunction;
+	TabItems.x = NM_X - 12;
+	TabItems.y = NM_Y - 13*4;
+	TabItems.amount = 10;
+	TabItems.curpos = tabfunction == 2 ? automapmode + 6 : tabfunction;
 	TabItems.indent = 52;
 	DrawTabMenu(TabItems);
 	MenuFadeIn();
@@ -1472,7 +1486,10 @@ void TabKeyFunction()
 		which = HandleMenu(&TabItems,&TabMenu[0],NULL);
 		if (which >= 0)
 		{
-			tabfunction = which;
+			if (which < 3)
+				tabfunction = which;
+			else
+				automapmode = which - 6;
 			DrawTabMenu(TabItems);
 			ShootSnd();
 			WaitKeyUp();

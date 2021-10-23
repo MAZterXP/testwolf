@@ -1298,7 +1298,8 @@ extern	int			far	tabstate;
 
 extern	boolean		far	keysalwaysstrafe;
 extern	boolean		far	mouseturningonly;
-extern	int			far	tabfunction;
+extern	byte		far	tabfunction;
+extern	byte		far	automapmode;
 
 extern	unsigned	far	killaccessible;
 extern	unsigned	far	secretaccessible;

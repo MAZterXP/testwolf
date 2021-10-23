@@ -98,7 +98,8 @@ int			far	tabstate;
 
 boolean		far	keysalwaysstrafe;
 boolean		far	mouseturningonly;
-int			far	tabfunction;
+byte		far	tabfunction;
+byte		far	automapmode;
 
 unsigned	far	killaccessible;
 unsigned	far	secretaccessible;
@@ -695,10 +696,10 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		int doornum = tilemap[x][y] & ~0x80;
 		int lock = doorobjlist[doornum].lock;
 
-		if (actor > 255 && ! (((objtype *) actor)->state->think
-							  || ((objtype *) actor)->state->action
-							  || ((objtype *) actor)->state->next != ((objtype *) actor)->state)
-			|| ! actor && (tabfunction == 3 || spotvis[x][y] & 0x01))
+		if (actor >= (unsigned) objlist && ! (((objtype *) actor)->state->think
+											  || ((objtype *) actor)->state->action
+											  || ((objtype *) actor)->state->next != ((objtype *) actor)->state)
+			|| (! actor || actor >= (unsigned) objlist) && (automapmode == 3 || spotvis[x][y] & 0x01))
 		{
 			// door is open and is either occupied by a corpse or currently visible; treat as blank space
 			spotvis[x][y] |= z;
@@ -719,7 +720,7 @@ void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 				*(*stackptr)++ = STACKITEM(x, y, z);
 		}
 	}
-	else if (! actor || actor > 255)
+	else if (! actor || actor >= (unsigned) objlist)
 	{
 		// blank spaces or actors
 		spotvis[x][y] |= z;
@@ -782,16 +783,16 @@ void CheckAccessible()
 			byte n = statptr->itemnumber;
 
 			// always show item in full map mode, or if player has seen it once
-			if (tabfunction == 3 || *statptr->visspot & 0x02)
+			if (automapmode == 3 || *statptr->visspot & 0x02)
 				*statptr->visspot |= 0x04;
 
-			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal || n == bo_key1 || n == bo_key2)
+			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal || n == bo_key1 || n == bo_key2 || n == bo_spear)
 			{
 				// if it can be physically reached, treasure is accessible
 				if (*statptr->visspot & 0x08)
 				{
-					// keys get marked as treasure for convenience, but don't count to total
-					if (n != bo_key1 && n != bo_key2)
+					// keys and the spear get marked as treasure because they are important, but don't count to total
+					if (n != bo_key1 && n != bo_key2 && n != bo_spear)
 						treasureaccessible++;
 				}
 
@@ -802,36 +803,6 @@ void CheckAccessible()
 			{
 				if ((*statptr->visspot & 0x7f) != 0x4f)	// if player isn't there...
 					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x10;	// mark the bonus
-			}
-		}
-	}
-
-	for (y = 0; y < 64; y++)
-	{
-		for (x = 0; x < 64; x++)
-		{
-			boolean pw = (pwallstate && x == pwallx && y == pwally);
-			if (pw || (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y]))
-			{
-				// if tile has been marked specially, secret is accessible
-				if (! pw && spotvis[x][y] & 0x20)
-					secretaccessible++;
-
-				if ((spotvis[x][y] & 0x7f) != 0x4f)	// if player isn't there...
-				{
-					if (pw || tabfunction == 3 || spotvis[x][y] & 0x80)
-					{
-						// inaccessible secrets are marked darker
-						if (! (spotvis[x][y] & 0x20))
-							spotvis[x][y] = (spotvis[x][y] & 0x83) | 0x24;
-					}
-					else
-					{
-						// if it's reachable, masquerade secret as a wall
-						if (spotvis[x][y] & 0x0c)
-							spotvis[x][y] |= 0x7c;
-					}
-				}
 			}
 		}
 	}
@@ -851,10 +822,40 @@ void CheckAccessible()
 			if (*visspot & 0x04 && obj->flags & FL_SHOOTABLE)
 				killaccessible++;
 
-			if ((*visspot & 0x7f) != 0x4f && (tabfunction == 3 || *visspot & 0x01))	// if player isn't there, and either full map mode or within player's viscone...
+			if ((*visspot & 0x7f) != 0x4f && (automapmode == 3 || *visspot & 0x01))	// if player isn't there, and either full map mode or within player's viscone...
 			{
 				// special case: enemy color is always dark to distinguish from player, and is drawn over everything else except player
 				*visspot = (*visspot & 0x83) | 0x44;
+			}
+		}
+	}
+
+	for (y = 0; y < 64; y++)
+	{
+		for (x = 0; x < 64; x++)
+		{
+			boolean pw = (pwallstate && x == pwallx && y == pwally);
+			if (pw || (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y]))
+			{
+				// if tile has been marked specially, secret is accessible
+				if (! pw && spotvis[x][y] & 0x20)
+					secretaccessible++;
+
+				if ((spotvis[x][y] & 0x7f) != 0x4f)	// if player isn't there...
+				{
+					if (pw || automapmode >= 2 || automapmode == 1 && killaccessible == gamestate.killcount || spotvis[x][y] & 0x80)
+					{
+						// inaccessible secrets are marked darker
+						if (! (spotvis[x][y] & 0x20))
+							spotvis[x][y] = (spotvis[x][y] & 0x83) | 0x24;
+					}
+					else
+					{
+						// if it's reachable, masquerade secret as a wall
+						if (spotvis[x][y] & 0x0c)
+							spotvis[x][y] |= 0x7c;
+					}
+				}
 			}
 		}
 	}
@@ -1123,7 +1124,7 @@ void CheckKeys (void)
 			byte x, y;
 			unsigned width, height;
 			byte mask = 0x02;
-			if (tabfunction == 3)
+			if (automapmode == 3)
 				mask = 0x0c;
 
 			tabstate = 2;	// do not allow next tab press to show KST stats again
@@ -1307,7 +1308,7 @@ void CheckKeys (void)
 				VWB_DrawPropString(sz);
 			}
 
-			if (tabfunction > 1)
+			if (tabfunction == 2)
 			{
 				// draw the map itself
 				for (y = 0; y < 64; y++)
