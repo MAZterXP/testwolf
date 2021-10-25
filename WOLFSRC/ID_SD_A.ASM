@@ -130,12 +130,6 @@ extreme		dw	?
 ;	Macro used to do the sound effects code
 ;
 	MACRO	DOFX
-IFDEF	WOLFDOSMPU
-	mov	al,[BYTE PTR cs:pcindicate]
-	or	al,al
-	jnz	@@nopc						; digital sound effect currently being played
-ENDIF	; WOLFDOSMPU
-
 	les	di,[pcSound]				; PC sound effects
 	mov	ax,es
 	or	ax,di
@@ -294,7 +288,53 @@ ENDIF	; WOLFDOSMPU
 	push ax
 	mov	al,[BYTE PTR cs:pcindicate]
 	or	al,al
+
+IFDEF	WOLFDOSMPU
+	jnz	@@pcdigi
+
+	push ds
+	push es
+	pusha
+
+	mov	ds,[cs:MyDS]
+
+	les	di,[ssSample]
+	mov	ax,es
+	or	ax,di
+	jz	@@donereg
+
+	mov	dx,[ssData]
+	mov	ax,[ssStatus]
+	or	ax,ax
+	jnz	@@covox
+
+@@sbdwait:				; wait to write when on SB Direct
+	in	al,dx
+	test al,80h
+	jnz	@@sbdwait
+	mov	al,10h
+	out dx,al
+@@sbdwait2:
+	in	al,dx
+	test al,80h
+	jnz	@@sbdwait2
+@@covox:				; just directly write when on Covox Speech Thing
+	mov	al,[es:di]
+	out	dx,al
+
+	inc	[WORD PTR ssSample]
+	dec	[ssLengthLeft]
+	jnz	@@donereg
+
+	mov	[WORD PTR ssSample],0
+	mov	[WORD PTR ssSample+2],0
+	call SDL_DigitizedDone
+	jmp	@@donereg
+
+@@pcdigi:
+ELSE	; WOLFDOSMPU
 	jz	@@done
+ENDIF	; WOLFDOSMPU
 
 	push ds
 	push es
@@ -310,11 +350,6 @@ ENDIF	; WOLFDOSMPU
 	mov	bl,[es:di]					; Get the byte
 	inc	[WORD PTR pcSound]			; Increment pointer
 
-IFDEF	WOLFDOSMPU
-	mov	dx,[ssData]					; if actually meant for SB direct, use that instead
-	jnz	@@wait
-ENDIF	; WOLFDOSMPU
-
 	and	bl,11100000b				; Nuke some of the precision (DEBUG - do this in the table)
 
 	xor	bh,bh
@@ -324,23 +359,6 @@ ENDIF	; WOLFDOSMPU
 	and	al,11111100b
 	or	al,ah
 	out	pcSpeaker,al
-
-IFDEF	WOLFDOSMPU
-	jmp	@@finishup
-@@wait:
-	in	al,dx
-	test al,80h
-	jnz	@@wait
-	mov	al,10h
-	out dx,al
-@@wait2:
-	in	al,dx
-	test al,80h
-	jnz	@@wait2
-	mov	al,bl
-	out	dx,al
-@@finishup:
-ENDIF	; WOLFDOSMPU
 
 	dec	[pcLengthLeft]
 	jnz	@@donereg
@@ -482,6 +500,12 @@ ENDIF	; WOLFDOSMPU
 	mov	[WORD PTR sqHackTime],ax
 	mov	[WORD PTR sqHackTime+2],ax
 @@nosq:
+
+IFDEF	WOLFDOSMPU
+	mov	ax,[ssStatus]
+	cmp	ax,1
+	jle	@@ssdone
+ENDIF	; WOLFDOSMPU
 
 	les	di,[ssSample]			; Get pointer to Sound Source sample
 	mov	ax,es

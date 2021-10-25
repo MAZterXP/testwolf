@@ -587,14 +587,25 @@ SDL_SetTimerSpeed(void)
 	void interrupt	(*isr)(void);
 
 #ifdef WOLFDOSMPU
-	if ((DigiMode == sds_SoundBlaster) && DigiPlaying && sbDMA == 2)
+	if (DigiMode == sds_SoundBlaster && DigiPlaying && sbDMA == 2
+		|| DigiMode == sds_SoundSource && DigiPlaying && ssNoCheck)
 	{
-		// SB direct mode
+		// shared code for SB Direct Mode and Covox Speech Thing
 		rate = TickBase * 100;
 		isr = SDL_t0ExtremeAsmService;
 
-		// set ssData to the correct SB port
-		ssData = sbLocation + sbWriteCmd;
+		if (DigiMode == sds_SoundBlaster)
+		{
+			// set ssData to the correct SB port
+			ssStatus = 0;
+			ssData = sbLocation + sbWriteCmd;
+		}
+		else
+		{
+			// set ssData to the correct Covox Speech Thing port
+			ssStatus = 1;
+			ssData = ssControl - 2;
+		}
 	}
 	else
 #endif // WOLFDOSMPU
@@ -602,12 +613,6 @@ SDL_SetTimerSpeed(void)
 	{
 		rate = TickBase * 100;
 		isr = SDL_t0ExtremeAsmService;
-
-#ifdef WOLFDOSMPU
-		// set ssData to nothing to indicate PC speaker digital sounds
-		// (unsupported; you must hack the config file for it because it sounds terrible)
-		ssData = 0;
-#endif // WOLFDOSMPU
 	}
 	else if
 	(
@@ -620,6 +625,7 @@ SDL_SetTimerSpeed(void)
 
 #ifdef WOLFDOSMPU
 		// reset ssData to the correct SS port
+		ssStatus = ssControl - 1;
 		ssData = ssStatus - 1;
 #endif // WOLFDOSMPU
 	}
@@ -659,8 +665,8 @@ SDL_SBStopSample(void)
 #ifdef WOLFDOSMPU
 	if (sbDMA == 2)
 	{
-		extern void SDL_PCStopSample();
-		SDL_PCStopSample();
+		extern void SDL_SSStopSample();
+		SDL_SSStopSample();
 		return;
 	}
 #endif // WOLFDOSMPU
@@ -788,8 +794,8 @@ SDL_SBPlaySample(byte huge *data,longword len)
 #ifdef WOLFDOSMPU
 	if (sbDMA == 2)
 	{
-		extern void SDL_PCPlaySample(byte huge *data, longword len);
-		SDL_PCPlaySample(data, len);
+		extern void SDL_SSPlaySample(byte huge *data, longword len);
+		SDL_SSPlaySample(data, len);
 		return;
 	}
 #endif // WOLFDOSMPU
@@ -963,7 +969,9 @@ SDL_StartSB(void)
 	byte	timevalue,test;
 
 #ifdef WOLFDOSMPU
-	if (sbDMA != 2)
+	if (sbDMA == 2)
+		SBProPresent = false;
+	else
 	{
 #endif // WOLFDOSMPU
 
@@ -980,6 +988,11 @@ SDL_StartSB(void)
 
 	sbWriteDelay();
 	sbOut(sbWriteCmd,0xd1);				// Turn on DSP speaker
+
+#ifdef WOLFDOSMPU
+	if (sbDMA != 2)
+	{
+#endif // WOLFDOSMPU
 
 	// Set the SoundBlaster DAC time constant for 7KHz
 	timevalue = 256 - (1000000 / 7000);
@@ -1015,6 +1028,10 @@ SDL_StartSB(void)
 			sbOut(sbpMixerData,0);				// 0=off,2=on
 		}
 	}
+
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1027,6 +1044,11 @@ SDL_ShutSB(void)
 {
 	SDL_SBStopSample();
 
+#ifdef WOLFDOSMPU
+	if (sbDMA != 2)
+	{
+#endif // WOLFDOSMPU
+
 	if (SBProPresent)
 	{
 		// Restore FM output levels (SB Pro)
@@ -1037,11 +1059,6 @@ SDL_ShutSB(void)
 		sbOut(sbpMixerAddr,sbpmVoiceVol);
 		sbOut(sbpMixerData,sbpOldVOCMix);
 	}
-
-#ifdef WOLFDOSMPU
-	if (sbDMA != 2)
-	{
-#endif // WOLFDOSMPU
 
 	setvect(sbIntVec,sbOldIntHand);		// Set vector back
 
@@ -1308,10 +1325,6 @@ SDL_PCPlaySound(PCSound far *sound)
 {
 asm	pushf
 asm	cli
-
-#ifdef WOLFDOSMPU
-	SDL_IndicatePC(false);
-#endif // WOLFDOSMPU
 
 	pcLastSample = -1;
 	pcLengthLeft = sound->common.length;
