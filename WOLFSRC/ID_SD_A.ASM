@@ -130,6 +130,12 @@ extreme		dw	?
 ;	Macro used to do the sound effects code
 ;
 	MACRO	DOFX
+IFDEF	WOLFDOSMPU
+	mov	al,[BYTE PTR cs:pcindicate]
+	or	al,al
+	jnz	@@nopc						; digital sound effect currently being played
+ENDIF	; WOLFDOSMPU
+
 	les	di,[pcSound]				; PC sound effects
 	mov	ax,es
 	or	ax,di
@@ -304,6 +310,11 @@ extreme		dw	?
 	mov	bl,[es:di]					; Get the byte
 	inc	[WORD PTR pcSound]			; Increment pointer
 
+IFDEF	WOLFDOSMPU
+	mov	dx,[ssData]					; if actually meant for SB direct, use that instead
+	jnz	@@wait
+ENDIF	; WOLFDOSMPU
+
 	and	bl,11100000b				; Nuke some of the precision (DEBUG - do this in the table)
 
 	xor	bh,bh
@@ -313,6 +324,23 @@ extreme		dw	?
 	and	al,11111100b
 	or	al,ah
 	out	pcSpeaker,al
+
+IFDEF	WOLFDOSMPU
+	jmp	@@finishup
+@@wait:
+	in	al,dx
+	test al,80h
+	jnz	@@wait
+	mov	al,10h
+	out dx,al
+@@wait2:
+	in	al,dx
+	test al,80h
+	jnz	@@wait2
+	mov	al,bl
+	out	dx,al
+@@finishup:
+ENDIF	; WOLFDOSMPU
 
 	dec	[pcLengthLeft]
 	jnz	@@donereg

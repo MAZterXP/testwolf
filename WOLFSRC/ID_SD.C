@@ -586,10 +586,28 @@ SDL_SetTimerSpeed(void)
 	word	rate;
 	void interrupt	(*isr)(void);
 
+#ifdef WOLFDOSMPU
+	if ((DigiMode == sds_SoundBlaster) && DigiPlaying && sbDMA == 2)
+	{
+		// SB direct mode
+		rate = TickBase * 100;
+		isr = SDL_t0ExtremeAsmService;
+
+		// set ssData to the correct SB port
+		ssData = sbLocation + sbWriteCmd;
+	}
+	else
+#endif // WOLFDOSMPU
 	if ((DigiMode == sds_PC) && DigiPlaying)
 	{
 		rate = TickBase * 100;
 		isr = SDL_t0ExtremeAsmService;
+
+#ifdef WOLFDOSMPU
+		// set ssData to nothing to indicate PC speaker digital sounds
+		// (unsupported; you must hack the config file for it because it sounds terrible)
+		ssData = 0;
+#endif // WOLFDOSMPU
 	}
 	else if
 	(
@@ -599,6 +617,11 @@ SDL_SetTimerSpeed(void)
 	{
 		rate = TickBase * 10;
 		isr = SDL_t0FastAsmService;
+
+#ifdef WOLFDOSMPU
+		// reset ssData to the correct SS port
+		ssData = ssStatus - 1;
+#endif // WOLFDOSMPU
 	}
 	else
 	{
@@ -632,6 +655,15 @@ static void
 SDL_SBStopSample(void)
 {
 	byte	is;
+
+#ifdef WOLFDOSMPU
+	if (sbDMA == 2)
+	{
+		extern void SDL_PCStopSample();
+		SDL_PCStopSample();
+		return;
+	}
+#endif // WOLFDOSMPU
 
 asm	pushf
 asm	cli
@@ -752,6 +784,15 @@ static void
 SDL_SBPlaySample(byte huge *data,longword len)
 {
 	longword	used;
+
+#ifdef WOLFDOSMPU
+	if (sbDMA == 2)
+	{
+		extern void SDL_PCPlaySample(byte huge *data, longword len);
+		SDL_PCPlaySample(data, len);
+		return;
+	}
+#endif // WOLFDOSMPU
 
 	SDL_SBStopSample();
 
@@ -921,12 +962,21 @@ SDL_StartSB(void)
 {
 	byte	timevalue,test;
 
+#ifdef WOLFDOSMPU
+	if (sbDMA != 2)
+	{
+#endif // WOLFDOSMPU
+
 	sbIntVec = sbIntVectors[sbInterrupt];
 	if (sbIntVec < 0)
 		Quit("SDL_StartSB: Illegal or unsupported interrupt number for SoundBlaster");
 
 	sbOldIntHand = getvect(sbIntVec);	// Get old interrupt handler
 	setvect(sbIntVec,SDL_SBService);	// Set mine
+
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 
 	sbWriteDelay();
 	sbOut(sbWriteCmd,0xd1);				// Turn on DSP speaker
@@ -988,7 +1038,16 @@ SDL_ShutSB(void)
 		sbOut(sbpMixerData,sbpOldVOCMix);
 	}
 
+#ifdef WOLFDOSMPU
+	if (sbDMA != 2)
+	{
+#endif // WOLFDOSMPU
+
 	setvect(sbIntVec,sbOldIntHand);		// Set vector back
+
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 }
 
 //	Sound Source Code
@@ -1249,6 +1308,10 @@ SDL_PCPlaySound(PCSound far *sound)
 {
 asm	pushf
 asm	cli
+
+#ifdef WOLFDOSMPU
+	SDL_IndicatePC(false);
+#endif // WOLFDOSMPU
 
 	pcLastSample = -1;
 	pcLengthLeft = sound->common.length;
@@ -2312,6 +2375,9 @@ SD_Startup(void)
 			if (env)
 			{
 				long temp;
+#ifdef WOLFDOSMPU
+				sbDMA = 2;	// if user specified BLASTER string but did not specify DMA, set direct mode
+#endif // WOLFDOSMPU
 				while (*env)
 				{
 					while (isspace(*env))
