@@ -138,7 +138,8 @@ far SndMenu[]=
 #ifdef WOLFDOSMPU
 	{1,STR_MPU,0},
 	{0,STR_VOLUME,MidiVolume},
-	{0,STR_MVOLUME,0}	// we just need the string to not occupy the data segment
+	{0,STR_MVOLUME,0},	// we need these strings to not occupy the data segment
+	{0,STR_COVOX,0}
 #else  // WOLFDOSMPU
 	{1,STR_ALSB,0}
 #endif // WOLFDOSMPU
@@ -1197,6 +1198,9 @@ void CP_Sound(void)
 	int which,i;
 
 #ifdef WOLFDOSMPU
+	if (CovoxSupport())
+		_fstrcpy(SndMenu[6].string, SndMenu[14].string);
+
 	if (! mpuIsEnabled())
 	{
 		// if no MUSIC\_INFO file was found, revert option string to AdLib/Sound Blaster

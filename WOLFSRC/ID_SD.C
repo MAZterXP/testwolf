@@ -2837,3 +2837,10 @@ SD_MusicPlaying(void)
 
 	return(result);
 }
+
+#ifdef WOLFDOSMPU
+boolean CovoxSupport(void)
+{
+	return ssNoCheck && SoundSourcePresent;
+}
+#endif // WOLFDOSMPU

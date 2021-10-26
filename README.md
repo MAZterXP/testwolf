@@ -29,6 +29,10 @@ This mod is forked directly from the official Wolf3D source release from id Soft
 Version History
 ===============
 
+1.41 (2021-10-26)
+-----------------
+- Added support for DMA-less Sound-Blaster-compatible cards and Covox-Speech-Thing-compatible parallel port sound devices. See the [tips section](#dont-hurt-midi) for details. (Thanks to Bondi for testing!)
+
 1.40 (2021-10-24)
 -----------------
 - Now sets MAXVISABLE to MAXACTORS (instead of a paltry hardcoded 50), so that all sprites render properly in extreme cases such as E4M8 (in the swastika-lights area) and E4M10 (where you can kill all 75 officers through a secret opening). Also fixed the "visability" algorithm so that animating actors always get drawn first. These fixes ensure that all active enemies and projectiles will never go invisible, even in custom levels that maximize the MAXACTORS limit. (Statics and corpses may still become invisible depending on their layout, but that has always happened in regular Wolf3D and it is still less of a problem with the increased MAXVISABLE limit.) _This bugfix can be disabled with new COMP flag 16._ (In case a mod uses the sprite limit to forcibly hide attackers, or for people who like the weirdness of fighting invisible officers on E4M10.)
@@ -158,6 +162,8 @@ Also download the latest [wolfmidi.zip](https://github.com/ericvids/wolfmidi/rel
 
 Then simply launch the wolfdosmpu EXE for your game (e.g., WOLF3DCM.EXE for Wolf3D commercial version).
 
+If you don't get MPU-401 music, check the Sound menu. If your MUSIC\ directory is being read by the game, the "AdLib/Sound Blaster" music option will change to "MPU-401/General MIDI"; otherwise, the game will revert to playing OPL2 music. If you are not hearing any music at all and the "MPU-401/General MIDI" option is shown, something else is wrong -- see the [tips section](#dont-hurt-midi) for troubleshooting.
+
 In case you're wondering, the MUSIC\ directory contains all the tracks for _both_ Wolf3D and SoD games. Any tracks with the same name between each game happen to be exact byte-for-byte duplicates. If you want to save space, you may install the data files of both Wolf3D and SoD in the same directory, so they can share the same MUSIC\ directory.
 
 Don't hurt MIDI.
@@ -167,14 +173,29 @@ Here are some tips and suggestions for some common problems:
 
 1. If you use wolfdosmpu inside DOSBox, wolfdosmpu will sometimes play on a different MIDI device than you intended (or will not play anything at all). In this case, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
 
-2. If your hardware MPU-401 is not being detected, try to set the port via the P option of the BLASTER environment variable. Try this even if you don't have a Sound Blaster card. (Some Roland MPU-401s and clones may be configured to use a different address instead of the default 330, e.g., 300, 332, etc.)
+2. If your hardware MPU-401 is not being detected, try to set the port via the P option of the BLASTER environment variable.
+   ```
+            SET BLASTER= ... P330 ...
 
-```
-         SET BLASTER= ... P330 ...
+   example: SET BLASTER=A220 I7 D1 T6 P330 H5
+   ```
+   Try this even if you don't have a Sound Blaster card (in which case, BLASTER would contain only the P option). Some Roland MPU-401s and clones may be configured to use a different address instead of the default 330, e.g., 300, 332, etc.
 
-example: SET BLASTER=A220 I7 D1 T6 P330 H5
-```
-3. __Note on memory and TSRs__: wolfdosmpu generally requires more conventional RAM than the original Wolf3D engine. The additional memory is used for MIDI file caching and parsing, and has to be allocated in conventional memory for compatibility reasons. The amount needed will increase if you use longer custom songs. The modern-controls EXEs also consume more memory for program code supporting the automap and other features.
+3. If you have a DMA-less Sound-Blaster-compatible card (such as an ES1688-based card), you have to specify the address of your Sound-Blaster-compatible in your BLASTER environment variable but _do not_ specify the IRQ (I) and DMA (D) parameters. For example: "SET BLASTER=A220" or "SET BLASTER=A220 P330" (without the quotes). This enables DMA-less mode, which uses your CPU to push the audio samples to your device with the proper timing. Note that SB Pro features, e.g., sound positioning and attenuation, are disabled in this mode because the related low-level port commands were observed to cause problems and crashing with these cards.
+
+4. If you have a parallel port digitized sound device that is similar to but not fully compatible with the Disney Sound Source (e.g., Covox Speech Thing), you can enable Covox compatibility mode by using the "SS#" command-line parameter, where # is the LPT port number. For example: "WOLF3DCW SS2" (without the quotes) to use a Covox on LPT2. The Sound menu will confirm that this mode is enabled by renaming the "Disney Sound Source" option to "Covox/Sound Source"; make sure that this option is selected. Covox compatibility mode, like DMA-less mode (above), relies on your CPU to push the audio samples to your device with the proper timing. (This mode also works for the Disney Sound Source itself; the game simply ignores the device's built-in sample buffering.)
+
+5. __Be careful when using Apogee shareware-/registered-version data files!__
+
+   First, make sure you have version 1.4 or 1.4g. All earlier Apogee versions are unsupported.
+
+   Second, you will get garbled graphics if you try to use Apogee data files with WOLF3DCM.EXE/WOLF3DCW.EXE. If you are using shareware (WL1 extension) files, use WOLF3DSM.EXE/WOLF3DSW.EXE, otherwise use WOLF3DRM.EXE/WOLF3DRW.EXE.
+
+   __DO NOT__ use WOLF3DRM.EXE/WOLF3DRW.EXE with WL1 data files -- it will seem to work at first but it will crash as soon as you start killing guards! (Also, __NEVER__ use WOLF3DRM.EXE/WOLF3DRW.EXE with the commercial data files from id/GT/Activision/Steam. Your system will become unresponsive, even under DOSBox!)
+
+   The main reason for keeping the Apogee versions is for their "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
+
+6. __Note on memory and TSRs__: wolfdosmpu generally requires more conventional RAM than the original Wolf3D engine. The additional memory is used for MIDI file caching and parsing, and has to be allocated in conventional memory for compatibility reasons. The amount needed will increase if you use longer custom songs. The modern-controls EXEs also consume more memory for program code supporting the automap and other features.
 
    TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) consume part of your conventional memory. As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
 
@@ -184,11 +205,9 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 
    If you use the debug command-line parameter ("goobers" for Wolf3D and "debugmode" for SoD), you can force the wolfdosmpu EXE to load regardless of available memory. THIS IS AN UNSUPPORTED FEATURE, and you risk all sorts of unexpected behavior, such as trigerring the mythical id Software copy protection code that erases your hard drive if you don't have a registered copy of v1.1. Don't say I didn't warn you.
 
-4. Apogee version 1.4/1.4g's WL6 data files are _NOT_ compatible with WOLF3DCM.EXE/WOLF3DCW.EXE; use WOLF3DRM.EXE/WOLF3DRW.EXE instead. However, the data files are identical between both Apogee 1.4 and 1.4g. The main reason for keeping the Apogee version is for its "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
+7. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu EXEs and the originals. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global (non-far) variables or constant string literals WILL break future savegames.
 
-5. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu EXEs and the originals. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global (non-far) variables or constant string literals WILL break future savegames.
-
-6. __Note on the COMP parameter__: You can enable specific quirks/bugs of the original EXEs using the COMP (compatibility) command-line parameter. Specify a number after COMP, which should be the sum of the flags you want to enable (alternatively, specify a negative number to disable those flags and enable everything else):
+8. __Note on the COMP parameter__: You can enable specific quirks/bugs of the original EXEs using the COMP (compatibility) command-line parameter. Specify a number after COMP, which should be the sum of the flags you want to enable (alternatively, specify a negative number to disable those flags and enable everything else):
    ```
     1: pushwalls move 3 tiles unless blocked
        (note: the default maps assume that pushwalls move 2 tiles maximum; this option renders these
@@ -207,7 +226,7 @@ example: SET BLASTER=A220 I7 D1 T6 P330 H5
 Bring "M" on!
 -------------
 
-If you want to replace any track of the game with your own MIDI music, simply replace the corresponding entry in the MUSIC\ directory with a MIDI file of your choice. (Do NOT use the MID extension. Also, do NOT touch the _INFO file unless you know what you are doing!)
+If you want to use your own MIDI music, simply replace each music file that you want to change in the MUSIC\ directory with a MIDI file of your choice. (Do NOT use the MID extension. Also, do NOT touch the _INFO file unless you know what you are doing!)
 
 However, since the MIDI files have to be optimized specifically for Wolf3D's timing algorithm, you will likely need to edit any custom MIDI files. The current limitations are:
 

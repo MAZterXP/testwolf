@@ -47,6 +47,7 @@
 #define	STR_MPU		"MPU-401/General MIDI"
 #define STR_VOLUME	"   Adjust Volume..."
 #define STR_MVOLUME	"Adjust Music Volume"
+#define STR_COVOX	"Covox/Sound Source"
 #endif // WOLFDOSMPU
 
 #ifdef WASD
