@@ -170,6 +170,11 @@ US_Startup(void)
 {
 	int	i,n;
 
+#ifdef WOLFDOSMPU
+	extern word far compflags;
+	compflags = 0;
+#endif // WOLFDOSMPU
+
 	if (US_Started)
 		return;
 
@@ -184,30 +189,23 @@ US_Startup(void)
 		case 0:
 			compatability = true;
 #ifdef WOLFDOSMPU
+			// actually use the COMP parameter for something useful
+			if (i + 1 >= _argc)
+				compflags = 0xFFFF;
+			else if (_argv[i + 1][0] == '-')
+				compflags = 0xFFFF - atoi(&_argv[i + 1][1]);
+			else
 			{
-				extern int far compflags;
-
-				// actually use the COMP parameter for something useful
-				if (i + 1 >= _argc)
+				compflags = atoi(_argv[i + 1]);
+				if (compflags == 0 && _argv[i + 1][0] != '0')
 					compflags = 0xFFFF;
-				else if (_argv[i + 1][0] == '-')
-					compflags = 0xFFFF - atoi(&_argv[i + 1][1]);
-				else
-				{
-					compflags = atoi(_argv[i + 1]);
-					if (compflags == 0 && _argv[i + 1][0] != '0')
-						compflags = 0xFFFF;
-				}
 			}
 #endif // WOLFDOSMPU
 			break;
 		case 1:
 			compatability = false;
 #ifdef WOLFDOSMPU
-			{
-				extern int far compflags;
-				compflags = 0;
-			}
+			compflags = 0;
 #endif // WOLFDOSMPU
 			break;
 		}

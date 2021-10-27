@@ -1286,7 +1286,7 @@ extern	void	EndText(void);
 #define COMPFLAG_50_SPRITE_LIMIT		0x0010
 
 extern	int			far	midivolume;
-extern	int			far	compflags;
+extern	word		far	compflags;
 extern	int			far	savedviewsize;
 
 #endif // WOLFDOSMPU

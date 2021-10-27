@@ -810,7 +810,6 @@ void DrawPlayBorderSides (void)
 	{
 		// shrinking screens fix
 		ClearMemory();
-		MM_SortMem();
 		NewViewSize(savedviewsize);
 	}
 #endif // WOLFDOSMPU
@@ -894,7 +893,6 @@ void DrawPlayBorder (void)
 	{
 		// shrinking screens fix
 		ClearMemory();
-		MM_SortMem();
 		NewViewSize(savedviewsize);
 	}
 #endif // WOLFDOSMPU

@@ -1451,7 +1451,6 @@ void	ThreeDRefresh (void)
 	{
 		// shrinking screens fix
 		ClearMemory();
-		MM_SortMem();
 		NewViewSize(savedviewsize);
 
 		// at this point, even if the view size shrunk, we have to accept it

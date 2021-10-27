@@ -276,6 +276,10 @@ void WriteConfig(void)
 		write(file,&buttonmouse,sizeof(buttonmouse));
 		write(file,&buttonjoy,sizeof(buttonjoy));
 
+#ifdef WOLFDOSMPU
+		// save what the user believes the viewsize currently is
+		viewsize = savedviewsize;
+#endif // WOLFDOSMPU
 		write(file,&viewsize,sizeof(viewsize));
 		write(file,&mouseadjustment,sizeof(mouseadjustment));
 
@@ -1728,6 +1732,16 @@ void Quit (char *error)
 {
 	unsigned        finscreen;
 	memptr	screen;
+
+#ifdef WOLFDOSMPU
+	if (compflags == 0x8000)
+	{
+		// error happened before subsystem initialization finished
+		ShutdownId();
+		puts(error);
+		exit(1);
+	}
+#endif // WOLFDOSMPU
 
 	if (virtualreality)
 		geninterrupt(0x61);

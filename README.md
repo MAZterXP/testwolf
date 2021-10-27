@@ -29,6 +29,11 @@ This mod is forked directly from the official Wolf3D source release from id Soft
 Version History
 ===============
 
+1.42 (2021-10-28)
+-----------------
+- Now detects whether proper data files have been provided for the EXE used.
+- Fixed Change View dialog becoming unresponsive to user input during low-memory conditions.
+
 1.41 (2021-10-26)
 -----------------
 - Added support for DMA-less Sound-Blaster-compatible cards and Covox-Speech-Thing-compatible parallel port sound devices. See the [tips section](#dont-hurt-midi) for details. (Thanks to Bondi for testing!)
@@ -185,13 +190,9 @@ Here are some tips and suggestions for some common problems:
 
 4. If you have a parallel port digitized sound device that is similar to but not fully compatible with the Disney Sound Source (e.g., Covox Speech Thing), you can enable Covox compatibility mode by using the "SS#" command-line parameter, where # is the LPT port number. For example: "WOLF3DCW SS2" (without the quotes) to use a Covox on LPT2. The Sound menu will confirm that this mode is enabled by renaming the "Disney Sound Source" option to "Covox/Sound Source"; make sure that this option is selected. Covox compatibility mode, like DMA-less mode (above), relies on your CPU to push the audio samples to your device with the proper timing. (This mode also works for the Disney Sound Source itself; the game simply ignores the device's built-in sample buffering.)
 
-5. __Be careful when using Apogee shareware-/registered-version data files!__
+5. __Be careful when using Apogee shareware-/registered-version data files!__ Make sure your Apogee data files are version 1.4 or 1.4g. All earlier Apogee versions (1.2 and below) are not supported.
 
-   First, make sure you have version 1.4 or 1.4g. All earlier Apogee versions are unsupported.
-
-   Second, you will get garbled graphics if you try to use Apogee data files with WOLF3DCM.EXE/WOLF3DCW.EXE. If you are using shareware (WL1 extension) files, use WOLF3DSM.EXE/WOLF3DSW.EXE, otherwise use WOLF3DRM.EXE/WOLF3DRW.EXE.
-
-   __DO NOT__ use WOLF3DRM.EXE/WOLF3DRW.EXE with WL1 data files -- it will seem to work at first but it will crash as soon as you start killing guards! (Also, __NEVER__ use WOLF3DRM.EXE/WOLF3DRW.EXE with the commercial data files from id/GT/Activision/Steam. Your system will become unresponsive, even under DOSBox!)
+   As a countermeasure, wolfdosmpu (as of version 1.42) tries to detect whether your data files are of the correct version, by checking the extension (WL6/WL1/SOD/SDM) and whether the VGAHEAD.WL6 file reports the correct size. If you get the error "NO WOLFENSTEIN 3-D .WL6/.WL1 FILES TO BE FOUND!", you are probably using shareware version data files on the registered/commercial version EXEs (or vice versa). If you get the error "VGAHEAD.WL6 IS INCOMPATIBLE!", you are probably using registered version data files on a commercial version EXE (or vice versa). Switch to the correct version EXE and try again.
 
    The main reason for keeping the Apogee versions is for their "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
@@ -212,16 +213,26 @@ Here are some tips and suggestions for some common problems:
     1: pushwalls move 3 tiles unless blocked
        (note: the default maps assume that pushwalls move 2 tiles maximum; this option renders these
        maps impossible to complete 100%)
-    2: make fake-Hitler fireballs framerate-dependent, effectively slowing them down on fast systems
-    4: pick up items using the original logic, which sometimes fails when walking backwards or sideways
-    8: disable circle-strafing (turning and strafing simultaneously) when playing with modern controls
-       (note: circle-strafing is always disabled when recording a demo)
-   16: limit sprite rendering to a maximum of 50 visible sprites at any time -- beyond this limit,
-       enemies may turn invisible
+
+    2: make fake-Hitler fireball logic framerate-dependent, slowing them down considerably when
+       running at 70 frames per second (this bug went undetected because the game likely ran at just
+       17.5 to 35 fps on development computers)
+
+    4: pick up items using the original viewpoint-based logic, which sometimes fails to detect items
+       when walking backwards or sideways, or when running fast through a row of items
+
+    8: disable circle-strafing (turning and strafing simultaneously) when playing with modern
+       controls, which is technically impossible on the original Wolf3D input handling code
+       (note: the demo file format is not updated to handle circle-strafing, so it is always disabled
+       when playing/recording demos)
+
+   16: limit sprite rendering to a maximum of 50 visible sprites at any time; beyond this limit, some
+       active enemies may turn invisible due to the renderer prioritizing statics and enemies with
+       lower indices (even if they are dead)
    ```
    For example, to mimic the original EXEs' behavior when they were run on a Pentium (or faster) system, specify COMP 31 (e.g., WOLF3DCM COMP 31). On the other hand, COMP 30 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
 
-   COMP by itself will enable all compatibility flags (including future ones). Use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags (default setting).
+   COMP by itself will enable all compatibility flags (including future ones). Use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags, which is the default setting.
 
 Bring "M" on!
 -------------

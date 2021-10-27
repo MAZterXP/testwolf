@@ -86,7 +86,7 @@ boolean		buttonstate[NUMBUTTONS];
 #ifdef WOLFDOSMPU
 
 int			far	midivolume;
-int			far	compflags = 0;
+word		far	compflags = 0x8000;
 int			far	savedviewsize;
 
 #endif // WOLFDOSMPU

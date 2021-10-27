@@ -3152,20 +3152,17 @@ void CP_ChangeView(void)
 	int exit=0,oldview,newview;
 	ControlInfo ci;
 
-#ifdef WOLFDOSMPU
-	if (savedviewsize != viewsize)
-	{
-		// shrinking screens fix
-		ClearMemory();
-		MM_SortMem();
-		NewViewSize(savedviewsize);
-	}
-#endif // WOLFDOSMPU
 
 	WindowX=WindowY=0;
 	WindowW=320;
 	WindowH=200;
+#ifdef WOLFDOSMPU
+	// shrinking screens fix
+	newview = oldview = savedviewsize;	// user thinks the viewsize is still savedviewsize
+	savedviewsize = viewsize;			// temporarily needed to allow interactive view size changing
+#else  // WOLFDOSMPU
 	newview=oldview=viewwidth/16;
+#endif // WOLFDOSMPU
 	DrawChangeView(oldview);
 
 	do
@@ -3209,7 +3206,12 @@ void CP_ChangeView(void)
 		else
 		if (ci.button1 || Keyboard[sc_Escape])
 		{
+#ifdef WOLFDOSMPU
+			// shrinking screens fix
+			savedviewsize = oldview;		// since we didn't change viewsize, assume user still wants oldview
+#else  // WOLFDOSMPU
 			viewwidth=oldview*16;
+#endif // WOLFDOSMPU
 			SD_PlaySound(ESCPRESSEDSND);
 			MenuFadeOut();
 			return;
@@ -3220,14 +3222,22 @@ void CP_ChangeView(void)
 
 	if (oldview!=newview)
 	{
-		SD_PlaySound (SHOOTSND);
-		Message(STR_THINK"...");
 #ifdef WOLFDOSMPU
 		// shrinking screens fix
 		savedviewsize = newview;
+		ClearMemory();
 #endif // WOLFDOSMPU
+		SD_PlaySound (SHOOTSND);
+		Message(STR_THINK"...");
 		NewViewSize(newview);
 	}
+#ifdef WOLFDOSMPU
+	else
+	{
+		// shrinking screens fix
+		savedviewsize = oldview;		// since we didn't change viewsize, assume user still wants oldview
+	}
+#endif // WOLFDOSMPU
 
 	ShootSnd();
 	MenuFadeOut();
@@ -4379,23 +4389,46 @@ void CheckForEpisodes(void)
 		strcpy(extension,"SOD");
 	}
 	else
+#ifdef WOLFDOSMPU
+		Quit("NO SPEAR OF DESTINY .SOD FILES TO BE FOUND!");
+#else  // WOLFDOSMPU
 		Quit("NO SPEAR OF DESTINY DATA FILES TO BE FOUND!");
+#endif // WOLFDOSMPU
 #else
 	if (!findfirst("*.SDM",&f,FA_ARCH))
 	{
 		strcpy(extension,"SDM");
 	}
 	else
+#ifdef WOLFDOSMPU
+		Quit("NO SPEAR OF DESTINY DEMO .SDM FILES TO BE FOUND!");
+#else  // WOLFDOSMPU
 		Quit("NO SPEAR OF DESTINY DEMO DATA FILES TO BE FOUND!");
+#endif // WOLFDOSMPU
 #endif
 
 #else
 	if (!findfirst("*.WL1",&f,FA_ARCH))
 	{
 		strcpy(extension,"WL1");
+#ifdef WOLFDOSMPU
+#ifndef UPLOAD
+		// don't actually continue on the commercial/registered version
+		// (we only do it like this to preserve data segment compatibility)
+		Quit("NO WOLFENSTEIN 3-D .WL6 FILES TO BE FOUND!");
+	}
+	else
+		Quit("NO WOLFENSTEIN 3-D .WL6 FILES TO BE FOUND!");
+#else
+	}
+	else
+		Quit("NO WOLFENSTEIN 3-D .WL1 FILES TO BE FOUND!");
+#endif
+#else  // WOLFDOSMPU
 	}
 	else
 		Quit("NO WOLFENSTEIN 3-D DATA FILES to be found!");
+#endif // WOLFDOSMPU
 #endif
 
 	strcat(configname,extension);

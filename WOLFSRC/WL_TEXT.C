@@ -799,7 +799,6 @@ void HelpScreens (void)
 	{
 		// shrinking screens fix
 		ClearMemory();
-		MM_SortMem();
 		NewViewSize(savedviewsize);
 	}
 #endif // WOLFDOSMPU
@@ -874,7 +873,6 @@ void EndText (void)
 	{
 		// shrinking screens fix
 		ClearMemory();
-		MM_SortMem();
 		NewViewSize(savedviewsize);
 	}
 #endif // WOLFDOSMPU

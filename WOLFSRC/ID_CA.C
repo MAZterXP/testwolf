@@ -860,7 +860,15 @@ asm	mov	ds,ax
 
 void CAL_SetupGrFile (void)
 {
+#ifdef WOLFDOSMPU
+#ifndef SPEAR
+	char fname[29];
+#else
+	char fname[12];
+#endif
+#else  // WOLFDOSMPU
 	char fname[13];
+#endif // WOLFDOSMPU
 	int handle;
 	memptr compseg;
 
@@ -899,7 +907,50 @@ void CAL_SetupGrFile (void)
 		 O_RDONLY | O_BINARY, S_IREAD)) == -1)
 		CA_CannotOpen(fname);
 
+#ifdef WOLFDOSMPU
+#ifndef SPEAR
+
+#ifdef GOODTIMES
+#define CHUNKSIZE (149+1)*FILEPOSSIZE			// commercial version
+#else
+#ifdef UPLOAD
+#define CHUNKSIZE (156+1)*FILEPOSSIZE			// shareware version
+#else
+#define CHUNKSIZE (NUMCHUNKS+1)*FILEPOSSIZE		// registered version
+#endif
+#endif
+
+	if (filelength(handle) != CHUNKSIZE)
+	{
+		fname[11] = ' ';
+		fname[12] = 'I';
+		fname[13] = 'S';
+		fname[14] = ' ';
+		fname[15] = 'I';
+		fname[16] = 'N';
+		fname[17] = 'C';
+		fname[18] = 'O';
+		fname[19] = 'M';
+		fname[20] = 'P';
+		fname[21] = 'A';
+		fname[22] = 'T';
+		fname[23] = 'I';
+		fname[24] = 'B';
+		fname[25] = 'L';
+		fname[26] = 'E';
+		fname[27] = '!';
+		fname[28] = 0;
+		Quit(fname);
+	}
+	CA_FarRead(handle, (memptr)grstarts, CHUNKSIZE);
+
+#else
 	CA_FarRead(handle, (memptr)grstarts, (NUMCHUNKS+1)*FILEPOSSIZE);
+#endif
+
+#else  // WOLFDOSMPU
+	CA_FarRead(handle, (memptr)grstarts, (NUMCHUNKS+1)*FILEPOSSIZE);
+#endif // WOLFDOSMPU
 
 	close(handle);
 
