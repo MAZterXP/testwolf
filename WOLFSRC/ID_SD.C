@@ -531,9 +531,19 @@ void mpuDestroy()
 	}
 }
 
-int mpuIsEnabled()
+boolean mpuIsEnabled()
 {
 	return MPU_DATA_FOUND;
+}
+
+boolean covoxIsEnabled(void)
+{
+	return ssNoCheck && SoundSourcePresent;
+}
+
+boolean opl2IsEnabled(void)
+{
+	return ! alNoCheck;
 }
 
 #endif // WOLFDOSMPU
@@ -2029,6 +2039,10 @@ SDL_StartAL(void)
 static boolean
 SDL_DetectAdLib(void)
 {
+#ifdef WOLFDOSMPU
+	if (! alNoCheck)
+	{
+#endif // WOLFDOSMPU
 	byte	status1,status2;
 	int		i;
 
@@ -2061,12 +2075,17 @@ asm	loop usecloop
 
 		return(true);
 	}
-	else
 #ifdef WOLFDOSMPU
-		// allow systems without an AdLib card to anyway use the MPU if we have the necessary files
-		// (but if the AdLib is present, it must be initialized)
-		return MPU_DATA_FOUND;
+	}
+
+	// do not allow further AdLib communication
+	alNoCheck = true;
+
+	// allow systems without an AdLib card to anyway use the MPU if we have the necessary files
+	// (but if the AdLib is present, it must be initialized)
+	return MPU_DATA_FOUND;
 #else  // WOLFDOSMPU
+	else
 		return(false);
 #endif // WOLFDOSMPU
 }
@@ -2193,7 +2212,11 @@ SDL_ShutDevice(void)
 static void
 SDL_CleanDevice(void)
 {
+#ifdef WOLFDOSMPU
+	if (opl2IsEnabled())
+#else  // WOLFDOSMPU
 	if ((SoundMode == sdm_AdLib) || (MusicMode == smm_AdLib))
+#endif // WOLFDOSMPU
 		SDL_CleanAL();
 }
 
@@ -2230,7 +2253,11 @@ SD_SetSoundMode(SDMode mode)
 	SD_StopSound();
 
 #ifndef	_MUSE_
+#ifdef WOLFDOSMPU
+	if ((mode == sdm_AdLib) && ! opl2IsEnabled())
+#else  // WOLFDOSMPU
 	if ((mode == sdm_AdLib) && !AdLibPresent)
+#endif // WOLFDOSMPU
 		mode = sdm_PC;
 
 	switch (mode)
@@ -2245,7 +2272,11 @@ SD_SetSoundMode(SDMode mode)
 		result = true;
 		break;
 	case sdm_AdLib:
+#ifdef WOLFDOSMPU
+		if (opl2IsEnabled())
+#else  // WOLFDOSMPU
 		if (AdLibPresent)
+#endif // WOLFDOSMPU
 		{
 			tableoffset = STARTADLIBSOUNDS;
 			NeedsDigitized = false;
@@ -2378,10 +2409,16 @@ SD_Startup(void)
 	if (!ssNoCheck)
 		SoundSourcePresent = SDL_DetectSoundSource();
 
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 	if (!alNoCheck)
+#endif // WOLFDOSMPU
 	{
 		AdLibPresent = SDL_DetectAdLib();
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 		if (AdLibPresent && !sbNoCheck)
+#endif // WOLFDOSMPU
 		{
 			int port = -1;
 			char *env = getenv("BLASTER");
@@ -2408,13 +2445,11 @@ SD_Startup(void)
 						)
 							port = (temp - 0x200) >> 4;
 						else
+#ifdef WOLFDOSMPU
+						if (! sbNoCheck)
+#endif // WOLFDOSMPU
 							Quit("SD_Startup: Unsupported address value in BLASTER");
 						break;
-#ifdef WOLFDOSMPU
-					case 'P':
-						mpuPort = strtol(env + 1,&env,16);
-						break;
-#endif // WOLFDOSMPU
 					case 'I':
 						temp = strtol(env + 1,&env,10);
 						if
@@ -2428,6 +2463,9 @@ SD_Startup(void)
 							sbIntVec = sbIntVectors[sbInterrupt];
 						}
 						else
+#ifdef WOLFDOSMPU
+						if (! sbNoCheck)
+#endif // WOLFDOSMPU
 							Quit("SD_Startup: Unsupported interrupt value in BLASTER");
 						break;
 					case 'D':
@@ -2435,8 +2473,16 @@ SD_Startup(void)
 						if ((temp == 0) || (temp == 1) || (temp == 3))
 							SDL_SBSetDMA(temp);
 						else
+#ifdef WOLFDOSMPU
+						if (! sbNoCheck)
+#endif // WOLFDOSMPU
 							Quit("SD_Startup: Unsupported DMA value in BLASTER");
 						break;
+#ifdef WOLFDOSMPU
+					case 'P':
+						mpuPort = strtol(env + 1,&env,16);
+						break;
+#endif // WOLFDOSMPU
 					default:
 						while (isspace(*env))
 							env++;
@@ -2446,6 +2492,9 @@ SD_Startup(void)
 					}
 				}
 			}
+#ifdef WOLFDOSMPU
+			if (! sbNoCheck)
+#endif // WOLFDOSMPU
 			SoundBlasterPresent = SDL_DetectSoundBlaster(port);
 		}
 	}
@@ -2461,6 +2510,8 @@ SD_Startup(void)
 	SD_Started = true;
 }
 
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 ///////////////////////////////////////////////////////////////////////////
 //
 //	SD_Default() - Sets up the default behaviour for the Sound Mgr whether
@@ -2511,6 +2562,7 @@ SD_Default(boolean gotit,SDMode sd,SMMode sm)
 	if (sm != MusicMode)
 		SD_SetMusicMode(sm);
 }
+#endif  // WOLFDOSMPU
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -2747,6 +2799,12 @@ SD_MusicOff(void)
 	word	i;
 
 
+#ifdef WOLFDOSMPU
+	sqActive = false;	// deactivate interrupt BEFORE sending turn-off messages
+	if (MPU_DATA_FOUND)
+		mpuRestart();
+	if (opl2IsEnabled())
+#endif // WOLFDOSMPU
 	switch (MusicMode)
 	{
 	case smm_AdLib:
@@ -2757,10 +2815,6 @@ SD_MusicOff(void)
 		break;
 	}
 	sqActive = false;
-#ifdef WOLFDOSMPU
-	if (MPU_DATA_FOUND)
-		mpuRestart();
-#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -2837,10 +2891,3 @@ SD_MusicPlaying(void)
 
 	return(result);
 }
-
-#ifdef WOLFDOSMPU
-boolean CovoxSupport(void)
-{
-	return ssNoCheck && SoundSourcePresent;
-}
-#endif // WOLFDOSMPU

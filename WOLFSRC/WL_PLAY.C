@@ -97,6 +97,7 @@ int			far	controlmouse;
 int			far	tabstate;
 
 boolean		far	keysalwaysstrafe;
+boolean		far	alwaysrun;
 boolean		far	mouseturningonly;
 byte		far	tabfunction;
 byte		far	automapmode;
@@ -376,7 +377,11 @@ void PollKeyboardMove (void)
 		buttonstate[bt_strafe] = true;
 #endif // WASD
 
+#ifdef WASD
+	if (alwaysrun ? ! buttonstate[bt_run] : buttonstate[bt_run])
+#else  // WASD
 	if (buttonstate[bt_run])
+#endif // WASD
 	{
 		if (Keyboard[dirscan[di_north]])
 			controly -= RUNMOVE*tics;
@@ -461,7 +466,11 @@ void PollJoystickMove (void)
 		else if (joyy < -64)
 			controly -= (-joyy-64)*JOYSCALE*tics;
 	}
+#ifdef WASD
+	else if (alwaysrun ? ! buttonstate[bt_run] : buttonstate[bt_run])
+#else  // WASD
 	else if (buttonstate[bt_run])
+#endif // WASD
 	{
 		if (joyx > 64)
 			controlx += RUNMOVE*tics;

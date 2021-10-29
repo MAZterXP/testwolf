@@ -864,7 +864,7 @@ void CAL_SetupGrFile (void)
 #ifndef SPEAR
 	char fname[29];
 #else
-	char fname[12];
+	char fname[13];
 #endif
 #else  // WOLFDOSMPU
 	char fname[13];
@@ -908,7 +908,8 @@ void CAL_SetupGrFile (void)
 		CA_CannotOpen(fname);
 
 #ifdef WOLFDOSMPU
-#ifndef SPEAR
+
+#ifndef SPEAR									// VGAHEAD version check is unnecessary for SoD
 
 #ifdef GOODTIMES
 #define CHUNKSIZE (149+1)*FILEPOSSIZE			// commercial version

@@ -69,16 +69,15 @@
 #define SM_Y3	SM_Y2+5*13
 #define SM_H3	3*13-7
 
-#define CTL_X	24
 #ifdef WASD
+#define CTL_X	33
 #define CTL_Y	55
+#define CTL_W	270
+#define CTL_H	13*10+4
 #else  // WASD
+#define CTL_X	24
 #define CTL_Y	70
-#endif // WASD
 #define CTL_W	284
-#ifdef WASD
-#define CTL_H	13*9+4
-#else  // WASD
 #define CTL_H	13*7-7
 #endif // WASD
 

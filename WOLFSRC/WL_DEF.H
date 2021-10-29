@@ -1297,6 +1297,7 @@ extern	int			far	controlmouse;
 extern	int			far	tabstate;
 
 extern	boolean		far	keysalwaysstrafe;
+extern	boolean		far	alwaysrun;
 extern	boolean		far	mouseturningonly;
 extern	byte		far	tabfunction;
 extern	byte		far	automapmode;

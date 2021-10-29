@@ -132,7 +132,9 @@ void ReadConfig(void)
 			if (keysalwaysstrafe > 1)
 				keysalwaysstrafe = 1;
 			read(file,&value,sizeof(value));
-			// skip one byte for compatibility
+			alwaysrun = value;
+			if (alwaysrun > 1)
+				alwaysrun = 1;
 			read(file,&value,sizeof(value));
 			mouseturningonly = value;
 			if (mouseturningonly > 1)
@@ -166,8 +168,30 @@ void ReadConfig(void)
 					midivolume = 10;
 			}
 		}
-#endif // WOLFDOSMPU
+		close(file);
 
+		if (! opl2IsEnabled() && sd == sdm_AdLib)
+			sd = sdm_PC;
+
+		if (! SoundBlasterPresent && sds == sds_SoundBlaster)
+		{
+			if (SoundSourcePresent)
+				sds = sds_SoundSource;
+			else
+				sds = sds_Off;
+		}
+
+		if (! SoundSourcePresent && sds == sds_SoundSource)
+		{
+			if (SoundBlasterPresent)
+				sds = sds_SoundBlaster;
+			else
+				sds = sds_Off;
+		}
+
+		if (! AdLibPresent && sm == smm_AdLib)	// really "if no music device is present"
+			sm = smm_Off;
+#else  // WOLFDOSMPU
 		close(file);
 
 		if (sd == sdm_AdLib && !AdLibPresent && !SoundBlasterPresent)
@@ -179,6 +203,7 @@ void ReadConfig(void)
 		if ((sds == sds_SoundBlaster && !SoundBlasterPresent) ||
 			(sds == sds_SoundSource && !SoundSourcePresent))
 			sds = sds_Off;
+#endif // WOLFDOSMPU
 
 		if (!MousePresent)
 			mouseenabled = false;
@@ -193,6 +218,21 @@ void ReadConfig(void)
 	//
 	// no config file, so select by hardware
 	//
+#ifdef WOLFDOSMPU
+		sd = sdm_PC;
+		if (opl2IsEnabled())
+			sd = sdm_AdLib;
+
+		sds = sds_Off;
+		if (SoundSourcePresent)
+			sds = sds_SoundSource;
+		if (SoundBlasterPresent)
+			sds = sds_SoundBlaster;
+
+		sm = smm_Off;
+		if (AdLibPresent)	// really "if any music device is present"
+			sm = smm_AdLib;
+#else  // WOLFDOSMPU
 		if (SoundBlasterPresent || AdLibPresent)
 		{
 			sd = sdm_AdLib;
@@ -210,6 +250,7 @@ void ReadConfig(void)
 			sds = sds_SoundSource;
 		else
 			sds = sds_Off;
+#endif // WOLFDOSMPU
 
 		if (MousePresent)
 			mouseenabled = true;
@@ -225,6 +266,7 @@ void ReadConfig(void)
 #ifdef WASD
 		viewsize = 19;
 		keysalwaysstrafe = true;
+		alwaysrun = false;
 		mouseturningonly = true;
 		tabfunction = 1;
 		automapmode = 0;
@@ -288,7 +330,7 @@ void WriteConfig(void)
 			byte value;
 			value = keysalwaysstrafe;
 			write(file,&value,sizeof(value));
-			value = 0;
+			value = alwaysrun;
 			write(file,&value,sizeof(value));
 			value = mouseturningonly;
 			write(file,&value,sizeof(value));
@@ -1391,7 +1433,11 @@ void DoJukebox(void)
 
 
 	IN_ClearKeysDown();
+#ifdef WOLFDOSMPU
+	if (! AdLibPresent)		// really "if no music device is present"
+#else  // WOLFDOSMPU
 	if (!AdLibPresent && !SoundBlasterPresent)
+#endif // WOLFDOSMPU
 		return;
 
 

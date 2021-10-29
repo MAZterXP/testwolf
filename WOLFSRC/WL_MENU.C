@@ -52,13 +52,13 @@ char far endStrings[9][80]=
 CP_iteminfo
 	MainItems={MENU_X,MENU_Y,10,STARTITEM,24},
 #ifdef WOLFDOSMPU
-	SndItems={SM_X,SM_Y1,13,0,52},
+	SndItems={SM_X-1,SM_Y1,13,0,49},
 #else  // WOLFDOSMPU
 	SndItems={SM_X,SM_Y1,12,0,52},
 #endif // WOLFDOSMPU
 	LSItems={LSM_X,LSM_Y,10,0,24},
 #ifdef WASD
-	CtlItems={CTL_X,CTL_Y,9,-1,32},
+	CtlItems={CTL_X,CTL_Y,10,-1,31},
 #else  // WASD
 	CtlItems={CTL_X,CTL_Y,6,-1,56},
 #endif // WASD
@@ -157,23 +157,16 @@ far CtlMenu[]=
 	{1,"",CustomControls}
 #else
 #ifdef WASD
-	{0,STR_MOUSEDI,0},
-	{0,STR_TURNDI,0},
+	{0,STR_MOUSEEN,0},
+	{0,STR_TURNEN,0},
 	{0,STR_SENS,MouseSensitivity},
-	{0,STR_JOYDI,0},
+	{0,STR_JOYEN,0},
 	{0,STR_PORT2,0},
 	{0,STR_GAMEPAD,0},
-	{1,STR_STRAFE1,0},
+	{1,STR_AUTORUN,0},
+	{1,STR_STRAFE,0},
 	{1,STR_TAB,TabKeyFunction},
-	{1,STR_CUSTOM,CustomControls},
-	{1,STR_MOUSEDI,0},
-	{1,STR_MOUSEEN,0},
-	{1,STR_TURNDI,0},
-	{1,STR_TURNEN,0},
-	{1,STR_JOYDI,0},
-	{1,STR_JOYEN,0},
-	{1,STR_STRAFE1,0},
-	{1,STR_STRAFE2,0},
+	{1,STR_CUSTOM,CustomControls}
 #else  // WASD
 	{0,STR_MOUSEEN,0},
 	{0,STR_JOYEN,0},
@@ -891,7 +884,10 @@ int CP_CheckQuick(unsigned scancode)
 				#endif
 			#endif
 			{
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 				int i;
+#endif // WOLFDOSMPU
 
 
 				VW_UpdateScreen();
@@ -899,11 +895,14 @@ int CP_CheckQuick(unsigned scancode)
 				SD_StopSound();
 				MenuFadeOut();
 
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 				//
 				// SHUT-UP THE ADLIB
 				//
 				for (i=1;i<=0xf5;i++)
 					alOut(i,0);
+#endif // WOLFDOSMPU
 				Quit(NULL);
 			}
 
@@ -1198,7 +1197,7 @@ void CP_Sound(void)
 	int which,i;
 
 #ifdef WOLFDOSMPU
-	if (CovoxSupport())
+	if (covoxIsEnabled())
 		_fstrcpy(SndMenu[6].string, SndMenu[14].string);
 
 	if (! mpuIsEnabled())
@@ -1354,15 +1353,23 @@ void DrawSoundMenu(void)
 	ClearMScreen();
 	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
 
+#ifdef WOLFDOSMPU
+	DrawWindow(SM_X-12,SM_Y1-3,SM_W+4,SM_H1,BKGDCOLOR);
+	DrawWindow(SM_X-12,SM_Y2-3,SM_W+4,SM_H2,BKGDCOLOR);
+	DrawWindow(SM_X-12,SM_Y3-3,SM_W+4,SM_H2-1,BKGDCOLOR);
+#else  // WOLFDOSMPU
 	DrawWindow(SM_X-8,SM_Y1-3,SM_W,SM_H1,BKGDCOLOR);
 	DrawWindow(SM_X-8,SM_Y2-3,SM_W,SM_H2,BKGDCOLOR);
-#ifdef WOLFDOSMPU
-	DrawWindow(SM_X-8,SM_Y3-3,SM_W,SM_H2-1,BKGDCOLOR);
-#else  // WOLFDOSMPU
 	DrawWindow(SM_X-8,SM_Y3-3,SM_W,SM_H3,BKGDCOLOR);
 #endif // WOLFDOSMPU
 #endif
 
+#ifdef WOLFDOSMPU
+	if (! opl2IsEnabled())
+		SndMenu[2].active=0;
+	if (! AdLibPresent)		// really "if no music device is present"
+		SndMenu[10].active=SndMenu[11].active=0;
+#else  // WOLFDOSMPU
 	//
 	// IF NO ADLIB, NON-CHOOSENESS!
 	//
@@ -1370,6 +1377,7 @@ void DrawSoundMenu(void)
 	{
 		SndMenu[2].active=SndMenu[10].active=SndMenu[11].active=0;
 	}
+#endif // WOLFDOSMPU
 
 	if (!SoundSourcePresent)
 		SndMenu[6].active=0;
@@ -1450,6 +1458,7 @@ void DrawTabMenu(CP_iteminfo TabItems)
 	_fstrcpy(sz, TabMenu[TabItems.amount].string);
 	US_CPrint(sz);
 	PrintY=24 + 13*6;
+	SETFONTCOLOR(tabfunction == 2 ? READHCOLOR : READCOLOR,BKGDCOLOR);
 	_fstrcpy(sz, TabMenu[TabItems.amount + 1].string);
 	US_CPrint(sz);
 
@@ -1481,7 +1490,7 @@ void TabKeyFunction()
 	TabItems.y = NM_Y - 13*4;
 	TabItems.amount = 10;
 	TabItems.curpos = tabfunction == 2 ? automapmode + 6 : tabfunction;
-	TabItems.indent = 52;
+	TabItems.indent = 50;
 	DrawTabMenu(TabItems);
 	MenuFadeIn();
 	WaitKeyUp();
@@ -1931,7 +1940,7 @@ void CP_Control(void)
 {
 	#define CTL_SPC	70
 #ifdef WASD
-	enum {MOUSEENABLE,MOUSETURN,MOUSESENS,JOYENABLE,USEPORT2,PADENABLE,STRAFE,TAB,CUSTOMIZE};
+	enum {MOUSEENABLE,MOUSETURN,MOUSESENS,JOYENABLE,USEPORT2,PADENABLE,AUTORUN,STRAFE,TAB,CUSTOMIZE};
 #else  // WASD
 	enum {MOUSEENABLE,JOYENABLE,USEPORT2,PADENABLE,MOUSESENS,CUSTOMIZE};
 #endif // WASD
@@ -2006,6 +2015,13 @@ void CP_Control(void)
 				break;
 
 #ifdef WASD
+			case AUTORUN:
+				alwaysrun^=1;
+				DrawCtlScreen();
+				ShootSnd();
+				WaitKeyUp();
+				break;
+
 			case STRAFE:
 				keysalwaysstrafe^=1;
 				DrawCtlScreen();
@@ -2311,11 +2327,15 @@ void DrawCtlScreen(void)
  DrawStripes(10);
  VWB_DrawPic(80,0,C_CONTROLPIC);
  VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+#ifdef WOLFDOSMPU
 #ifdef WASD
  DrawWindow(CTL_X-8,CTL_Y-3,CTL_W,CTL_H,BKGDCOLOR);
 #else  // WASD
- DrawWindow(CTL_X-8,CTL_Y-5,CTL_W,CTL_H,BKGDCOLOR);
+ DrawWindow(CTL_X-8,CTL_Y-4,CTL_W,CTL_H,BKGDCOLOR);
 #endif // WASD
+#else  // WOLFDOSMPU
+ DrawWindow(CTL_X-8,CTL_Y-5,CTL_W,CTL_H,BKGDCOLOR);
+#endif // WOLFDOSMPU
 #endif
  WindowX=0;
  WindowW=320;
@@ -2337,11 +2357,6 @@ void DrawCtlScreen(void)
  }
 
  CtlMenu[1].active=CtlMenu[2].active=mouseenabled;
-
- _fstrcpy(CtlMenu[0].string, CtlMenu[mouseenabled + 9].string);
- _fstrcpy(CtlMenu[1].string, CtlMenu[mouseturningonly + 11].string);
- _fstrcpy(CtlMenu[3].string, CtlMenu[joystickenabled + 13].string);
- _fstrcpy(CtlMenu[6].string, CtlMenu[keysalwaysstrafe + 15].string);
 #else  // WASD
  if (JoysPresent[0])
    CtlMenu[1].active=
@@ -2365,27 +2380,27 @@ void DrawCtlScreen(void)
 
 #ifdef WASD
  x=CTL_X+32;
- y=CTL_Y+3;
+ y=CTL_Y+2;
  if (mouseenabled)
    VWB_DrawPic(x,y,C_SELECTEDPIC);
  else
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
 
- x+=24;
+ x+=28;
  y+=13;
   if (mouseturningonly)
    VWB_DrawPic(x,y,C_SELECTEDPIC);
  else
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
 
- x-=24;
+ x-=28;
  y+=26;
  if (joystickenabled)
    VWB_DrawPic(x,y,C_SELECTEDPIC);
  else
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
 
- x+=24;
+ x+=28;
  y+=13;
  if (joystickport)
    VWB_DrawPic(x,y,C_SELECTEDPIC);
@@ -2398,7 +2413,13 @@ void DrawCtlScreen(void)
  else
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
 
- x-=24;
+ x-=28;
+ y+=13;
+ if (alwaysrun)
+   VWB_DrawPic(x,y,C_SELECTEDPIC);
+ else
+   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+
  y+=13;
  if (keysalwaysstrafe)
    VWB_DrawPic(x,y,C_SELECTEDPIC);
@@ -2406,7 +2427,11 @@ void DrawCtlScreen(void)
    VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
 #else  // WASD
  x=CTL_X+CtlItems.indent-24;
+#ifdef WOLFDOSMPU
+ y=CTL_Y+2;
+#else  // WOLFDOSMPU
  y=CTL_Y+3;
+#endif // WOLFDOSMPU
  if (mouseenabled)
    VWB_DrawPic(x,y,C_SELECTEDPIC);
  else
@@ -3280,7 +3305,10 @@ void DrawChangeView(int view)
 ////////////////////////////////////////////////////////////////////
 void CP_Quit(void)
 {
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 	int i;
+#endif // WOLFDOSMPU
 
 
 	#ifdef JAPAN
@@ -3299,11 +3327,14 @@ void CP_Quit(void)
 		SD_MusicOff();
 		SD_StopSound();
 		MenuFadeOut();
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 		//
 		// SHUT-UP THE ADLIB
 		//
 		for (i=1;i<=0xf5;i++)
 			alOut(i,0);
+#endif // WOLFDOSMPU
 		Quit(NULL);
 	}
 
@@ -3379,7 +3410,11 @@ void IntroScreen(void)
 	if (JoysPresent[0] || JoysPresent[1])
 		VWB_Bar(164,105,12,2,FILLCOLOR);
 
+#ifdef WOLFDOSMPU
+	if (opl2IsEnabled() && !SoundBlasterPresent)
+#else  // WOLFDOSMPU
 	if (AdLibPresent && !SoundBlasterPresent)
+#endif // WOLFDOSMPU
 		VWB_Bar(164,128,12,2,FILLCOLOR);
 
 	if (SoundBlasterPresent)
