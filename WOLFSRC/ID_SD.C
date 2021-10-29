@@ -2425,7 +2425,7 @@ SD_Startup(void)
 				long temp;
 #ifdef WOLFDOSMPU
 				sbDMA = 2;				// if user specified BLASTER string but did not specify D, set direct mode
-				sbNoProCheck = true;	// if user specified BLASTER string but did not specify T, do not enable SB pro
+				sbNoProCheck |= 0x8000;	// if user specified BLASTER string but did not specify T, do not check for SB pro
 #endif // WOLFDOSMPU
 				while (*env)
 				{
@@ -2481,7 +2481,7 @@ SD_Startup(void)
 					case 'T':
 						temp = strtol(env + 1,&env,10);
 						if (temp >= 4 || temp == 2)
-							sbNoProCheck = false;
+							sbNoProCheck &= ~0x8000;	// user specified a pro model; reenable the check
 						break;
 					case 'P':
 						mpuPort = strtol(env + 1,&env,16);
