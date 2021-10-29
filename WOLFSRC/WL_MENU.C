@@ -2461,7 +2461,7 @@ void DrawCtlScreen(void)
  //
  if (CtlItems.curpos<0 || !CtlMenu[CtlItems.curpos].active)
 #ifdef WASD
-   for (i=0;i<9;i++)
+   for (i=0;i<CtlItems.amount;i++)
 #else  // WASD
    for (i=0;i<6;i++)
 #endif // WASD
