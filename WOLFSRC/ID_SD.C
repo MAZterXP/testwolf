@@ -2480,7 +2480,7 @@ SD_Startup(void)
 #ifdef WOLFDOSMPU
 					case 'T':
 						temp = strtol(env + 1,&env,10);
-						if (temp < 4 && temp != 2)
+						if (temp >= 4 || temp == 2)
 							sbNoProCheck = false;
 						break;
 					case 'P':
