@@ -979,9 +979,7 @@ SDL_StartSB(void)
 	byte	timevalue,test;
 
 #ifdef WOLFDOSMPU
-	if (sbDMA == 2)
-		SBProPresent = false;
-	else
+	if (sbDMA != 2)
 	{
 #endif // WOLFDOSMPU
 
@@ -1011,6 +1009,10 @@ SDL_StartSB(void)
 	sbWriteDelay();
 	sbOut(sbWriteData,timevalue);
 
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
+
 	SBProPresent = false;
 	if (sbNoProCheck)
 		return;
@@ -1038,10 +1040,6 @@ SDL_StartSB(void)
 			sbOut(sbpMixerData,0);				// 0=off,2=on
 		}
 	}
-
-#ifdef WOLFDOSMPU
-	}
-#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1054,11 +1052,6 @@ SDL_ShutSB(void)
 {
 	SDL_SBStopSample();
 
-#ifdef WOLFDOSMPU
-	if (sbDMA != 2)
-	{
-#endif // WOLFDOSMPU
-
 	if (SBProPresent)
 	{
 		// Restore FM output levels (SB Pro)
@@ -1069,6 +1062,11 @@ SDL_ShutSB(void)
 		sbOut(sbpMixerAddr,sbpmVoiceVol);
 		sbOut(sbpMixerData,sbpOldVOCMix);
 	}
+
+#ifdef WOLFDOSMPU
+	if (sbDMA != 2)
+	{
+#endif // WOLFDOSMPU
 
 	setvect(sbIntVec,sbOldIntHand);		// Set vector back
 
@@ -2426,7 +2424,8 @@ SD_Startup(void)
 			{
 				long temp;
 #ifdef WOLFDOSMPU
-				sbDMA = 2;	// if user specified BLASTER string but did not specify DMA, set direct mode
+				sbDMA = 2;				// if user specified BLASTER string but did not specify D, set direct mode
+				sbNoProCheck = true;	// if user specified BLASTER string but did not specify T, do not enable SB pro
 #endif // WOLFDOSMPU
 				while (*env)
 				{
@@ -2479,6 +2478,11 @@ SD_Startup(void)
 							Quit("SD_Startup: Unsupported DMA value in BLASTER");
 						break;
 #ifdef WOLFDOSMPU
+					case 'T':
+						temp = strtol(env + 1,&env,10);
+						if (temp < 4 && temp != 2)
+							sbNoProCheck = false;
+						break;
 					case 'P':
 						mpuPort = strtol(env + 1,&env,16);
 						break;

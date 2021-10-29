@@ -29,10 +29,15 @@ This mod is forked directly from the official Wolf3D source release from id Soft
 Version History
 ===============
 
-1.42 (2021-10-28)
+1.42 (2021-10-29)
 -----------------
 - Now detects whether proper data files have been provided for the EXE used.
 - Fixed Change View dialog becoming unresponsive to user input during low-memory conditions.
+- Now allows MPU-401 support even if AdLib is manually disabled via the "noal" command-line parameter. (The MPU code is partially dependent on the AdLib code, and previous wolfdosmpu versions disabled music altogether if "noal" was used.)
+- Now does not disable the Sound Blaster when "noal" is specified (like the original Wolf3D did); it now disables just the OPL2 sound effects.
+- Now allows BLASTER environment variable to specify the MPU port even if the Sound Blaster is manually disabled via the "nosb" command-line parameter.
+- Now sets "nopro" internally if BLASTER variable is present and does not have the T option (or is set to 0, 1, or 3). This way, DMA-less SB-compatible cards are given the option to enable Pro extensions.
+- Added "always run" option for modern-controls version. Beware: Always-running in Wolf3D is a lot less fluid than always-running in later games like Doom or Quake (due to the lack of acceleration/deceleration), and is not recommended for people with motion sickness.
 
 1.41 (2021-10-26)
 -----------------
