@@ -57,12 +57,13 @@ FAQ
 Version History
 ===============
 
-1.43
-----
+1.43 (2021-11-02)
+-----------------
 - Automap now makes doors glow if they have not been opened (more accurately, "haven't been _seen_ open"), to better visualize unexplored areas in a busy map. However, doors will only start glowing on levels started on version 1.43 onwards (i.e., your old savegames will still work fine, but no doors will glow until you proceed to the next level).
-- Automap tracing has been improved to cut off visibility at unopened doors. This improvement reduces (but does not completely eliminate) automap errors where visibility would "seep through" areas that the player hasn't explored yet but has already been "seen" by the ray-casting engine, which is caused by precision errors when checking for wall collisions. This issue also affects other source ports and derivative games that rely on the ray-casting engine for automapping, such as ECWolf and the DOS version of Super 3-D Noah's Ark. (The actual precision errors are left untouched because fixing them may affect the speed and determinism of the renderer and may cause subtle differences in gameplay.)
+- Automap tracing has been improved to cut off visibility at unopened doors. This improvement reduces automap errors where visibility would "seep through" areas that the player hasn't explored yet but has already been "seen" by the ray-casting engine, which is caused by precision errors when checking for wall collisions. This issue also affects other source ports and derivative games that rely on the ray-casting engine for automapping, such as ECWolf and the DOS version of Super 3-D Noah's Ark. (The actual precision errors are left untouched because fixing them may affect the speed and determinism of the renderer and may cause subtle differences in gameplay.)
 - Now marks previously-seen stationary enemies on the map if they are the only ones left and you have seen all of them (only on "Show hints if clear" automap mode or higher, renamed from "Show secrets if clear"). The rationale for this is that the automap is supposed to help the player determine where enemies may still be hiding, and if these stationary enemies were seen but never alerted, they should obviously remain where they are. If they are not marked (and the map is already mostly explored), then the player is forced to explore every part of the level again, which just wastes time and adds to frustration. However, if there are any moving enemies left (aside from ghosts), no enemy positions will be marked unless the player sees them directly, because their positions _should_ be uncertain to the player.
 - Fixed modern-controls bug where items can still be picked up even when they are made inaccessible by pushing a secret wall on top of them. This bug did not affect the MPU-only version because the spotvis algorithm was modified only in the modern-controls version (to support showing walls on the automap).
+- Fixed so that pushwall spots do not reactivate when another pushwall is pushed into its place and the user saves and reloads the game. To reenable the previous behavior, use new COMP flag 32.
 
 1.42 (2021-10-29)
 -----------------
@@ -228,7 +229,7 @@ Here are some tips and suggestions for some common problems:
 
 3. If you have a DMA-less Sound-Blaster-compatible card (such as an ES1688-based card), you have to specify the address of your Sound-Blaster-compatible in your BLASTER environment variable but _do not_ specify the IRQ (I) and DMA (D) parameters. For example: "SET BLASTER=A220" or "SET BLASTER=A220 P330" (without the quotes). This enables DMA-less mode, which uses your CPU to push the audio samples to your device with the proper timing.
 
-4. If you have a parallel port digitized sound device that is similar to but not fully compatible with the Disney Sound Source (e.g., Covox Speech Thing), you can enable Covox compatibility mode by using the "SS#" command-line parameter, where # is the LPT port number. For example: "WOLF3DCW SS2" (without the quotes) to use a Covox on LPT2. The Sound menu will confirm that this mode is enabled by renaming the "Disney Sound Source" option to "Covox/Sound Source"; make sure that this option is selected. Covox compatibility mode, like DMA-less mode (above), relies on your CPU to push the audio samples to your device with the proper timing. (This mode also works for the Disney Sound Source itself; the game simply ignores the device's built-in sample buffering.)
+4. If you have a parallel port digitized sound device that is similar to but not fully compatible with the Disney Sound Source (e.g., Covox Speech Thing), you can enable Covox compatibility mode by using the "SS#" command-line parameter, where # is the LPT port number. For example: "WOLF3DCM SS2" (without the quotes) to use a Covox on LPT2. The Sound menu will confirm that this mode is enabled by renaming the "Disney Sound Source" option to "Covox/Sound Source"; make sure that this option is selected. Covox compatibility mode, like DMA-less mode (above), relies on your CPU to push the audio samples to your device with the proper timing. (This mode also works for the Disney Sound Source itself; the game simply ignores the device's built-in sample buffering.)
 
 5. __Be careful when using Apogee shareware-/registered-version data files!__ Make sure your Apogee data files are version 1.4 or 1.4g. All earlier Apogee versions (1.2 and below) are not supported.
 
@@ -269,8 +270,17 @@ Here are some tips and suggestions for some common problems:
    16: limit sprite rendering to a maximum of 50 visible sprites at any time; beyond this limit, some
        active enemies may turn invisible due to the renderer prioritizing statics and enemies with
        lower indices (even if they are dead)
+
+   32: pushwalls reactivate when they land on a space where another pushwall was placed before
+       (note: the original game does not immediately manifest this bug, requiring you to save and
+       reload before you can push the wall again; this flag reactivates the wall immediately for
+       your convenience)
+       (note 2: if loading an older savegame, or a savegame with this COMP flag on, a pushwall that
+       already occupies another pushwall's spot will always reactivate regardless of the current COMP
+       setting; however, later pushwalls that end up occupying other pushwalls' spots will be tracked
+       and will not reactivate as long as the COMP flag is off)
    ```
-   For example, to mimic the original EXEs' behavior when they were run on a Pentium (or faster) system, specify COMP 31 (e.g., WOLF3DCM COMP 31). On the other hand, COMP 30 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
+   For example, to mimic the original EXEs' behavior when they were run on a Pentium (or faster) system, specify COMP 63 (e.g., WOLF3DCM COMP 63). On the other hand, COMP 62 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
 
    COMP by itself will enable all compatibility flags (including future ones). Use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags, which is the default setting.
 

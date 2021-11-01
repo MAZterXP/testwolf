@@ -668,15 +668,20 @@ void	CenterWindow(word w,word h)
 
 #define STACKITEM(x, y, z) (((z) << 10) | ((x) << 6) | (y))
 
-void PushCell(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
+void PushTile(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 {
 	boolean pw = (pwallstate && x == pwallx && y == pwally);
 	unsigned actor;
 	byte *visspot = &spotvis[x][y];
 
-	// do not flood through cells we cannot improve
+	// do not flood through tiles we cannot improve
 	if ((*visspot | z) == *visspot)
 		return;
+
+	// allow flooding through unseen tiles but remove the unfog bit
+	// (this cuts off visibility when a room has multiple entrances)
+	if (automapmode < 3 && ! (*visspot & 0x02))
+		z &= ~0x10;
 
 	actor = (unsigned) actorat[x][y];
 	if (actor == 1 && ! tilemap[x][y])
@@ -783,10 +788,10 @@ void CheckAccessible()
 		y = current & 0x3f;
 		z = (current >> 10) & 0x3c;
 
-		if (x > 0)	PushCell(x - 1, y, z, di_west, &stackptr);
-		if (x < 63)	PushCell(x + 1, y, z, di_east, &stackptr);
-		if (y > 0)	PushCell(x, y - 1, z, di_north, &stackptr);
-		if (y < 63)	PushCell(x, y + 1, z, di_south, &stackptr);
+		if (x > 0)	PushTile(x - 1, y, z, di_west, &stackptr);
+		if (x < 63)	PushTile(x + 1, y, z, di_east, &stackptr);
+		if (y > 0)	PushTile(x, y - 1, z, di_north, &stackptr);
+		if (y < 63)	PushTile(x, y + 1, z, di_south, &stackptr);
 
 		// tempmem should never get exhausted, but if it ever does, it's a sign of something worse
 		if (stackptr >= (unsigned far *) tempmem + BUFFERSIZE / sizeof(unsigned))
@@ -802,7 +807,7 @@ void CheckAccessible()
 			byte w = tilemap[statptr->tilex][statptr->tiley];
 
 			// if the tile is occupied by a wall, bonus is inaccessible
-			if (w && ! (w & 0x80))
+			if (w && ! (w & 0x80) && n != block)  // block "bonuses" are actually barrels that disable multiple use of secret tiles
 				*statptr->visspot &= ~0x08;
 
 			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal)
@@ -832,7 +837,7 @@ void CheckAccessible()
 		}
 	}
 
-	// count secrets and repurpose fog bit as the blue bit
+	// count secrets and repurpose unfog bit as the blue bit
 	for (y = 0; y < 64; y++)
 	{
 		for (x = 0; x < 64; x++)
@@ -840,6 +845,20 @@ void CheckAccessible()
 			byte *visspot = &spotvis[x][y];
 			boolean secret = (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y]);
 			boolean pw = (pwallstate && x == pwallx && y == pwally);
+
+			// a secret is disabled if there is a "bonus" barrel inside
+			if (secret && ! (compflags & COMPFLAG_REACTIVATING_PUSHWALLS))
+			{
+				for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
+				{
+					if (statptr->shapenum != -1 && statptr->flags & FL_BONUS && statptr->tilex == x && statptr->tiley == y && statptr->itemnumber == block)
+					{
+						*visspot |= 0x68;	// turn into regular wall
+						secret = false;
+						break;
+					}
+				}
+			}
 
 			// if tile has been marked as an active secret, secret is accessible
 			if (! pw && *visspot & 0x08 && secret)
@@ -893,8 +912,8 @@ void CheckAccessible()
 			{
 				if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal || n == bo_key1 || n == bo_key2 || n == bo_spear)
 					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x64;	// mark the treasure (including key items)
-				else
-					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x14;	// mark the bonus
+				else if (n != block)
+					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x14;	// mark the bonus (except for barrels that mark pushwall spots that can't be reused)
 			}
 		}
 	}

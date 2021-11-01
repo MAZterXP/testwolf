@@ -1090,11 +1090,9 @@ void DrawScaleds (void)
 	// mark all currently-seen opened doors as see-through
 	for (door = 0; door < doornum; door++)
 	{
-		if (doorobjlist[door].action != dr_closed
-			&& spotvis[doorobjlist[door].tilex][doorobjlist[door].tiley] & 0x01)
-		{
-			spotvis[doorobjlist[door].tilex][doorobjlist[door].tiley] &= ~0x80;
-		}
+		visspot = &spotvis[doorobjlist[door].tilex][doorobjlist[door].tiley];
+		if (doorobjlist[door].action != dr_closed && *visspot & 0x01)
+			*visspot &= ~0x80;
 	}
 #endif // WASD
 
@@ -1121,7 +1119,7 @@ for (i = 0; i < 2; i++)
 #ifdef WASD
 		// if item is inside a wall, do not draw nor allow pickup
 		// (non-WASD version doesn't need this because it doesn't mark walls in spotvis)
-		if (tilemap[statptr->tilex][statptr->tiley] > 0 && tilemap[statptr->tilex][statptr->tiley] < 128)
+		if (tilemap[statptr->tilex][statptr->tiley] && ! (tilemap[statptr->tilex][statptr->tiley] & 0x80))
 			continue;
 #endif // WASD
 

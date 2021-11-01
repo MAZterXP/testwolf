@@ -731,6 +731,10 @@ int			pwalldir;
 
 void PushWall (int checkx, int checky, int dir)
 {
+#ifdef WOLFDOSMPU
+	statobj_t *statptr;
+#endif // WOLFDOSMPU
+
 	int		oldtile;
 
 	if (pwallstate)
@@ -740,6 +744,26 @@ void PushWall (int checkx, int checky, int dir)
 	oldtile = tilemap[checkx][checky];
 	if (!oldtile)
 		return;
+
+#ifdef WOLFDOSMPU
+	for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
+	{
+		if (statptr->shapenum != -1 && statptr->flags & FL_BONUS && statptr->tilex == checkx && statptr->tiley == checky && statptr->itemnumber == block)
+		{
+			// if there is a "bonus" barrel inside the wall, this is a previously-pushed wall
+			if (compflags & COMPFLAG_REACTIVATING_PUSHWALLS)
+			{
+				// if compatibility flag is enabled, allow pushing, but track this barrel for removal later
+				break;
+			}
+			else
+			{
+				// do not allow pushing by default
+				return;
+			}
+		}
+	}
+#endif // WOLFDOSMPU
 
 	switch (dir)
 	{
@@ -791,7 +815,18 @@ void PushWall (int checkx, int checky, int dir)
 	pwallstate = 1;
 	pwallpos = 0;
 	tilemap[pwallx][pwally] |= 0xc0;
+#ifdef WOLFDOSMPU
+	if (statptr != laststatobj)
+	{
+		// if we had a "bonus" barrel, remove it (deception!!)
+		statptr->shapenum = -1;
+	}
+
+	// do not remove P tile info; this is a bug that causes secret tile locations to become reenabled when the game is reloaded
+	// (we handle it by placing a barrel inside a used secret wall instead)
+#else  // WOLFDOSMPU
 	*(mapsegs[1]+farmapylookup[pwally]+pwallx) = 0;	// remove P tile info
+#endif // WOLFDOSMPU
 #ifdef WASD
 	// mark the wall as a secret in the automap when the player dies
 	spotvis[pwallx][pwally] |= 0x80;
@@ -847,6 +882,26 @@ void MovePWalls (void)
 		// the block has been pushed two tiles
 		//
 			pwallstate = 0;
+#ifdef WOLFDOSMPU
+			switch (pwalldir)
+			{
+			case di_north:
+				pwally--;
+				break;
+			case di_east:
+				pwallx++;
+				break;
+			case di_south:
+				pwally++;
+				break;
+			case di_west:
+				pwallx--;
+				break;
+			}
+			// if a pushwall ended up in a spot where another pushwall had been, disable the pushwall by placing a "bonus" barrel inside it
+			if (! (compflags & COMPFLAG_REACTIVATING_PUSHWALLS) && *(mapsegs[1]+farmapylookup[pwally]+pwallx) == PUSHABLETILE)
+				PlaceItemType(block, pwallx, pwally);
+#endif // WOLFDOSMPU
 			return;
 		}
 		else
@@ -858,6 +913,11 @@ void MovePWalls (void)
 				if (actorat[pwallx][pwally-1])
 				{
 					pwallstate = 0;
+#ifdef WOLFDOSMPU
+					// if a pushwall ended up in a spot where another pushwall had been, disable the pushwall by placing a "bonus" barrel inside it
+					if (! (compflags & COMPFLAG_REACTIVATING_PUSHWALLS) && *(mapsegs[1]+farmapylookup[pwally]+pwallx) == PUSHABLETILE)
+						PlaceItemType(block, pwallx, pwally);
+#endif // WOLFDOSMPU
 					return;
 				}
 				(unsigned)actorat[pwallx][pwally-1] =
@@ -869,6 +929,11 @@ void MovePWalls (void)
 				if (actorat[pwallx+1][pwally])
 				{
 					pwallstate = 0;
+#ifdef WOLFDOSMPU
+					// if a pushwall ended up in a spot where another pushwall had been, disable the pushwall by placing a "bonus" barrel inside it
+					if (! (compflags & COMPFLAG_REACTIVATING_PUSHWALLS) && *(mapsegs[1]+farmapylookup[pwally]+pwallx) == PUSHABLETILE)
+						PlaceItemType(block, pwallx, pwally);
+#endif // WOLFDOSMPU
 					return;
 				}
 				(unsigned)actorat[pwallx+1][pwally] =
@@ -880,6 +945,11 @@ void MovePWalls (void)
 				if (actorat[pwallx][pwally+1])
 				{
 					pwallstate = 0;
+#ifdef WOLFDOSMPU
+					// if a pushwall ended up in a spot where another pushwall had been, disable the pushwall by placing a "bonus" barrel inside it
+					if (! (compflags & COMPFLAG_REACTIVATING_PUSHWALLS) && *(mapsegs[1]+farmapylookup[pwally]+pwallx) == PUSHABLETILE)
+						PlaceItemType(block, pwallx, pwally);
+#endif // WOLFDOSMPU
 					return;
 				}
 				(unsigned)actorat[pwallx][pwally+1] =
@@ -891,6 +961,11 @@ void MovePWalls (void)
 				if (actorat[pwallx-1][pwally])
 				{
 					pwallstate = 0;
+#ifdef WOLFDOSMPU
+					// if a pushwall ended up in a spot where another pushwall had been, disable the pushwall by placing a "bonus" barrel inside it
+					if (! (compflags & COMPFLAG_REACTIVATING_PUSHWALLS) && *(mapsegs[1]+farmapylookup[pwally]+pwallx) == PUSHABLETILE)
+						PlaceItemType(block, pwallx, pwally);
+#endif // WOLFDOSMPU
 					return;
 				}
 				(unsigned)actorat[pwallx-1][pwally] =

@@ -1284,6 +1284,7 @@ extern	void	EndText(void);
 #define COMPFLAG_FLAWED_ITEM_PICKUP		0x0004
 #define COMPFLAG_NO_CIRCLE_STRAFE		0x0008
 #define COMPFLAG_50_SPRITE_LIMIT		0x0010
+#define COMPFLAG_REACTIVATING_PUSHWALLS	0x0020
 
 extern	int			far	midivolume;
 extern	word		far	compflags;
