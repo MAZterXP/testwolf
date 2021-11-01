@@ -1484,12 +1484,15 @@ void DrawTabMenu(CP_iteminfo TabItems)
 
 void TabKeyFunction()
 {
-	int which;
+	static int far which = -1;
 	CP_iteminfo	TabItems;
 	TabItems.x = NM_X - 12;
 	TabItems.y = NM_Y - 13*4;
 	TabItems.amount = 10;
-	TabItems.curpos = tabfunction == 2 ? automapmode + 6 : tabfunction;
+	if (which == -1)
+		TabItems.curpos = tabfunction == 2 ? automapmode + 6 : tabfunction;
+	else
+		TabItems.curpos = which;
 	TabItems.indent = 50;
 	DrawTabMenu(TabItems);
 	MenuFadeIn();
@@ -1509,6 +1512,7 @@ void TabKeyFunction()
 		}
 	}
 	while (which >= 0);
+	which = TabItems.curpos;
 
 	ShootSnd();
 	MenuFadeOut();

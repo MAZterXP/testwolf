@@ -1084,6 +1084,20 @@ void DrawScaleds (void)
 	statobj_t	*statptr;
 	objtype		*obj;
 
+#ifdef WASD
+	int door;
+
+	// mark all currently-seen opened doors as see-through
+	for (door = 0; door < doornum; door++)
+	{
+		if (doorobjlist[door].action != dr_closed
+			&& spotvis[doorobjlist[door].tilex][doorobjlist[door].tiley] & 0x01)
+		{
+			spotvis[doorobjlist[door].tilex][doorobjlist[door].tiley] &= ~0x80;
+		}
+	}
+#endif // WASD
+
 	visptr = &vislist[0];
 
 #ifdef WOLFDOSMPU
@@ -1103,6 +1117,13 @@ for (i = 0; i < 2; i++)
 	{
 		if ((visptr->shapenum = statptr->shapenum) == -1)
 			continue;						// object has been deleted
+
+#ifdef WASD
+		// if item is inside a wall, do not draw nor allow pickup
+		// (non-WASD version doesn't need this because it doesn't mark walls in spotvis)
+		if (tilemap[statptr->tilex][statptr->tiley] > 0 && tilemap[statptr->tilex][statptr->tiley] < 128)
+			continue;
+#endif // WASD
 
 #ifdef WOLFDOSMPU
 		// pick up items using better logic
@@ -1427,9 +1448,15 @@ void ReadSpotVis(int file)
 
 void ResetSpotVis()
 {
+	int door;
+
 	// spotvis must be reset to show nothing
 	// do it in this module to prevent messing up the data segment
 	memset(spotvis, 0, sizeof(spotvis));
+
+	// go through all the doors and mark them as unseen
+	for (door = 0; door < doornum; door++)
+		spotvis[doorobjlist[door].tilex][doorobjlist[door].tiley] = 0x80;
 }
 
 #endif // WASD

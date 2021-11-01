@@ -1312,12 +1312,6 @@ restart:
 		if (! loadedgame)
 			pwallstate = 0;
 #endif // WOLFDOSMPU
-#ifdef WASD
-		// reset the map (except if you died or loaded another game)
-		// (yes, you should get to keep your map when you die)
-		if (! died && ! loadedgame)
-			ResetSpotVis();
-#endif // WASD
 
 		if (!loadedgame)
 		  gamestate.score = gamestate.oldscore;
@@ -1327,7 +1321,16 @@ restart:
 		if (loadedgame)
 			loadedgame = false;
 		else
-			SetupGameLevel ();
+#ifdef WASD
+		{
+#endif // WASD
+			SetupGameLevel();
+#ifdef WASD
+			// reset map visibility (but if you died, you get to keep your map)
+			if (! died)
+				ResetSpotVis();
+		}
+#endif // WASD
 
 #ifdef SPEAR
 		if (gamestate.mapon == 20)	// give them the key allways
@@ -1370,14 +1373,14 @@ startplayloop:
 #ifdef WOLFDOSMPU
 			pwallstate = 0;
 #endif // WOLFDOSMPU
-#ifdef WASD
-			ResetSpotVis();
-#endif // WASD
 
 			ClearMemory ();
 			gamestate.oldscore = gamestate.score;
 			gamestate.mapon = 20;
 			SetupGameLevel ();
+#ifdef WASD
+			ResetSpotVis();
+#endif // WASD
 			StartMusic ();
 			PM_CheckMainMem ();
 			player->x = spearx;

@@ -67,8 +67,8 @@
 #define	STR_TAB2	"Automap"
 #define	STR_MAPT	"Automap Mode:"
 #define	STR_MAP0	"Normal (no hints)"
-#define	STR_MAP1	"Show secrets if clear"
-#define	STR_MAP2	"Always show secrets"
+#define	STR_MAP1	"Show hints if clear"
+#define	STR_MAP2	"Always show hints"
 #define	STR_MAP3	"Full map with enemies"
 #else  // WASD
 #define	STR_MOUSEEN	"Mouse Enabled"
