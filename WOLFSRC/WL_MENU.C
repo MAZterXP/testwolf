@@ -1269,9 +1269,24 @@ void CP_Sound(void)
 				{
 					SD_SetDigiDevice(sds_Off);
 					DrawSoundMenu();
+#ifdef WOLFDOSMPU
+					ShootSnd();
+#endif // WOLFDOSMPU
 				}
 				break;
 			case 6:
+#ifdef WOLFDOSMPU
+				if (! SoundSourcePresent)
+				{
+					if (DigiMode!=sds_PC)
+					{
+						SD_SetDigiDevice(sds_PC);
+						DrawSoundMenu();
+						ShootSnd();
+					}
+				}
+				else
+#endif // WOLFDOSMPU
 				if (DigiMode!=sds_SoundSource)
 				{
 					SD_SetDigiDevice(sds_SoundSource);
@@ -1380,13 +1395,20 @@ void DrawSoundMenu(void)
 #endif // WOLFDOSMPU
 
 	if (!SoundSourcePresent)
+#ifdef WOLFDOSMPU
+		_fstrcpy(SndMenu[6].string, SndMenu[1].string);		// replace Sound Source with PC Speaker
+#else  // WOLFDOSMPU
 		SndMenu[6].active=0;
+#endif // WOLFDOSMPU
 
 	if (!SoundBlasterPresent)
 		SndMenu[7].active=0;
 
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 	if (!SoundSourcePresent && !SoundBlasterPresent)
 		SndMenu[5].active=0;
+#endif // WOLFDOSMPU
 
 	DrawMenu(&SndItems,&SndMenu[0]);
 #ifndef JAPAN
@@ -1422,7 +1444,11 @@ void DrawSoundMenu(void)
 				// DIGITIZED SOUND
 				//
 				case 5: if (DigiMode==sds_Off) on=1; break;
+#ifdef WOLFDOSMPU
+				case 6: if (DigiMode==sds_SoundSource || DigiMode == sds_PC) on=1; break;
+#else  // WOLFDOSMPU
 				case 6: if (DigiMode==sds_SoundSource) on=1; break;
+#endif // WOLFDOSMPU
 				case 7: if (DigiMode==sds_SoundBlaster) on=1; break;
 
 				//

@@ -178,7 +178,7 @@ void ReadConfig(void)
 			if (SoundSourcePresent)
 				sds = sds_SoundSource;
 			else
-				sds = sds_Off;
+				sds = sds_PC;
 		}
 
 		if (! SoundSourcePresent && sds == sds_SoundSource)
@@ -186,8 +186,11 @@ void ReadConfig(void)
 			if (SoundBlasterPresent)
 				sds = sds_SoundBlaster;
 			else
-				sds = sds_Off;
+				sds = sds_PC;
 		}
+
+		if (SoundSourcePresent && sds == sds_PC)
+			sds = sds_SoundSource;
 
 		if (! AdLibPresent && sm == smm_AdLib)	// really "if no music device is present"
 			sm = smm_Off;
@@ -223,7 +226,7 @@ void ReadConfig(void)
 		if (opl2IsEnabled())
 			sd = sdm_AdLib;
 
-		sds = sds_Off;
+		sds = sds_PC;
 		if (SoundSourcePresent)
 			sds = sds_SoundSource;
 		if (SoundBlasterPresent)

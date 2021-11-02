@@ -597,29 +597,13 @@ SDL_SetTimerSpeed(void)
 	void interrupt	(*isr)(void);
 
 #ifdef WOLFDOSMPU
-	if (DigiMode == sds_SoundBlaster && DigiPlaying && sbDMA == 2
-		|| DigiMode == sds_SoundSource && DigiPlaying && ssNoCheck)
-	{
-		// shared code for SB Direct Mode and Covox Speech Thing
-		rate = TickBase * 100;
-		isr = SDL_t0ExtremeAsmService;
-
-		if (DigiMode == sds_SoundBlaster)
-		{
-			// set ssData to the correct SB port
-			ssStatus = 0;
-			ssData = sbLocation + sbWriteCmd;
-		}
-		else
-		{
-			// set ssData to the correct Covox Speech Thing port
-			ssStatus = 1;
-			ssData = ssControl - 2;
-		}
-	}
-	else
-#endif // WOLFDOSMPU
+	if (DigiPlaying &&
+		(DigiMode == sds_PC
+		 || DigiMode == sds_SoundBlaster && sbDMA == 2
+		 || DigiMode == sds_SoundSource && ssNoCheck))
+#else  // WOLFDOSMPU
 	if ((DigiMode == sds_PC) && DigiPlaying)
+#endif // WOLFDOSMPU
 	{
 		rate = TickBase * 100;
 		isr = SDL_t0ExtremeAsmService;
@@ -632,12 +616,6 @@ SDL_SetTimerSpeed(void)
 	{
 		rate = TickBase * 10;
 		isr = SDL_t0FastAsmService;
-
-#ifdef WOLFDOSMPU
-		// reset ssData to the correct SS port
-		ssStatus = ssControl - 1;
-		ssData = ssStatus - 1;
-#endif // WOLFDOSMPU
 	}
 	else
 	{
@@ -647,6 +625,31 @@ SDL_SetTimerSpeed(void)
 
 	if (rate != TimerRate)
 	{
+#ifdef WOLFDOSMPU
+asm	pushf
+asm	cli
+		if (DigiMode == sds_SoundBlaster && sbDMA == 2)
+		{
+			// hijack SS variables for SB direct mode
+			ssStatus = 0;
+			ssData = sbLocation + sbWriteCmd;
+		}
+		else if (SoundSourcePresent)
+		{
+			// otherwise, set SS variables to their normal values
+			if (ssNoCheck)
+			{
+				ssStatus = 1;
+				ssData = ssControl - 2;
+			}
+			else
+			{
+				ssStatus = ssControl - 1;
+				ssData = ssStatus - 1;
+			}
+		}
+asm popf
+#endif // WOLFDOSMPU
 		setvect(8,isr);
 		SDL_SetIntsPerSec(rate);
 		TimerRate = rate;
@@ -1553,6 +1556,16 @@ SD_Poll(void)
 		{
 			DigiPlaying = false;
 			DigiLastSegment = false;
+#ifdef WOLFDOSMPU
+			// fix for low-priority sounds not playing after a high-priority sound is interrupted
+			if ((DigiMode == sds_PC) && (SoundMode == sdm_PC))
+			{
+				SDL_SoundFinished();
+			}
+			else
+				DigiNumber = DigiPriority = 0;
+			SoundPositioned = false;
+#endif // WOLFDOSMPU
 		}
 	}
 	SDL_SetTimerSpeed();
@@ -2667,6 +2680,11 @@ SD_PlaySound(soundnames sound)
 	if ((SoundMode != sdm_Off) && !s)
 		Quit("SD_PlaySound() - Uncached sound");
 
+#ifdef WOLFDOSMPU
+	// when on PC speaker, revert to non-digital version for door noises
+	if (DigiMode != sds_PC || (sound != OPENDOORSND && sound != CLOSEDOORSND))
+#endif // WOLFDOSMPU
+
 	if ((DigiMode != sds_Off) && (DigiMap[sound] != -1))
 	{
 		if ((DigiMode == sds_PC) && (SoundMode == sdm_PC))
@@ -2714,6 +2732,10 @@ SD_PlaySound(soundnames sound)
 	switch (SoundMode)
 	{
 	case sdm_PC:
+#ifdef WOLFDOSMPU
+		if (DigiPlaying && DigiMode == sds_PC)
+			SD_StopDigitized();
+#endif // WOLFDOSMPU
 		SDL_PCPlaySound((void far *)s);
 		break;
 	case sdm_AdLib:

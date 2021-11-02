@@ -11,7 +11,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 About
 =====
 
-**wolfdosmpu** started as a source mod for the original 16-bit DOS versions of Wolfenstein 3-D and Spear of Destiny to add rudimentary MIDI playback support via the MPU-401 interface, replacing the OPL2-based music. Since then, many features have been added (gameplay bug fixes, compatibility options, additional support for sound hardware, modern WASD-style controls and an automap), while keeping the core Wolf3D game and interface unchanged unless necessary. Thus, the project has grown to become that "lost version update" for people who still prefer playing the game on DOS, and has become my own favorite way to play Wolf3D/SoD even on modern systems (via DOSBox). Try it, you might like it yourself. :)
+**wolfdosmpu** started as a source mod for the original 16-bit DOS versions of Wolfenstein 3-D and Spear of Destiny to add rudimentary MIDI playback support via the MPU-401 interface, replacing the OPL2-based music. Since then, many features have been added (gameplay bug fixes, compatibility options, additional support for sound hardware, modern WASD-style controls, and an automap function), while keeping the core Wolf3D game and interface unchanged unless absolutely necessary. Thus, the project has essentially grown into a proverbial "lost version update" of vanilla Wolf3D/SoD, catering to people who still prefer playing these games on DOS. Personally, it has become my favorite way to play these games even on modern systems (via DOSBox). Try it, you might like it yourself. :)
 
 It is recommended to use this mod with [wolfmidi](https://github.com/ericvids/wolfmidi/), which converts the game's native OPL2 music data to General MIDI.
 
@@ -57,7 +57,7 @@ FAQ
 Version History
 ===============
 
-1.43 (2021-11-02)
+1.43 (2021-11-03)
 -----------------
 - Automap now makes doors glow if they have not been opened (more accurately, "haven't been _seen_ open"), to better visualize unexplored areas in a busy map. However, doors will only start glowing on levels started on version 1.43 onwards (i.e., your old savegames will still work fine, but no doors will glow until you proceed to the next level).
 - Automap tracing has been improved to cut off visibility at unopened doors. This improvement reduces automap errors where visibility would "seep through" areas that the player hasn't explored yet but has already been "seen" by the ray-casting engine, which is caused by precision errors when checking for wall collisions. This issue also affects other source ports and derivative games that rely on the ray-casting engine for automapping, such as ECWolf and the DOS version of Super 3-D Noah's Ark. (The actual precision errors are left untouched because fixing them may affect the speed and determinism of the renderer and may cause subtle differences in gameplay.)
@@ -65,6 +65,8 @@ Version History
 - Fixed modern-controls bug where items can still be picked up even when they are made inaccessible by pushing a secret wall on top of them. This bug did not affect the MPU-only version because the spotvis algorithm was modified only in the modern-controls version (to support showing walls on the automap).
 - Fixed so that pushwall spots do not reactivate when another pushwall is pushed into its place and the user saves and reloads the game. To reenable the previous behavior, use new COMP flag 32.
 - Fixed so that the OPL2 device is cleaned up twice on system exit. The original EXEs were actually doing this second clean-up in the main game code, but it does not respect the "noal" option, so it was #ifdef-ed out for safety. But then I later noticed that not cleaning up twice caused the game to sometimes not detect the OPL2 properly on the next startup, so I reimplemented it with proper support for "noal". This might be a DOSBox-only thing, but I'm not taking chances.
+- Fixed a bug that causes lower-priority digitized sounds to never play again when a high-priority sound's ending portion was delayed from playing.
+- The hidden PC Speaker digitized sound mode is improved, fixing dropout issues when combining digitized and non-digitized PC sound effects. If no Disney Sound Source or Covox Speech Thing is present (or if the "noss" command-line parameter is supplied), its menu option is now replaced with PC Speaker, officially making it a non-hidden mode. Also, door sound effects now revert to their non-digitized counterparts because they are too noisy and unintelligible (and play very often in a level); hopefully this makes PC Speaker digitized sound much more tolerable. For DOSBox users, it is recommended to set the volume of the emulated PC Speaker device to 40 (or below) using the DOSBox command line "MIXER SPKR 40" for proper loudness relative to the emulated SB and FM devices.
 
 1.42 (2021-10-29)
 -----------------
@@ -90,7 +92,7 @@ Version History
 
 1.39 RC (2021-10-18)
 --------------------
-- Added music volume control, to allow users to balance the loudness of the music with the sound effects (suggested by mOBSCENE). Note that sound effects volume (both digital and FM) can be changed through your sound card's mixer app. The MPU-401 device's volume, on the other hand, usually has no readily-available software-based control, justifying this feature.
+- Added music volume control, to allow users to balance the loudness of the music with the sound effects (suggested by mOBSCENE). Note that sound effects volume (both digitized and FM) can be changed through your sound card's mixer app. The MPU-401 device's volume, on the other hand, usually has no readily-available software-based control, justifying this feature.
 - Made Tab key functions a separate menu -- it was previously unclear that the menu option cycles through four possibilities.
 - Now supports negative parameters for COMP, to disable the specified options (and enable everything else).
 - Player respawn now properly marks pushwalls and bonuses that have been previously pushed/seen. This modifies the savegame format -- older savegames will be automatically updated to the new format, but newer savegames will not work properly with older versions of wolfdosmpu (which you should generally avoid anyway).
@@ -242,7 +244,7 @@ Here are some tips and suggestions for some common problems:
 
    TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) consume part of your conventional memory. As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
 
-   My own testing with DOSBox-X indicates that the modern-controls EXEs require at least 572 KB of free conventional memory in order to run properly (with the default music). The MPU-only EXEs use about 8 KB less, but I still recommend freeing at least 572 KB of conventional memory for the best results.
+   My own testing with DOSBox-X indicates that the modern-controls EXEs require at least 572 KB of free conventional memory in order to run properly (with the default music). The MPU-only EXEs use about 7 KB less, but I still recommend freeing at least 572 KB of conventional memory for the best results.
 
    One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
 
