@@ -2212,10 +2212,21 @@ SDL_CleanDevice(void)
 {
 #ifdef WOLFDOSMPU
 	if (opl2IsEnabled())
+	{
 #else  // WOLFDOSMPU
 	if ((SoundMode == sdm_AdLib) || (MusicMode == smm_AdLib))
 #endif // WOLFDOSMPU
 		SDL_CleanAL();
+#ifdef WOLFDOSMPU
+		// weirdly enough, cleaning up twice works better, at least on DOSBox;
+		// otherwise, restarting the game immediately after quitting sometimes fails
+		// to detect the AdLib and reverts the game to PC Speaker sound
+
+		// the original EXEs actually do cleanup twice, but the second cleanup happens
+		// in the main game code regardless of the "noal" parameter, which is Bad(tm)
+		SDL_CleanAL();
+	}
+#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////

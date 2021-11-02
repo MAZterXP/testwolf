@@ -1324,7 +1324,7 @@ restart:
 #ifdef WASD
 		{
 #endif // WASD
-			SetupGameLevel();
+			SetupGameLevel ();
 #ifdef WASD
 			// reset map visibility (but if you died, you get to keep your map)
 			if (! died)

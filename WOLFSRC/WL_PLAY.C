@@ -1205,9 +1205,6 @@ void CheckKeys (void)
 			int i;
 			byte x, y;
 			unsigned width, height;
-			byte mask = 0x02;
-			if (automapmode == 3)
-				mask = 0x0c;
 
 			tabstate = 2;	// do not allow next tab press to show KST stats again
 
@@ -1398,7 +1395,7 @@ void CheckKeys (void)
 					for (x = 0; x < 64; x++)
 					{
 						byte *visspot = &spotvis[x][y];
-						if (*visspot & mask && *visspot & 0x0c)
+						if (*visspot & 0x0c)
 						{
 							byte color = (*visspot & 0x70);
 							byte glow;
