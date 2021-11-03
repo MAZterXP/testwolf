@@ -1549,6 +1549,16 @@ SD_Poll(void)
 	}
 	if (DigiMissed && DigiNextAddr)
 	{
+#ifdef WOLFDOSMPU
+		memptr addr = DigiNextAddr;		// prevent race condition
+		DigiNextAddr = nil;
+		DigiMissed = false;
+		SDL_PlayDigiSegment(addr,DigiNextLen);
+
+		// the code we replaced was causing issues such as disabling lower priority sounds,
+		// cutting off sounds at the end because the interrupt does not fire anymore, etc.
+		// (why is it reporting sound playback as finished even if it is still playing?!)
+#else  // WOLFDOSMPU
 		SDL_PlayDigiSegment(DigiNextAddr,DigiNextLen);
 		DigiNextAddr = nil;
 		DigiMissed = false;
@@ -1556,17 +1566,8 @@ SD_Poll(void)
 		{
 			DigiPlaying = false;
 			DigiLastSegment = false;
-#ifdef WOLFDOSMPU
-			// fix for low-priority sounds not playing after a high-priority sound is interrupted
-			if ((DigiMode == sds_PC) && (SoundMode == sdm_PC))
-			{
-				SDL_SoundFinished();
-			}
-			else
-				DigiNumber = DigiPriority = 0;
-			SoundPositioned = false;
-#endif // WOLFDOSMPU
 		}
+#endif // WOLFDOSMPU
 	}
 	SDL_SetTimerSpeed();
 }

@@ -130,6 +130,13 @@ extreme		dw	?
 ;	Macro used to do the sound effects code
 ;
 	MACRO	DOFX
+
+IFDEF	WOLFDOSMPU
+	mov	al,[BYTE PTR cs:pcindicate]
+	or	al,al
+	jnz	@@nopc						; PC digitized sound effect ongoing
+ENDIF	; WOLFDOSMPU
+
 	les	di,[pcSound]				; PC sound effects
 	mov	ax,es
 	or	ax,di
@@ -370,6 +377,9 @@ ENDIF	; WOLFDOSMPU
 	and	al,11111100b
 	out	pcSpeaker,al
 
+IFDEF	WOLFDOSMPU
+	mov	[cs:pcindicate],0
+ENDIF	; WOLFDOSMPU
 	call SDL_DigitizedDone
 
 @@donereg:
@@ -504,7 +514,7 @@ ENDIF	; WOLFDOSMPU
 IFDEF	WOLFDOSMPU
 	mov	ax,[ssStatus]
 	cmp	ax,1
-	jle	@@ssdone
+	jle	@@ssdone				; SB Direct or Covox sound effect ongoing
 ENDIF	; WOLFDOSMPU
 
 	les	di,[ssSample]			; Get pointer to Sound Source sample
