@@ -1064,6 +1064,16 @@ void Cmd_Use (void)
 		PushWall (checkx,checky,dir);
 		return;
 	}
+#ifdef WOLFDOSMPU
+	// Obscure bug alert: Pushing a secret wall on its second (or third) tile movement causes the game to
+	// treat the wall like a door, because its 0xc0 tilemap bits, which is meant just for passing the ray-
+	// casting check, would also pass the doornum & 0x80 check below. In turn, this causes a nonexistent
+	// door to be passed to OperateDoor, resulting in game corruption. If you ever noticed certain map
+	// ornaments that are normally passable suddenly becoming impassable (and you can pick them up too if
+	// you try hard enough!), this is the culprit.
+	if ((doornum & 0xc0) == 0xc0)
+		return;
+#endif // WOLFDOSMPU
 	if (!buttonheld[bt_use] && doornum == ELEVATORTILE && elevatorok)
 	{
 	//

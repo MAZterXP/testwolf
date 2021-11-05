@@ -1494,7 +1494,7 @@ int  BackDoor(char *s)
 		}
 
 	return 0;
-#endif  // WOLFDOSMPU
+#endif // WOLFDOSMPU
 }
 
 

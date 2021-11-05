@@ -2591,7 +2591,7 @@ SD_Default(boolean gotit,SDMode sd,SMMode sm)
 	if (sm != MusicMode)
 		SD_SetMusicMode(sm);
 }
-#endif  // WOLFDOSMPU
+#endif // WOLFDOSMPU
 
 ///////////////////////////////////////////////////////////////////////////
 //

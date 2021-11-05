@@ -754,6 +754,13 @@ void PushTile(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		// elevator (does not flood through)
 		*visspot |= 0x48 | z;	// special case: always accessible
 	}
+#if 0
+	else if (! tilemap[x][y])
+	{
+		// error tile (debug when this happens)
+		*visspot |= 0x5f;
+	}
+#endif
 	else
 	{
 		// wall (does not flood through)
@@ -1196,6 +1203,49 @@ void CheckKeys (void)
 	}
 
 #ifdef WASD
+#if 0
+	{
+		static boolean far lastFrameOk = false;
+		int x, y;
+		for (x = 0; x < 64; x++)
+		{
+			for (y = 0; y < 64; y++)
+			{
+				if ((unsigned) actorat[x][y] > 1 && (unsigned) actorat[x][y] < 256 && ! tilemap[x][y])
+				{
+					if (lastFrameOk)
+					{
+						char name[32];
+						unsigned nwritten;
+						int handle;
+						name[0] = 'S';
+						name[1] = 'A';
+						name[2] = 'V';
+						name[3] = 'E';
+						name[4] = 'G';
+						name[5] = 'M';
+						name[6] = '_';
+						name[7] = 'E';
+						name[8] = 0;
+						unlink(name);
+						handle=creat(name,S_IREAD|S_IWRITE);
+						_dos_write(handle,(void far *)name,32,&nwritten);
+						lseek(handle,32,SEEK_SET);
+						SaveTheGame(handle,0,0);
+						close(handle);
+						Quit(name);
+					}
+					else
+						break;
+				}
+			}
+			if (y < 64)
+				break;
+		}
+		if (x == 64 && y == 64)
+			lastFrameOk = true;
+	}
+#endif
 	if (Keyboard[sc_Tab])
 	{
 		if (tabstate == 0)
