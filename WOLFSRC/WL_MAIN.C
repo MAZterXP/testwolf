@@ -1546,6 +1546,9 @@ void DoJukebox(void)
 #else
 	UnCacheLump (CONTROLS_LUMP_START,CONTROLS_LUMP_END);
 #endif
+#ifdef WOLFDOSMPU
+	UNCACHEGRCHUNK(STARTFONT+1);
+#endif // WOLFDOSMPU
 }
 #endif
 #ifdef WOLFDOSMPU

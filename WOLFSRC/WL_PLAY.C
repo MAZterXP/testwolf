@@ -795,7 +795,12 @@ void CheckAccessible()
 
 		// tempmem should never get exhausted, but if it ever does, it's a sign of something worse
 		if (stackptr >= (unsigned far *) tempmem + BUFFERSIZE / sizeof(unsigned))
-			Quit(0);
+		{
+			char sz[2];
+			sz[0] = ' ';
+			sz[1] = 0;
+			Quit(sz);
+		}
 	}
 
 	// count treasure
@@ -806,8 +811,13 @@ void CheckAccessible()
 			byte n = statptr->itemnumber;
 			byte w = tilemap[statptr->tilex][statptr->tiley];
 
+			// a secret is disabled if there is a "bonus" barrel inside
+			boolean secret = (*(mapsegs[1] + farmapylookup[statptr->tiley] + statptr->tilex) == PUSHABLETILE && w);
+			if (! (compflags & COMPFLAG_REACTIVATING_PUSHWALLS) && n == block && secret)
+				*statptr->visspot |= 0x68;	// turn into regular wall
+
 			// if the tile is occupied by a wall, bonus is inaccessible
-			if (w && ! (w & 0x80) && n != block)  // block "bonuses" are actually barrels that disable multiple use of secret tiles
+			if (w && ! (w & 0x80) && n != block)  // ignore "bonus" barrels
 				*statptr->visspot &= ~0x08;
 
 			if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal)
@@ -846,19 +856,9 @@ void CheckAccessible()
 			boolean secret = (*(mapsegs[1] + farmapylookup[y] + x) == PUSHABLETILE && tilemap[x][y]);
 			boolean pw = (pwallstate && x == pwallx && y == pwally);
 
-			// a secret is disabled if there is a "bonus" barrel inside
-			if (secret && ! (compflags & COMPFLAG_REACTIVATING_PUSHWALLS))
-			{
-				for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
-				{
-					if (statptr->shapenum != -1 && statptr->flags & FL_BONUS && statptr->tilex == x && statptr->tiley == y && statptr->itemnumber == block)
-					{
-						*visspot |= 0x68;	// turn into regular wall
-						secret = false;
-						break;
-					}
-				}
-			}
+			// check if secret is disabled due to bonus barrel
+			if (secret && (*visspot & 0x68) == 0x68)
+				secret = false;
 
 			// if tile has been marked as an active secret, secret is accessible
 			if (! pw && *visspot & 0x08 && secret)
@@ -1133,7 +1133,13 @@ void CheckKeys (void)
 		ClearMemory ();
 		ClearSplitVWB ();
 		VW_ScreenToScreen (displayofs,bufferofs,80,160);
+#ifdef WOLFDOSMPU
+		CA_CacheGrChunk(STARTFONT+1);
+#endif // WOLFDOSMPU
 		US_ControlPanel(scan);
+#ifdef WOLFDOSMPU
+		UNCACHEGRCHUNK(STARTFONT+1);
+#endif // WOLFDOSMPU
 
 		 DrawAllPlayBorderSides ();
 

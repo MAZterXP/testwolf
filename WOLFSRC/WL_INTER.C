@@ -1069,7 +1069,14 @@ void	DrawHighScores(void)
 
 	CacheLump (HIGHSCORES_LUMP_START,HIGHSCORES_LUMP_END);
 	CA_CacheGrChunk (STARTFONT+1);
+#ifdef WOLFDOSMPU
+	CA_CacheGrChunk(C_WONSPEARPIC);
+	CA_CacheGrChunk(HIGHSCORESPIC);
+#endif // WOLFDOSMPU
 	VWB_DrawPic (0,0,HIGHSCORESPIC);
+#ifdef WOLFDOSMPU
+	UNCACHEGRCHUNK(HIGHSCORESPIC);
+#endif // WOLFDOSMPU
 
 	fontnumber = 1;
 #endif
@@ -1176,6 +1183,9 @@ void	DrawHighScores(void)
 	VW_UpdateScreen ();
 
 #ifdef SPEAR
+#ifdef WOLFDOSMPU
+	UNCACHEGRCHUNK(C_WONSPEARPIC);
+#endif // WOLFDOSMPU
 	UnCacheLump (HIGHSCORES_LUMP_START,HIGHSCORES_LUMP_END);
 	fontnumber = 0;
 #endif
@@ -1460,6 +1470,11 @@ char 	far CopyProFailedStrs[][100] = {
 
 int  BackDoor(char *s)
 {
+#ifdef WOLFDOSMPU
+	// copy protection is disabled right now so this never gets called; this replacement just saves some codeseg bytes
+	// (TODO: remove copy protection altogether but keep the strings for dataseg compatibility)
+	return *s;
+#else  // WOLFDOSMPU
 	int i;
 
 
@@ -1479,6 +1494,7 @@ int  BackDoor(char *s)
 		}
 
 	return 0;
+#endif  // WOLFDOSMPU
 }
 
 

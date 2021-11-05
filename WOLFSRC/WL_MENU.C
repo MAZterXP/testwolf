@@ -739,6 +739,9 @@ int CP_CheckQuick(unsigned scancode)
 				Message(STR_SAVING"...");
 				CP_SaveGame(1);
 				fontnumber=0;
+#ifdef WOLFDOSMPU
+				VL_WaitVBL(3);	// because saving is too fast on modern systems
+#endif // WOLFDOSMPU
 			}
 			else
 			{
@@ -762,6 +765,18 @@ int CP_CheckQuick(unsigned scancode)
 
 				SETFONTCOLOR(0,15);
 				IN_ClearKeysDown();
+#ifdef WOLFDOSMPU
+				#ifndef SPEAR
+				UNCACHEGRCHUNK(C_CURSOR1PIC);
+				UNCACHEGRCHUNK(C_CURSOR2PIC);
+				UNCACHEGRCHUNK(C_DISKLOADING1PIC);
+				UNCACHEGRCHUNK(C_DISKLOADING2PIC);
+				UNCACHEGRCHUNK(C_SAVEGAMEPIC);
+				UNCACHEGRCHUNK(C_MOUSELBACKPIC);
+				#else
+				UnCacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
+				#endif
+#endif // WOLFDOSMPU
 				DrawPlayScreen ();
 
 				if (!startgame && !loadedgame)
@@ -779,6 +794,8 @@ int CP_CheckQuick(unsigned scancode)
 
 				PM_CheckMainMem ();
 
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 				#ifndef SPEAR
 				UNCACHEGRCHUNK(C_CURSOR1PIC);
 				UNCACHEGRCHUNK(C_CURSOR2PIC);
@@ -789,6 +806,7 @@ int CP_CheckQuick(unsigned scancode)
 				#else
 				UnCacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
 				#endif
+#endif // WOLFDOSMPU
 			}
 			return 1;
 
@@ -835,6 +853,18 @@ int CP_CheckQuick(unsigned scancode)
 
 				SETFONTCOLOR(0,15);
 				IN_ClearKeysDown();
+#ifdef WOLFDOSMPU
+				#ifndef SPEAR
+				UNCACHEGRCHUNK(C_CURSOR1PIC);
+				UNCACHEGRCHUNK(C_CURSOR2PIC);
+				UNCACHEGRCHUNK(C_DISKLOADING1PIC);
+				UNCACHEGRCHUNK(C_DISKLOADING2PIC);
+				UNCACHEGRCHUNK(C_LOADGAMEPIC);
+				UNCACHEGRCHUNK(C_MOUSELBACKPIC);
+				#else
+				UnCacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
+				#endif
+#endif // WOLFDOSMPU
 				DrawPlayScreen ();
 
 				if (!startgame && !loadedgame)
@@ -852,6 +882,8 @@ int CP_CheckQuick(unsigned scancode)
 					Mouse(MDelta);	// Clear accumulated mouse movement
 				PM_CheckMainMem ();
 
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 				#ifndef SPEAR
 				UNCACHEGRCHUNK(C_CURSOR1PIC);
 				UNCACHEGRCHUNK(C_CURSOR2PIC);
@@ -862,6 +894,7 @@ int CP_CheckQuick(unsigned scancode)
 				#else
 				UnCacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
 				#endif
+#endif // WOLFDOSMPU
 			}
 			return 1;
 
