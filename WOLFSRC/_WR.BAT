@@ -1,1 +1,1 @@
-@CALL _PREP.BAT W WOLFVER.H WOLF3DR Wolf3D (Registered Version) %1
+@CALL _PREP.BAT W WOLFVER.H WOLF3DR Wolf3D (Registered Version) %1 %2 %3

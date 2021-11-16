@@ -967,6 +967,11 @@ void Thrust (int angle, long speed)
 
 	offset = farmapylookup[player->tiley]+player->tilex;
 	player->areanumber = *(mapsegs[0] + offset) -AREATILE;
+#ifdef WOLFDOSMPU
+	// prevent memory corruption in case actor is in a holowall
+	if (player->areanumber >= NUMAREAS)
+		player->areanumber = 0;
+#endif // WOLFDOSMPU
 
 	if (*(mapsegs[1] + offset) == EXITTILE)
 		VictoryTile ();
@@ -1125,6 +1130,11 @@ void SpawnPlayer (int tilex, int tiley, int dir)
 	player->tiley = tiley;
 	player->areanumber =
 		*(mapsegs[0] + farmapylookup[player->tiley]+player->tilex);
+#ifdef WOLFDOSMPU
+	// prevent memory corruption in case actor is in a holowall
+	if (player->areanumber >= NUMAREAS)
+		player->areanumber = 0;
+#endif // WOLFDOSMPU
 	player->x = ((long)tilex<<TILESHIFT)+TILEGLOBAL/2;
 	player->y = ((long)tiley<<TILESHIFT)+TILEGLOBAL/2;
 	player->state = &s_player;

@@ -1,2 +1,2 @@
 @echo off
-git diff base --diff-filter=d
+git diff base --diff-filter=ad

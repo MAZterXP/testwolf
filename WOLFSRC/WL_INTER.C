@@ -214,11 +214,29 @@ void Victory (void)
 	min = sec/60;
 	sec %= 60;
 
+#ifdef WOLFDOSMPU
+	// SoD 100% completion is pretty hard to do in less than 100 minutes; show up to 999 minutes (just above 16 hours)
+	if (min > 999)
+	{
+		min = 999;
+		sec = 99;
+	}
+#else  // WOLFDOSMPU
 	if (min > 99)
 		min = sec = 99;
+#endif // WOLFDOSMPU
 
 	i = TIMEX*8+1;
+#ifdef WOLFDOSMPU
+	if (min/100)
+	{
+		VWB_DrawPic(i,TIMEY*8,L_NUM0PIC+(min/100));
+		i += 2*8;
+	}
+	VWB_DrawPic(i,TIMEY*8,L_NUM0PIC+((min/10)%10));
+#else  // WOLFDOSMPU
 	VWB_DrawPic(i,TIMEY*8,L_NUM0PIC+(min/10));
+#endif // WOLFDOSMPU
 	i += 2*8;
 	VWB_DrawPic(i,TIMEY*8,L_NUM0PIC+(min%10));
 	i += 2*8;
@@ -228,6 +246,12 @@ void Victory (void)
 	i += 2*8;
 	VWB_DrawPic(i,TIMEY*8,L_NUM0PIC+(sec%10));
 	VW_UpdateScreen ();
+
+#ifdef WOLFDOSMPU
+	// total time verification only accepts less than 100 minutes
+	if (min > 99)
+		min = sec = 99;
+#endif // WOLFDOSMPU
 
 	itoa(kr,tempstr,10);
 	x=RATIOX+24-strlen(tempstr)*2;
@@ -1281,6 +1305,16 @@ void	CheckHighScore (long score,word other)
 ////////////////////////////////////////////////////////
 void NonShareware(void)
 {
+#ifdef WOLFDOSMPU
+	// unused, but hack for dataseg compatibility
+	printf(
+		"Attention",
+		"This game is NOT shareware.\n",
+		"Please do not distribute it.\n",
+		"Thanks.\n\n",
+		"        Id Software\n"
+	);
+#else  // WOLFDOSMPU
 	VW_FadeOut();
 
 	ClearMScreen();
@@ -1316,6 +1350,7 @@ void NonShareware(void)
 	VW_UpdateScreen ();
 	VW_FadeIn();
 	IN_Ack();
+#endif // WOLFDOSMPU
 }
 #endif
 #endif
@@ -1470,11 +1505,6 @@ char 	far CopyProFailedStrs[][100] = {
 
 int  BackDoor(char *s)
 {
-#ifdef WOLFDOSMPU
-	// copy protection is disabled right now so this never gets called; this replacement just saves some codeseg bytes
-	// (TODO: remove copy protection altogether but keep the strings for dataseg compatibility)
-	return *s;
-#else  // WOLFDOSMPU
 	int i;
 
 
@@ -1494,12 +1524,36 @@ int  BackDoor(char *s)
 		}
 
 	return 0;
-#endif // WOLFDOSMPU
 }
 
 
 void CopyProtection(void)
 {
+#ifdef WOLFDOSMPU
+	// unused, but hack for dataseg compatibility
+	int	enemypicked[4]={0,0,0,0},
+		bosses[4] = { BOSSPIC1PIC,BOSSPIC2PIC,BOSSPIC3PIC,BOSSPIC4PIC },
+		whichpicked[4]={0,0,0,0},
+		memberpicked[5]={0,0,0,0,0},
+		wordpicked[5]={0,0,0,0,0};
+	printf(
+		STR_DEBRIEF,
+		STR_ENEMY1"\n",
+		STR_ENEMY2"\n\n",
+		STR_CHECKMAN,
+		STR_MAN1,
+		STR_MAN2,
+		STR_MAN3" \"",
+		"\" "STR_MAN4,
+		STR_ID1,
+		"%s\n",
+		enemypicked[0],
+		bosses[0],
+		whichpicked[0],
+		memberpicked[0],
+		wordpicked[0]
+	);
+#else  // WOLFDOSMPU
 #define TYPEBOX_Y		177
 #define TYPEBOX_BKGD	0x9c
 #define PRINTCOLOR		HIGHLIGHT
@@ -1727,6 +1781,7 @@ void CopyProtection(void)
 
 	printf("%s\n",message);
 	exit(1);
+#endif // WOLFDOSMPU
 }
 
 #endif // SPEARDEMO

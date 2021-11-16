@@ -202,9 +202,15 @@ void UpdateSoundLoc(void)
 
 void ClearMemory (void)
 {
+#ifdef WOLFDOSMPU
+	SD_StopSound();		// since the later functions stop the sound anyway, stop it now so its memory is not locked
+	PM_UnlockMainMem();
+	MM_SortMem ();
+#else  // WOLFDOSMPU
 	PM_UnlockMainMem();
 	SD_StopDigitized();
 	MM_SortMem ();
+#endif // WOLFDOSMPU
 }
 
 
@@ -743,6 +749,13 @@ void SetupGameLevel (void)
 					break;
 				}
 			}
+#ifdef WOLFDOSMPU
+#if defined(MEMDEBUG) && (MEMDEBUG == 3)
+			// holowall test -- make the wooden eagle trophy wall (first wooden wall in E1M1) a holowall
+			if (tile == 10)
+				SpawnDeadGuard(x, y);
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU
 		}
 
 //
@@ -750,6 +763,9 @@ void SetupGameLevel (void)
 //
 	ScanInfoPlane ();
 
+#ifdef WOLFDOSMPU
+	FixAreaTiles();
+#else  // WOLFDOSMPU
 //
 // take out the ambush markers
 //
@@ -776,6 +792,7 @@ void SetupGameLevel (void)
 				*(map-1) = tile;
 			}
 		}
+#endif // WOLFDOSMPU
 
 
 
@@ -786,6 +803,43 @@ void SetupGameLevel (void)
 	CA_LoadAllSounds ();
 
 }
+
+#ifdef WOLFDOSMPU
+int FixAreaTiles()
+{
+	// take out ambush markers and set the area code for blank secret tiles
+	int x, y;
+	unsigned far *map = mapsegs[0], far *map1 = mapsegs[1], tile;
+	for (y=0;y<mapheight;y++)
+		for (x=0;x<mapwidth;x++)
+		{
+			tile = *map++;
+			if (tile == AMBUSHTILE || *map1 == PUSHABLETILE && ! tilemap[x][y])
+			{
+				tilemap[x][y] = 0;
+				if ( (unsigned)actorat[x][y] == AMBUSHTILE)
+					actorat[x][y] = NULL;
+
+				if (*map >= AREATILE)
+					tile = *map;
+				if (*(map-1-mapwidth) >= AREATILE)
+					tile = *(map-1-mapwidth);
+				if (*(map-1+mapwidth) >= AREATILE)
+					tile = *(map-1+mapwidth);
+				if ( *(map-2) >= AREATILE)
+					tile = *(map-2);
+
+#ifdef MEMDEBUG
+				if (tile < AREATILE || tile >= AREATILE + NUMAREAS)
+					Quit(0);
+#endif // MEMDEBUG
+				*(map-1) = tile;
+			}
+			map1++;
+		}
+	return 0;
+}
+#endif // WOLFDOSMPU
 
 
 //==========================================================================
@@ -1370,17 +1424,10 @@ startplayloop:
 			else
 				SD_WaitSoundDone();
 
-#ifdef WOLFDOSMPU
-			pwallstate = 0;
-#endif // WOLFDOSMPU
-
 			ClearMemory ();
 			gamestate.oldscore = gamestate.score;
 			gamestate.mapon = 20;
 			SetupGameLevel ();
-#ifdef WASD
-			ResetSpotVis();
-#endif // WASD
 			StartMusic ();
 			PM_CheckMainMem ();
 			player->x = spearx;
@@ -1388,6 +1435,14 @@ startplayloop:
 			player->angle = spearangle;
 			spearflag = false;
 			Thrust (0,0);
+#ifdef WASD
+			ResetSpotVis();
+#endif // WASD
+#ifdef WOLFDOSMPU
+			pwallstate = 0;
+			gamestate.keys |= 1;	// in case player tricked a guy into opening the locked door
+			DrawKeys();
+#endif // WOLFDOSMPU
 			goto startplayloop;
 		}
 #endif
@@ -1509,7 +1564,16 @@ startplayloop:
 			died = true;			// don't "get psyched!"
 
 			if (gamestate.lives > -1)
+#ifdef WOLFDOSMPU
+			{
+				// without this line, SetupGameLevel will try to allocate memory before
+				// unlocking the page manager, which can cause an out of memory error!
+				ClearMemory();
+#endif // WOLFDOSMPU
 				break;				// more lives left
+#ifdef WOLFDOSMPU
+			}
+#endif // WOLFDOSMPU
 
 			VW_FadeOut ();
 

@@ -96,6 +96,11 @@ void SpawnNewObj (unsigned tilex, unsigned tiley, statetype *state)
 	actorat[tilex][tiley] = new;
 	new->areanumber =
 		*(mapsegs[0] + farmapylookup[new->tiley]+new->tilex) - AREATILE;
+#ifdef WOLFDOSMPU
+	// prevent memory corruption in case actor is in a holowall
+	if (new->areanumber >= NUMAREAS)
+		new->areanumber = 0;
+#endif // WOLFDOSMPU
 }
 
 
@@ -326,6 +331,11 @@ boolean TryWalk (objtype *ob)
 
 	ob->areanumber =
 		*(mapsegs[0] + farmapylookup[ob->tiley]+ob->tilex) - AREATILE;
+#ifdef WOLFDOSMPU
+	// prevent memory corruption in case actor is in a holowall
+	if (ob->areanumber >= NUMAREAS)
+		ob->areanumber = 0;
+#endif // WOLFDOSMPU
 
 	ob->distance = TILEGLOBAL;
 	return true;
@@ -775,6 +785,9 @@ moveok:
 ===============
 */
 
+#ifdef WOLFDOSMPU
+	// unused
+#else  // WOLFDOSMPU
 void DropItem (stat_t itemtype, int tilex, int tiley)
 {
 	int	x,y,xl,xh,yl,yh;
@@ -801,6 +814,7 @@ void DropItem (stat_t itemtype, int tilex, int tiley)
 				return;
 			}
 }
+#endif // WOLFDOSMPU
 
 
 

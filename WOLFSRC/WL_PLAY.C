@@ -87,6 +87,7 @@ boolean		buttonstate[NUMBUTTONS];
 
 int			far	midivolume;
 word		far	compflags = 0x8000;
+boolean		far	nomain = false;
 int			far	savedviewsize;
 
 #endif // WOLFDOSMPU
@@ -572,6 +573,11 @@ void PollControls (void)
 		return;
 	}
 
+#ifdef WOLFDOSMPU
+	// ignore input while fading/fizzling in
+	if (! screenfaded && ! fizzlein)
+	{
+#endif // WOLFDOSMPU
 
 //
 // get button states
@@ -609,6 +615,10 @@ void PollControls (void)
 		controly = max;
 	else if (controly < min)
 		controly = min;
+
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 
 	if (demorecord)
 	{
@@ -754,13 +764,13 @@ void PushTile(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		// elevator (does not flood through)
 		*visspot |= 0x48 | z;	// special case: always accessible
 	}
-#if 0
+#ifdef MEMDEBUG
 	else if (! tilemap[x][y])
 	{
 		// error tile (debug when this happens)
 		*visspot |= 0x5f;
 	}
-#endif
+#endif // MEMDEBUG
 	else
 	{
 		// wall (does not flood through)
@@ -801,7 +811,7 @@ void CheckAccessible()
 		if (y < 63)	PushTile(x, y + 1, z, di_south, &stackptr);
 
 		// tempmem should never get exhausted, but if it ever does, it's a sign of something worse
-		if (stackptr >= (unsigned far *) tempmem + BUFFERSIZE / sizeof(unsigned))
+		if ((byte far *) stackptr >= (byte far *) tempmem + BUFFERSIZE)
 		{
 			char sz[2];
 			sz[0] = ' ';
@@ -1009,6 +1019,11 @@ void CheckKeys (void)
 		godmode ^= 1;
 		DrawAllPlayBorderSides ();
 		IN_ClearKeysDown();
+#ifdef WOLFDOSMPU
+		if (MousePresent)
+			Mouse(MDelta);	// Clear accumulated mouse movement
+		lasttimecount = TimeCount;	// don't frameskip
+#endif // WOLFDOSMPU
 		return;
 	}
 	#endif
@@ -1049,6 +1064,12 @@ void CheckKeys (void)
 		PM_CheckMainMem ();
 		IN_ClearKeysDown();
 		IN_Ack();
+#ifdef WOLFDOSMPU
+		IN_ClearKeysDown();
+		if (MousePresent)
+			Mouse(MDelta);	// Clear accumulated mouse movement
+		lasttimecount = TimeCount;	// don't frameskip
+#endif // WOLFDOSMPU
 
 		DrawAllPlayBorder ();
 	}
@@ -1078,6 +1099,12 @@ void CheckKeys (void)
 	 PM_CheckMainMem ();
 	 IN_ClearKeysDown();
 	 IN_Ack();
+#ifdef WOLFDOSMPU
+	 IN_ClearKeysDown();
+	 if (MousePresent)
+		Mouse(MDelta);	// Clear accumulated mouse movement
+	 lasttimecount = TimeCount;	// don't frameskip
+#endif // WOLFDOSMPU
 
 	 DrawAllPlayBorderSides ();
 	 DebugOk=1;
@@ -1104,6 +1131,12 @@ void CheckKeys (void)
 	 PM_CheckMainMem ();
 	 IN_ClearKeysDown();
 	 IN_Ack();
+#ifdef WOLFDOSMPU
+	 IN_ClearKeysDown();
+	 if (MousePresent)
+		Mouse(MDelta);	// Clear accumulated mouse movement
+	 lasttimecount = TimeCount;	// don't frameskip
+#endif // WOLFDOSMPU
 
 	 DrawAllPlayBorder ();
 	}
@@ -1122,6 +1155,9 @@ void CheckKeys (void)
 		Paused = false;
 		if (MousePresent)
 			Mouse(MDelta);	// Clear accumulated mouse movement
+#ifdef WOLFDOSMPU
+		lasttimecount = TimeCount;	// don't frameskip
+#endif // WOLFDOSMPU
 		return;
 	}
 
@@ -1140,13 +1176,7 @@ void CheckKeys (void)
 		ClearMemory ();
 		ClearSplitVWB ();
 		VW_ScreenToScreen (displayofs,bufferofs,80,160);
-#ifdef WOLFDOSMPU
-		CA_CacheGrChunk(STARTFONT+1);
-#endif // WOLFDOSMPU
 		US_ControlPanel(scan);
-#ifdef WOLFDOSMPU
-		UNCACHEGRCHUNK(STARTFONT+1);
-#endif // WOLFDOSMPU
 
 		 DrawAllPlayBorderSides ();
 
@@ -1156,6 +1186,11 @@ void CheckKeys (void)
 		PM_CheckMainMem ();
 		SETFONTCOLOR(0,15);
 		IN_ClearKeysDown();
+#ifdef WOLFDOSMPU
+		if (MousePresent)
+			Mouse(MDelta);	// Clear accumulated mouse movement
+		lasttimecount = TimeCount;	// don't frameskip
+#endif // WOLFDOSMPU
 		return;
 	}
 
@@ -1178,6 +1213,9 @@ void CheckKeys (void)
 		if (loadedgame)
 			playstate = ex_abort;
 		lasttimecount = TimeCount;
+#ifdef WOLFDOSMPU
+		IN_ClearKeysDown();
+#endif // WOLFDOSMPU
 		if (MousePresent)
 			Mouse(MDelta);	// Clear accumulated mouse movement
 		PM_CheckMainMem ();
@@ -1187,23 +1225,48 @@ void CheckKeys (void)
 //
 // TAB-? debug keys
 //
+#ifdef WOLFDOSMPU
+	if (
 #ifdef WASD
-	if (tabstate == 2)	// only if Tab was pressed before and *another* key is pressed...
+		tabstate == 2 &&			// only if Tab was pressed before and *another* key is pressed...
 #endif // WASD
+		Keyboard[sc_Tab] && (DebugOk
+#ifdef MEMDEBUG
+		|| Keyboard[sc_T] || Keyboard[sc_G]		// enable some debugging keys on MEMDEBUG even if debugging keys disabled
+#endif // MEMDEBUG
+		)
+	)
+#else  // WOLFDOSMPU
 	if (Keyboard[sc_Tab] && DebugOk)
+#endif // WOLFDOSMPU
 	{
 		CA_CacheGrChunk (STARTFONT);
 		fontnumber=0;
 		SETFONTCOLOR(0,15);
 		DebugKeys();
+#ifdef WOLFDOSMPU
+		IN_ClearKeysDown();
+#endif // WOLFDOSMPU
 		if (MousePresent)
 			Mouse(MDelta);	// Clear accumulated mouse movement
 		lasttimecount = TimeCount;
 		return;
 	}
 
-#ifdef WASD
-#if 0
+#ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+	// tile corruption check
+	{
+		int i;
+		for (i=1;i<MAXWALLTILES;i++)
+		{
+			if (horizwall[i]!=(i-1)*2)
+				Quit(0);
+			if (vertwall[i]!=(i-1)*2+1)
+				Quit(0);
+		}
+	}
+	// map corruption check
 	{
 		static boolean far lastFrameOk = false;
 		int x, y;
@@ -1245,7 +1308,9 @@ void CheckKeys (void)
 		if (x == 64 && y == 64)
 			lastFrameOk = true;
 	}
-#endif
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU
+#ifdef WASD
 	if (Keyboard[sc_Tab])
 	{
 		if (tabstate == 0)
@@ -1547,6 +1612,7 @@ void CheckKeys (void)
 
 			if (MousePresent)
 				Mouse(MDelta);	// Clear accumulated mouse movement
+			lasttimecount = TimeCount;	// don't frameskip
 		}
 		else
 			tabstate = 0;
@@ -2090,6 +2156,12 @@ void PlayLoop (void)
 	int		give;
 	int	helmetangle;
 
+#ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+	LogMemory(NULL);
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU
+
 	playstate = TimeCount = lasttimecount = 0;
 	frameon = 0;
 	running = false;
@@ -2152,7 +2224,17 @@ void PlayLoop (void)
 		UpdateSoundLoc();	// JAB
 
 		if (screenfaded)
+#ifdef WOLFDOSMPU
+		{
+#endif // WOLFDOSMPU
 			VW_FadeIn ();
+#ifdef WOLFDOSMPU
+			// ignore keypresses and mouse while fading in
+			IN_ClearKeysDown();
+			if (MousePresent)
+				Mouse(MDelta);	// Clear accumulated mouse movement
+		}
+#endif // WOLFDOSMPU
 
 		CheckKeys();
 

@@ -7,6 +7,6 @@
 //#define DEBCHECK
 #define CARMACIZED
 //#define UPLOAD
-#define VERSION 1.43
+#define VERSION 1.44
 #define WOLFDOSMPU
 #define WASD

@@ -704,6 +704,23 @@ void MoveDoors (void)
 		case dr_closing:
 			DoorClosing(door);
 			break;
+
+#ifdef WOLFDOSMPU
+		case dr_closed:
+			if (! (compflags & COMPFLAG_PHANTOM_DOORS))
+			{
+				// if any actor claims the door slot even if it is closed, all other actors can pass through
+				// the closed door until it opens; some mods may take advantage of this, but the intended
+				// logic is for the door to be opened on level start (and should close naturally after a while)
+				if ((unsigned) actorat[doorobjlist[door].tilex][doorobjlist[door].tiley] != (door | 0x80))
+				{
+					OpenDoor(door);
+					DoorOpening(door);		// execute the state once to connect areas
+					doorposition[door] = 0xffff;	// fully open it by the next tic
+				}
+			}
+			break;
+#endif // WOLFDOSMPU
 		}
 }
 
@@ -822,7 +839,8 @@ void PushWall (int checkx, int checky, int dir)
 		statptr->shapenum = -1;
 	}
 
-	// do not remove P tile info; this is a bug that causes secret tile locations to become reenabled when the game is reloaded
+	// do not remove pushwall tile info in the old manner below;
+	// when the game is reloaded, secret tiles become reenabled!
 	// (we handle it by placing a barrel inside a used secret wall instead)
 #else  // WOLFDOSMPU
 	*(mapsegs[1]+farmapylookup[pwally]+pwallx) = 0;	// remove P tile info
@@ -866,7 +884,16 @@ void MovePWalls (void)
 		//
 		tilemap[pwallx][pwally] = 0;
 		(unsigned)actorat[pwallx][pwally] = 0;
+#ifdef WOLFDOSMPU
+		FixAreaTiles();
+
+		// do not change area tile info in the old manner below; when the game is reloaded,
+		// the areanumber will become undefined and further area connectivity checks will
+		// cause memory corruption of the horizwall/vertwall arrays, and unfortunate wall
+		// tiles get replaced with texture number 1
+#else  // WOLFDOSMPU
 		*(mapsegs[0]+farmapylookup[pwally]+pwallx) = player->areanumber+AREATILE;
+#endif // WOLFDOSMPU
 
 		//
 		// see if it should be pushed farther
@@ -920,6 +947,10 @@ void MovePWalls (void)
 #endif // WOLFDOSMPU
 					return;
 				}
+#ifdef WOLFDOSMPU
+				// if landing tile is a door side, grab its door side attribute
+				oldtile |= tilemap[pwallx][pwally-1] & 0x40;
+#endif // WOLFDOSMPU
 				(unsigned)actorat[pwallx][pwally-1] =
 				tilemap[pwallx][pwally-1] = oldtile;
 				break;
@@ -936,6 +967,10 @@ void MovePWalls (void)
 #endif // WOLFDOSMPU
 					return;
 				}
+#ifdef WOLFDOSMPU
+				// if landing tile is a door side, grab its door side attribute
+				oldtile |= tilemap[pwallx+1][pwally] & 0x40;
+#endif // WOLFDOSMPU
 				(unsigned)actorat[pwallx+1][pwally] =
 				tilemap[pwallx+1][pwally] = oldtile;
 				break;
@@ -952,6 +987,10 @@ void MovePWalls (void)
 #endif // WOLFDOSMPU
 					return;
 				}
+#ifdef WOLFDOSMPU
+				// if landing tile is a door side, grab its door side attribute
+				oldtile |= tilemap[pwallx][pwally+1] & 0x40;
+#endif // WOLFDOSMPU
 				(unsigned)actorat[pwallx][pwally+1] =
 				tilemap[pwallx][pwally+1] = oldtile;
 				break;
@@ -968,6 +1007,10 @@ void MovePWalls (void)
 #endif // WOLFDOSMPU
 					return;
 				}
+#ifdef WOLFDOSMPU
+				// if landing tile is a door side, grab its door side attribute
+				oldtile |= tilemap[pwallx-1][pwally] & 0x40;
+#endif // WOLFDOSMPU
 				(unsigned)actorat[pwallx-1][pwally] =
 				tilemap[pwallx-1][pwally] = oldtile;
 				break;

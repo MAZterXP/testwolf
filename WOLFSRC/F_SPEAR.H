@@ -11,7 +11,11 @@
 #define STR_ENDGAME1	"We owe you a great debt, Mr. Blazkowicz."
 #define STR_ENDGAME2	"You have served your country well."
 #define STR_ENDGAME3	"With the spear gone, the Allies will finally"
+#ifdef WOLFDOSMPU
+#define STR_ENDGAME4	"be able to destroy Hitler..."
+#else  // WOLFDOSMPU
 #define STR_ENDGAME4	"by able to destroy Hitler..."
+#endif // WOLFDOSMPU
 
 #define STR_COPY1		"That's close, but not close enough to get"
 #define STR_COPY2		"you into the game."

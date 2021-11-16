@@ -57,7 +57,11 @@ typedef struct mmblockstruct
 //#define GETNEWBLOCK {if(!(mmnew=mmfree))Quit("MM_GETNEWBLOCK: No free blocks!")\
 //	;mmfree=mmfree->next;}
 
+#ifdef WOLFDOSMPU
+#define GETNEWBLOCK if(!mmnew){if(!mmfree)MML_ClearBlock();mmnew=mmfree;mmfree=mmfree->next;}
+#else  // WOLFDOSMPU
 #define GETNEWBLOCK {if(!mmfree)MML_ClearBlock();mmnew=mmfree;mmfree=mmfree->next;}
+#endif // WOLFDOSMPU
 
 #define FREEBLOCK(x) {*x->useptr=NULL;x->next=mmfree;mmfree=x;}
 
@@ -279,6 +283,9 @@ void MML_UseSpace (unsigned segstart, unsigned seglength)
 		mmnew->start = segstart+seglength;
 		mmnew->length = extra;
 		mmnew->attributes = LOCKBIT;
+#ifdef WOLFDOSMPU
+		mmnew = NULL;
+#endif // WOLFDOSMPU
 	}
 
 }
@@ -362,6 +369,9 @@ void MM_Startup (void)
 	mmnew->attributes = LOCKBIT;
 	mmnew->next = NULL;
 	mmrover = mmhead;
+#ifdef WOLFDOSMPU
+	mmnew = NULL;
+#endif // WOLFDOSMPU
 
 
 //
@@ -375,7 +385,12 @@ void MM_Startup (void)
 	seglength = length / 16;			// now in paragraphs
 	segstart = FP_SEG(start)+(FP_OFF(start)+15)/16;
 	MML_UseSpace (segstart,seglength);
+#ifdef WOLFDOSMPU
+	// accurately report used memory
+	mminfo.nearheap = seglength * 16L;
+#else  // WOLFDOSMPU
 	mminfo.nearheap = length;
+#endif // WOLFDOSMPU
 
 //
 // get all available far conventional memory segments
@@ -384,10 +399,22 @@ void MM_Startup (void)
 	start = farheap = farmalloc(length);
 	length -= 16-(FP_OFF(start)&15);
 	length -= SAVEFARHEAP;
+#ifdef WOLFDOSMPU
+#if defined(MEMDEBUG) && (MEMDEBUG)
+	// force low main memory situation for testing
+	if (length > MAINMEMSIZE + BUFFERSIZE - mminfo.nearheap)
+		length = MAINMEMSIZE + BUFFERSIZE - mminfo.nearheap;
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU
 	seglength = length / 16;			// now in paragraphs
 	segstart = FP_SEG(start)+(FP_OFF(start)+15)/16;
 	MML_UseSpace (segstart,seglength);
+#ifdef WOLFDOSMPU
+	// accurately report used memory
+	mminfo.farheap = seglength * 16L;
+#else  // WOLFDOSMPU
 	mminfo.farheap = length;
+#endif // WOLFDOSMPU
 	mminfo.mainmem = mminfo.nearheap + mminfo.farheap;
 
 //
@@ -446,6 +473,19 @@ void MM_GetPtr (memptr *baseptr,unsigned long size)
 				,far *purge,far *next;
 	int			search;
 	unsigned	needed,startseg;
+
+#ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+	extern boolean far dontalloc;
+	if (dontalloc)
+	{
+		char sz[2];
+		sz[0] = ' ';
+		sz[1] = 0;
+		Quit(sz);
+	}
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU
 
 	needed = (size+15)/16;		// convert size from bytes to paragraphs
 
@@ -506,6 +546,9 @@ tryagain:
 					purge = next;		// purge another if not at scan
 				}
 				mmrover = mmnew;
+#ifdef WOLFDOSMPU
+				mmnew = NULL;
+#endif // WOLFDOSMPU
 				return;	// good allocation!
 			}
 
@@ -539,6 +582,9 @@ boolean SetViewSize (unsigned width, unsigned height);
 		{
 mmblocktype	far *savedmmnew;
 			savedmmnew = mmnew;
+#ifdef WOLFDOSMPU
+			mmnew = NULL;
+#endif // WOLFDOSMPU
 			viewsize -= 2;
 			SetViewSize (viewsize*16,viewsize*16*HEIGHTRATIO);
 			mmnew = savedmmnew;
@@ -959,3 +1005,111 @@ void MM_BombOnError (boolean bomb)
 }
 
 
+#ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+typedef enum	{
+	wp_knife,
+	wp_pistol,
+	wp_machinegun,
+	wp_chaingun
+} weapontype;
+
+typedef	struct
+{
+	int			difficulty;
+	int			mapon;
+	long		oldscore,score,nextextra;
+	int			lives;
+	int			health;
+	int			ammo;
+	int			keys;
+	weapontype		bestweapon,weapon,chosenweapon;
+
+	int			faceframe;
+	int			attackframe,attackcount,weaponframe;
+
+	int			episode,secretcount,treasurecount,killcount,
+				secrettotal,treasuretotal,killtotal;
+	long		TimeCount;
+	long		killx,killy;
+	boolean		victoryflag;		// set during victory animations
+} gametype;
+
+extern	gametype	gamestate;
+
+void LogMemory(char *line)
+{
+	char text[20];
+	int file;
+	int blocks = 0;
+	mmblocktype far *scan = mmhead->next;
+
+	while (scan != NULL)
+	{
+		blocks++;
+		scan = scan->next;
+	}
+
+	text[0] = 'W';
+	text[1] = 'O';
+	text[2] = 'L';
+	text[3] = 'F';
+	text[4] = '3';
+	text[5] = 'D';
+	text[6] = '.';
+	text[7] = 'E';
+	text[8] = 'R';
+	text[9] = 'R';
+	text[10] = 0;
+	file = open(text, O_CREAT | O_BINARY | O_WRONLY, S_IREAD | S_IWRITE | S_IFREG);
+	lseek(file, filelength(file), SEEK_SET);
+
+	if (line)
+	{
+		write(file, (void far *) line, strlen(line));
+		text[0] = '\n';
+		text[1] = 0;
+		write(file, (void far *) text, strlen(text));
+	}
+#ifndef SPEAR
+	text[0] = 'E';
+	text[1] = '1' + (gamestate.episode > 0 ? gamestate.episode : gamestate.mapon / 10);
+	text[2] = 'M';
+	if (gamestate.mapon % 10 == 9)
+	{
+		text[3] = '1';
+		text[4] = '0';
+	}
+	else
+	{
+		text[3] = '1' + (gamestate.mapon % 10);
+		text[4] = ' ';
+	}
+#else
+	text[0] = 'M';
+	text[1] = 'A';
+	text[2] = 'P';
+	text[3] = '0' + (gamestate.mapon + 1) / 10;
+	text[4] = '0' + (gamestate.mapon + 1) % 10;
+#endif
+	text[5] = '\t';
+	text[6] = ((blocks / 100) % 10) + '0';
+	text[7] = ((blocks / 10) % 10) + '0';
+	text[8] = (blocks % 10) + '0';
+	text[9] = 'b';
+	text[10] = ' ';
+	text[11] = ((PM_MainPagesAvail() / 10) % 10) + '0';
+	text[12] = (PM_MainPagesAvail() % 10) + '0';
+	text[13] = 'p';
+	text[14] = ' ';
+	text[15] = ((MM_TotalFree() / 102400) % 10) + '0';
+	text[16] = ((MM_TotalFree() / 10240) % 10) + '0';
+	text[17] = ((MM_TotalFree() / 1024) % 10) + '0';
+	text[18] = 'K';
+	text[19] = '\n';
+	text[20] = 0;
+	write(file, (void far *) text, strlen(text));
+	close(file);
+}
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU

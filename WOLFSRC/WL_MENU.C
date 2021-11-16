@@ -678,6 +678,10 @@ void CP_ReadThis(void)
 ////////////////////////////////////////////////////////////////////
 void BossKey(void)
 {
+#if defined(WOLFDOSMPU) && ! defined(GOODTIMES) && ! defined(SPEAR)
+	// unused, but hack for dataseg compatibility
+	printf("C>");
+#else  // WOLFDOSMPU
 	SD_MusicOff();
 	_AX = 3;
 	geninterrupt(0x10);
@@ -690,6 +694,7 @@ void BossKey(void)
 	VL_TestPaletteSet ();
 	VL_SetPalette (&gamepal);
 	LoadLatchMem();
+#endif // WOLFDOSMPU
 }
 /*
 #endif
@@ -740,7 +745,7 @@ int CP_CheckQuick(unsigned scancode)
 				CP_SaveGame(1);
 				fontnumber=0;
 #ifdef WOLFDOSMPU
-				VL_WaitVBL(3);	// because saving is too fast on modern systems
+				VL_WaitVBL(MAXTICS);		// because saving is too fast on modern systems
 #endif // WOLFDOSMPU
 			}
 			else
@@ -792,10 +797,10 @@ int CP_CheckQuick(unsigned scancode)
 				if (MousePresent)
 					Mouse(MDelta);	// Clear accumulated mouse movement
 
-				PM_CheckMainMem ();
-
 #ifdef WOLFDOSMPU
 #else  // WOLFDOSMPU
+				PM_CheckMainMem ();
+
 				#ifndef SPEAR
 				UNCACHEGRCHUNK(C_CURSOR1PIC);
 				UNCACHEGRCHUNK(C_CURSOR2PIC);
@@ -880,10 +885,11 @@ int CP_CheckQuick(unsigned scancode)
 
 				if (MousePresent)
 					Mouse(MDelta);	// Clear accumulated mouse movement
-				PM_CheckMainMem ();
 
 #ifdef WOLFDOSMPU
 #else  // WOLFDOSMPU
+				PM_CheckMainMem ();
+
 				#ifndef SPEAR
 				UNCACHEGRCHUNK(C_CURSOR1PIC);
 				UNCACHEGRCHUNK(C_CURSOR2PIC);
@@ -1616,6 +1622,9 @@ int CP_LoadGame(int quick)
 	int handle,which,exit=0;
 	char name[13];
 
+#ifdef WOLFDOSMPU
+	int oldgame = LSItems.curpos;
+#endif // WOLFDOSMPU
 
 	strcpy(name,SaveName);
 
@@ -1690,6 +1699,13 @@ int CP_LoadGame(int quick)
 		}
 
 	} while(which>=0);
+
+#ifdef WOLFDOSMPU
+	if (exit)
+		pickquick = 1;
+	else
+		LSItems.curpos = oldgame;
+#endif // WOLFDOSMPU
 
 	MenuFadeOut();
 
@@ -1782,6 +1798,9 @@ int CP_SaveGame(int quick)
 	unsigned nwritten;
 	char name[13],input[32];
 
+#ifdef WOLFDOSMPU
+	int oldgame = LSItems.curpos;
+#endif // WOLFDOSMPU
 
 	strcpy(name,SaveName);
 
@@ -1884,6 +1903,13 @@ int CP_SaveGame(int quick)
 		}
 
 	} while(which>=0);
+
+#ifdef WOLFDOSMPU
+	if (exit)
+		pickquick = 1;
+	else
+		LSItems.curpos = oldgame;
+#endif // WOLFDOSMPU
 
 	MenuFadeOut();
 

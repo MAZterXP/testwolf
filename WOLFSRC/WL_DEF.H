@@ -1285,9 +1285,11 @@ extern	void	EndText(void);
 #define COMPFLAG_NO_CIRCLE_STRAFE		0x0008
 #define COMPFLAG_50_SPRITE_LIMIT		0x0010
 #define COMPFLAG_REACTIVATING_PUSHWALLS	0x0020
+#define COMPFLAG_PHANTOM_DOORS			0x0040
 
 extern	int			far	midivolume;
 extern	word		far	compflags;
+extern	boolean		far	nomain;
 extern	int			far	savedviewsize;
 
 #endif // WOLFDOSMPU

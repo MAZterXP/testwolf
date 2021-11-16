@@ -521,7 +521,12 @@ void HitVertWall (void)
 		if (tilehit & 0x40)
 		{								// check for adjacent doors
 			ytile = yintercept>>TILESHIFT;
+#ifdef WOLFDOSMPU
+			// don't draw door side through a pushwall
+			if ((tilemap[xtile-xtilestep][ytile]&0xc0) == 0x80)
+#else  // WOLFDOSMPU
 			if ( tilemap[xtile-xtilestep][ytile]&0x80 )
+#endif // WOLFDOSMPU
 				wallpic = DOORWALL+3;
 			else
 				wallpic = vertwall[tilehit & ~0x40];
@@ -593,7 +598,12 @@ void HitHorizWall (void)
 		if (tilehit & 0x40)
 		{								// check for adjacent doors
 			xtile = xintercept>>TILESHIFT;
+#ifdef WOLFDOSMPU
+			// don't draw door side through a pushwall
+			if ((tilemap[xtile][ytile-ytilestep]&0xc0) == 0x80)
+#else  // WOLFDOSMPU
 			if ( tilemap[xtile][ytile-ytilestep]&0x80 )
+#endif // WOLFDOSMPU
 				wallpic = DOORWALL+2;
 			else
 				wallpic = horizwall[tilehit & ~0x40];
@@ -1131,7 +1141,8 @@ for (i = 0; i < 2; i++)
 				&& statptr->flags & FL_BONUS)
 			{
 				GetBonus(statptr);
-				continue;
+				if (statptr->shapenum == -1)
+					continue;
 			}
 		}
 #endif // WOLFDOSMPU
@@ -1147,6 +1158,10 @@ for (i = 0; i < 2; i++)
 			,&visptr->viewx,&visptr->viewheight) && statptr->flags & FL_BONUS)
 		{
 			GetBonus (statptr);
+#ifdef WOLFDOSMPU
+			// don't make 25-ammo boxes suddenly disappear if they're not picked up
+			if (statptr->shapenum == -1)
+#endif // WOLFDOSMPU
 			continue;
 		}
 
@@ -1481,6 +1496,7 @@ void	ThreeDRefresh (void)
 		// at this point, even if the view size shrunk, we have to accept it
 		savedviewsize = viewsize;
 		DrawAllPlayBorderSides();
+		PM_CheckMainMem();
 	}
 #endif // WOLFDOSMPU
 
@@ -1535,6 +1551,12 @@ asm	rep stosw
 
 		lasttimecount = TimeCount = 0;		// don't make a big tic count
 
+#ifdef WOLFDOSMPU
+		// ignore keypresses and mouse while fizzling in
+		IN_ClearKeysDown();
+		if (MousePresent)
+			Mouse(MDelta);	// Clear accumulated mouse movement
+#endif // WOLFDOSMPU
 	}
 
 	bufferofs -= screenofs;

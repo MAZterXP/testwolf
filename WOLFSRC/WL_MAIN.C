@@ -707,6 +707,9 @@ boolean LoadTheGame(int file,int x,int y)
 			ResetSpotVis();
 	}
 #endif // WASD
+#ifdef WOLFDOSMPU
+	FixAreaTiles();
+#endif // WOLFDOSMPU
 
 	return true;
 }
@@ -1546,9 +1549,6 @@ void DoJukebox(void)
 #else
 	UnCacheLump (CONTROLS_LUMP_START,CONTROLS_LUMP_END);
 #endif
-#ifdef WOLFDOSMPU
-	UNCACHEGRCHUNK(STARTFONT+1);
-#endif // WOLFDOSMPU
 }
 #endif
 #ifdef WOLFDOSMPU
@@ -1593,15 +1593,15 @@ void InitGame (void)
 	US_Startup ();
 
 
-#ifndef SPEAR
 #ifdef WOLFDOSMPU
-	if (mminfo.mainmem < 257000L && !MS_CheckParm("goobers"))
+	if (mminfo.mainmem < MAINMEMSIZE + BUFFERSIZE && ! nomain)		// additional memory needed for automap
 #else  // WOLFDOSMPU
+#ifndef SPEAR
 	if (mminfo.mainmem < 235000L)
-#endif // WOLFDOSMPU
 #else
 	if (mminfo.mainmem < 257000L && !MS_CheckParm("debugmode"))
 #endif
+#endif // WOLFDOSMPU
 	{
 		memptr screen;
 
@@ -1786,6 +1786,11 @@ void Quit (char *error)
 	memptr	screen;
 
 #ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+	// save the error to a file
+	if (error)
+		LogMemory(error);
+#endif // MEMDEBUG
 	if (compflags == 0x8000)
 	{
 		// error happened before subsystem initialization finished

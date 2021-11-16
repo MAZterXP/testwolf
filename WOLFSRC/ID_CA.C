@@ -861,11 +861,7 @@ asm	mov	ds,ax
 void CAL_SetupGrFile (void)
 {
 #ifdef WOLFDOSMPU
-#ifndef SPEAR
 	char fname[29];
-#else
-	char fname[13];
-#endif
 #else  // WOLFDOSMPU
 	char fname[13];
 #endif // WOLFDOSMPU
@@ -909,15 +905,13 @@ void CAL_SetupGrFile (void)
 
 #ifdef WOLFDOSMPU
 
-#ifndef SPEAR									// VGAHEAD version check is unnecessary for SoD
-
 #ifdef GOODTIMES
-#define CHUNKSIZE (149+1)*FILEPOSSIZE			// commercial version
+#define CHUNKSIZE (149+1)*FILEPOSSIZE			// wolf3d commercial version
 #else
 #ifdef UPLOAD
-#define CHUNKSIZE (156+1)*FILEPOSSIZE			// shareware version
+#define CHUNKSIZE (156+1)*FILEPOSSIZE			// wolf3d shareware version
 #else
-#define CHUNKSIZE (NUMCHUNKS+1)*FILEPOSSIZE		// registered version
+#define CHUNKSIZE (NUMCHUNKS+1)*FILEPOSSIZE		// other versions
 #endif
 #endif
 
@@ -944,10 +938,6 @@ void CAL_SetupGrFile (void)
 		Quit(fname);
 	}
 	CA_FarRead(handle, (memptr)grstarts, CHUNKSIZE);
-
-#else
-	CA_FarRead(handle, (memptr)grstarts, (NUMCHUNKS+1)*FILEPOSSIZE);
-#endif
 
 #else  // WOLFDOSMPU
 	CA_FarRead(handle, (memptr)grstarts, (NUMCHUNKS+1)*FILEPOSSIZE);

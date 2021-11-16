@@ -312,6 +312,12 @@ PML_ShutdownXMS(void)
 	}
 }
 
+#ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+boolean far dontalloc;
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU
+
 /////////////////////////////////////////////////////////////////////////////
 //
 //	Main memory code
@@ -331,6 +337,11 @@ PM_SetMainMemPurge(int level)
 	for (i = 0;i < PMMaxMainMem;i++)
 		if (MainMemPages[i])
 			MM_SetPurge(&MainMemPages[i],level);
+#ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+	dontalloc = false;
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU
 }
 
 //
@@ -407,6 +418,12 @@ PM_CheckMainMem(void)
 	}
 	if (mmerror)
 		mmerror = false;
+#ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+	dontalloc = true;
+	LogMemory(NULL);
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU
 }
 
 //
@@ -1141,7 +1158,12 @@ PM_Reset(void)
 void
 PM_Startup(void)
 {
+#ifdef WOLFDOSMPU
+	extern boolean far nomain;
+	boolean	noems,noxms;
+#else  // WOLFDOSMPU
 	boolean	nomain,noems,noxms;
+#endif // WOLFDOSMPU
 	int		i;
 
 	if (PMStarted)
@@ -1171,7 +1193,13 @@ PM_Startup(void)
 	if (!noxms)
 		PML_StartupXMS();
 
+#ifdef WOLFDOSMPU
+	// this code was actually useless because nomain was never really used,
+	// but now that we actually use nomain, preserve dataseg compatibility
+	if (PMStarted)
+#else  // WOLFDOSMPU
 	if (nomain && !EMSPresent)
+#endif // WOLFDOSMPU
 		Quit("PM_Startup: No main or EMS");
 	else
 		PML_StartupMainMem();
@@ -1197,3 +1225,23 @@ PM_Shutdown(void)
 
 	PML_ShutdownMainMem();
 }
+
+#ifdef WOLFDOSMPU
+#ifdef MEMDEBUG
+int PM_MainPagesAvail()
+{
+#if (MEMDEBUG == 2)
+	int i;
+	int found = 0;
+	for (i = 0;i < PMNumBlocks;i++)
+	{
+		if (PMPages[i].locked)
+			found++;
+	}
+	return found;
+#else
+	return MainPagesAvail;
+#endif
+}
+#endif // MEMDEBUG
+#endif // WOLFDOSMPU

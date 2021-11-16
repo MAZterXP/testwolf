@@ -4,14 +4,22 @@
 
 #define __ID_CA__
 
+#ifdef WOLFDOSMPU
+
+#define SAVENEARHEAP	0x200		// space to leave in data segment
+#define SAVEFARHEAP		0			// space to leave in far heap
+
+#define	BUFFERSIZE		0x2000		// bigger buffer size (for automap, and to make loading faster when loading larger asset data)
+#define MAINMEMSIZE		252944L
+
+#else  // WOLFDOSMPU
+
 #define SAVENEARHEAP	0x400		// space to leave in data segment
 #define SAVEFARHEAP		0			// space to leave in far heap
 
-#ifdef WASD
-#define	BUFFERSIZE		0x2000		// bigger buffer size for automap
-#else  // WASD
 #define	BUFFERSIZE		0x1000		// miscelanious, allways available buffer
-#endif // WASD
+
+#endif // WOLFDOSMPU
 
 #define MAXBLOCKS		700
 
