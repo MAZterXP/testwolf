@@ -308,6 +308,11 @@ void RecursiveConnect (int areanumber)
 void ConnectAreas (void)
 {
 	memset (areabyplayer,0,sizeof(areabyplayer));
+#ifdef WOLFDOSMPU
+	// don't cause memory corruption (but keep compatibility with existing holowall behavior)
+	// (yes, we are ignoring the illegal memory accesses, but, hey, at least there's no corruption)
+	if (player->areanumber < NUMAREAS)
+#endif // WOLFDOSMPU
 	areabyplayer[player->areanumber] = true;
 	RecursiveConnect (player->areanumber);
 }
@@ -316,6 +321,11 @@ void ConnectAreas (void)
 void InitAreas (void)
 {
 	memset (areabyplayer,0,sizeof(areabyplayer));
+#ifdef WOLFDOSMPU
+	// don't cause memory corruption (but keep compatibility with existing holowall behavior)
+	// (yes, we are ignoring the illegal memory accesses, but, hey, at least there's no corruption)
+	if (player->areanumber < NUMAREAS)
+#endif // WOLFDOSMPU
 	areabyplayer[player->areanumber] = true;
 }
 
@@ -755,12 +765,28 @@ void PushWall (int checkx, int checky, int dir)
 	int		oldtile;
 
 	if (pwallstate)
+#ifdef WOLFDOSMPU
+	{
+	  // for consistency
+	  SD_PlaySound(DONOTHINGSND);
+#endif // WOLFDOSMPU
 	  return;
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 
 
 	oldtile = tilemap[checkx][checky];
 	if (!oldtile)
+#ifdef WOLFDOSMPU
+	{
+		// for consistency
+		SD_PlaySound(DONOTHINGSND);
+#endif // WOLFDOSMPU
 		return;
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 
 #ifdef WOLFDOSMPU
 	for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
@@ -776,6 +802,7 @@ void PushWall (int checkx, int checky, int dir)
 			else
 			{
 				// do not allow pushing by default
+				SD_PlaySound(DONOTHINGSND);
 				return;
 			}
 		}
@@ -845,12 +872,17 @@ void PushWall (int checkx, int checky, int dir)
 #else  // WOLFDOSMPU
 	*(mapsegs[1]+farmapylookup[pwally]+pwallx) = 0;	// remove P tile info
 #endif // WOLFDOSMPU
+
 #ifdef WASD
 	// mark the wall as a secret in the automap when the player dies
 	spotvis[pwallx][pwally] |= 0x80;
 #endif // WASD
 
+#ifdef WOLFDOSMPU
+	PlaySoundLocTile(PUSHWALLSND, pwallx, pwally);
+#else  // WOLFDOSMPU
 	SD_PlaySound (PUSHWALLSND);
+#endif // WOLFDOSMPU
 }
 
 

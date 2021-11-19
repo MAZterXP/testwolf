@@ -2156,12 +2156,6 @@ void PlayLoop (void)
 	int		give;
 	int	helmetangle;
 
-#ifdef WOLFDOSMPU
-#ifdef MEMDEBUG
-	LogMemory(NULL);
-#endif // MEMDEBUG
-#endif // WOLFDOSMPU
-
 	playstate = TimeCount = lasttimecount = 0;
 	frameon = 0;
 	running = false;

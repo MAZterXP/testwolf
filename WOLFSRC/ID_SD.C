@@ -509,14 +509,33 @@ void mpuTick()
 
 void mpuInit()
 {
-	byte filename[15];
-	word maxSize = mpuReadInfo(filename, 0);
-	if (maxSize > 0)
+	char nompu[6];
+	char *parm[2];
+	int i;
+	nompu[0] = 'n';
+	nompu[1] = 'o';
+	nompu[2] = 'm';
+	nompu[3] = 'p';
+	nompu[4] = 'u';
+	nompu[5] = 0;
+	parm[0] = nompu;
+	parm[1] = 0;
+	for (i = 1; i < _argc; i++)
 	{
-		sqHackTime = 0x80000000L;	// set MPU_DATA_FOUND to true
-		mpuBuffer = (byte far *) farmalloc(maxSize);
-		mpuPort = 0x330;
-		mpuPos = 0;
+		if (US_CheckParm(_argv[i], parm) == 0)
+			break;
+	}
+	if (i == _argc)
+	{
+		byte filename[15];
+		word maxSize = mpuReadInfo(filename, 0);
+		if (maxSize > 0)
+		{
+			sqHackTime = 0x80000000L;	// set MPU_DATA_FOUND to true
+			mpuBuffer = (byte far *) farmalloc(maxSize);
+			mpuPort = 0x330;
+			mpuPos = 0;
+		}
 	}
 }
 
@@ -854,8 +873,20 @@ SDL_PositionSBP(int leftpos,int rightpos)
 	if (!SBProPresent)
 		return;
 
+#ifdef WOLFDOSMPU
+	// sound blaster pro's volume attenuation curve is too steep,
+	// making far sounds practically inaudible; since non-pro SB
+	// plays everything at full volume, the softest sounds should
+	// at least be audible on pro SB to be "fair" (and to prevent
+	// users from thinking that sounds are just being turned off
+	// all of a sudden, when in reality, very soft/far sounds are
+	// overriding very loud/near sounds)
+	leftpos = 15 - (leftpos >> 1);
+	rightpos = 15 - (rightpos >> 1);
+#else  // WOLFDOSMPU
 	leftpos = 15 - leftpos;
 	rightpos = 15 - rightpos;
+#endif // WOLFDOSMPU
 	v = ((leftpos & 0x0f) << 4) | (rightpos & 0x0f);
 
 asm	pushf
@@ -1190,6 +1221,16 @@ SDL_StartSS(void)
 		ssOff = 0x0c;				// For normal machines
 
 	outportb(ssControl,ssOn);		// Enable SS
+
+#ifdef WOLFDOSMPU
+	// initialize for covox
+	// (this is needed here as well as on setting timer speed)
+	if (ssNoCheck)
+	{
+		ssStatus = 1;
+		ssData = ssControl - 2;
+	}
+#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -2729,6 +2770,14 @@ SD_PlaySound(soundnames sound)
 		Quit("SD_PlaySound() - Zero length sound");
 	if (s->priority < SoundPriority)
 		return(false);
+#ifdef WOLFDOSMPU
+	if ((sound == DONOTHINGSND || sound == HITWALLSND) && SD_SoundPlaying() == sound && DigiPlaying)
+	{
+		// don't cut-off and restart DONOTHINGSND and HITWALLSND if a digitized sound is playing
+		// (this prevents audio slowdown when the user hugs the wall or spams the use key)
+		return false;
+	}
+#endif // WOLFDOSMPU
 
 	switch (SoundMode)
 	{

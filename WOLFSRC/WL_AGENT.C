@@ -965,13 +965,33 @@ void Thrust (int angle, long speed)
 	player->tilex = player->x >> TILESHIFT;		// scale to tile values
 	player->tiley = player->y >> TILESHIFT;
 
+#ifdef WOLFDOSMPU
+	// pick up items using better logic
+	if (! (compflags & COMPFLAG_FLAWED_ITEM_PICKUP))
+	{
+		statobj_t *statptr;
+		for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
+		{
+			if (statptr->shapenum != -1
+				&& statptr->tilex == player->tilex
+				&& statptr->tiley == player->tiley
+				&& statptr->flags & FL_BONUS)
+			{
+				GetBonus(statptr);
+			}
+		}
+	}
+#endif // WOLFDOSMPU
+
+#ifdef WASD
+	// make sure each new tile visited by the player is marked in spotvis
+	// or else there's a chance for automap visibility to disconnect (if
+	// the player is moving fast and is not looking where they are going)
+	spotvis[player->tilex][player->tiley] |= 0x02;
+#endif // WASD
+
 	offset = farmapylookup[player->tiley]+player->tilex;
 	player->areanumber = *(mapsegs[0] + offset) -AREATILE;
-#ifdef WOLFDOSMPU
-	// prevent memory corruption in case actor is in a holowall
-	if (player->areanumber >= NUMAREAS)
-		player->areanumber = 0;
-#endif // WOLFDOSMPU
 
 	if (*(mapsegs[1] + offset) == EXITTILE)
 		VictoryTile ();
@@ -1069,16 +1089,6 @@ void Cmd_Use (void)
 		PushWall (checkx,checky,dir);
 		return;
 	}
-#ifdef WOLFDOSMPU
-	// Obscure bug alert: Pushing a secret wall on its second (or third) tile movement causes the game to
-	// treat the wall like a door, because its 0xc0 tilemap bits, which is meant just for passing the ray-
-	// casting check, would also pass the doornum & 0x80 check below. In turn, this causes a nonexistent
-	// door to be passed to OperateDoor, resulting in game corruption. If you ever noticed certain map
-	// ornaments that are normally passable suddenly becoming impassable (and you can pick them up too if
-	// you try hard enough!), this is the culprit.
-	if ((doornum & 0xc0) == 0xc0)
-		return;
-#endif // WOLFDOSMPU
 	if (!buttonheld[bt_use] && doornum == ELEVATORTILE && elevatorok)
 	{
 	//
@@ -1094,7 +1104,17 @@ void Cmd_Use (void)
 		SD_PlaySound (LEVELDONESND);
 		SD_WaitSoundDone();
 	}
+#ifdef WOLFDOSMPU
+	// Obscure bug alert: Pushing a secret pushwall while it is currently moving causes the game to
+	// treat the wall like a door, because its 0xc0 tilemap bits, which is meant just for passing the ray-
+	// casting check, would also pass the doornum & 0x80 check below. In turn, this causes a nonexistent
+	// door to be passed to OperateDoor, resulting in game corruption. If you ever noticed certain map
+	// ornaments that are normally passable suddenly becoming impassable (and you can pick them up too if
+	// you try hard enough!), this is the culprit.
+	else if (!buttonheld[bt_use] && (doornum & 0xc0) == 0x80)
+#else  // WOLFDOSMPU
 	else if (!buttonheld[bt_use] && doornum & 0x80)
+#endif // WOLFDOSMPU
 	{
 		buttonheld[bt_use] = true;
 		OperateDoor (doornum & ~0x80);
@@ -1130,11 +1150,6 @@ void SpawnPlayer (int tilex, int tiley, int dir)
 	player->tiley = tiley;
 	player->areanumber =
 		*(mapsegs[0] + farmapylookup[player->tiley]+player->tilex);
-#ifdef WOLFDOSMPU
-	// prevent memory corruption in case actor is in a holowall
-	if (player->areanumber >= NUMAREAS)
-		player->areanumber = 0;
-#endif // WOLFDOSMPU
 	player->x = ((long)tilex<<TILESHIFT)+TILEGLOBAL/2;
 	player->y = ((long)tiley<<TILESHIFT)+TILEGLOBAL/2;
 	player->state = &s_player;

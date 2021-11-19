@@ -61,6 +61,10 @@ Usage
 
   All these little changes cause an estimated 10 to 33 percent decrease in frame rate. There might be slightly more efficient methods, but there will always be a memory tradeoff (and we are also constrained by the conventional memory limit). Since I'm still discovering more bugs in the classic code that need fixing, that takes priority over optimization for now.
 
+- ### What does the ^ symbol in the completion stats/automap mean?
+
+  The ^ indicates that there are more kills/secrets/treasures on the level but they are currently inaccessible. When you get a key or push a secret door that makes more items accessible, the counts increase, and eventually the ^ disappears when everything is accessible. The ^ will not disappear in E2M8, E3M10 and E6M10 by the way, because of map bugs and/or ghosts that can not be killed.
+
 - ### Why are keys marked as treasure in the automap? And why is the silver key marked as gold?
 
   The color gold/brown is used in the automap to denote "map completion" bonuses. This includes all treasure, keys, and the Spear. All other bonuses are colored blue. If the silver key was colored blue or gray (the two closest colors to silver in the 16-color automap palette), it would become too hard to distinguish it from the rest of the map; it's generally easier to just "look for everything that's gold and pick it up". Besides, in practice, the actual color of the key does not matter in Wolf3D since the locked doors don't actually indicate their key color, unlike in Doom.
@@ -119,7 +123,7 @@ Usage
        (note: wolfdosmpu fixes this bug by opening all doors faced by patrolling enemies on level
        start; see E4M6 on hard mode for an example, in the top left room with the crowns)
   ```
-  For example, to mimic the vanilla game's behavior when they were run on a Pentium (or faster) system, specify COMP 127 (e.g., WOLF3DCM COMP 127). On the other hand, COMP 126 (or COMP -1) disables the 3-tile pushwall move, which mimics how the game logic originally ran on 386 machines and is ideal for completionists who wish to retain all other engine quirks.
+  For example, to mimic the vanilla game's behavior when they were run on a Pentium (or faster) system, specify COMP 127 (e.g., WOLF3DCM COMP 127). On the other hand, COMP 126 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
 
   COMP by itself will enable all compatibility flags (including future ones). Use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags, which is the default setting.
 
@@ -127,12 +131,23 @@ Usage
 Version History
 ===============
 
+Next release
+------------
+- Added "nompu" command-line parameter to disable MPU-401 usage and revert to OPL2 music. Removing/renaming your MUSIC directory has the same effect. Just in case you REALLY want that...
+- Fixed the sound attenuation behavior on SB pro, because SB pro volume level 7 of 15 (the minimum volume encoded into the Wolf3D volume lookup table) is actually near inaudible instead of half volume as one might expect. Since the developer intention seems to be for attenuating sounds only down to the half-volume point (coupled with the fact that non-SB-pro devices do not attenuate volume, making it "unfair" for SB pro owners if they don't hear some sounds), the value sent to the SB pro is now adjusted closer to the SB pro's real half-volume point. This fix also reduces (but not eliminates) sounds getting cut off abruptly -- which is actually a low-volume sound effect taking precedence over a high-volume one -- and also makes the sound positioning a bit more pleasing with headphones due to the more-balanced volume distribution. All that said, the real solution to the sound cut-off problem is to do software-based mixing of simultaneous sounds ala Doom, which would require significant engine changes and may be too much work for 286 (don't know when/if this will happen at all).
+- Fixed Covox support where the first few digitized sounds will not play (but subsequent ones work fine).
+- Fixed slowdown issue with Covox and DMA-less SB mode combined with very short non-digitized AdLib sound effects (i.e., the digitized sound's pitch lowers when the player runs into a wall or holds the Open key).
+- Fixed DONOTHINGSND not getting played on tiles previously occupied by pushwalls (it now plays, as with any other tile, for consistency).
+- PUSHWALLSND is now a positioned sound.
+- Fixed rare possibility for the automap to break when the player is straferunning through a one-tile-wide corridor and experiencing framerate drops, which can result in the player skipping entire tiles (and breaking spotvis connectivity). Item pickup logic has also been fixed to not skip these tiles.
+- Previous version broke some behavioral compatibility with existing maps with holowalls -- in particular, shooting inside a holowall should alert all enemies in the level. (Fixed in this version.)
+
 1.44 (2021-11-16)
 -----------------
 - Corrected a couple of crashing and corruption cases in the classic code. You should now be able to play Spear of Destiny from start to finish without crashing or experiencing corrupted graphics, even if you save/load your game a lot.
   - Now stops MM_GetPtr() from exhausting all available memory block structures (not the actual memory) over the course of the game. This is due to the page manager aggressively requesting new blocks every time the game goes into the play loop "until it fails" and causes the temporary block structure to be leaked, eventually bombing with "MM_ClearBlock: No purgable blocks!"
   - Fixed out-of-memory issue that can happen on rare memory configurations after the level restarts due to player death.
-  - Fixed memory corruption issue where pushing a secret wall on its second (or third) tile movement can cause random static map ornaments to become impassable. I have experienced it myself on E4M2 and SoD Map 1, and [this video](https://www.youtube.com/watch?v=_1ieQL_8wgA) shows how it can be triggered in SoD Map 2 (which renders it unwinnable if no enemies are left to help reverse the glitch).
+  - Fixed memory corruption issue where pushing a secret wall again while it is moving can cause random static map ornaments to become impassable. I have experienced it myself on E4M2 and SoD Map 1, and [this video](https://www.youtube.com/watch?v=_1ieQL_8wgA) shows how it can be triggered in SoD Map 2 (which renders it unwinnable if no enemies are left to help reverse the glitch).
   - Fixed memory corruption issue where loading a game and entering an already-pushed secret wall's original position puts the player in an undefined area, subsequently causing random walls to change to texture page number 1 (darkened stone wall).
   - Increased the conventional memory requirement to 576 KB (exactly 9/10ths of 640 KB) to avoid memory thrashing issues. You can now bypass this memory requirement with the "nomain" command-line parameter (instead of the "goobers" or "debugmode" parameters), to force the game to run on a low-memory system without enabling cheat codes. Please save your game often if you need to use "nomain" because the game is much more likely to crash.
 - Gameplay fixes:

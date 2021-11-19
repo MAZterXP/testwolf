@@ -896,11 +896,6 @@ void SpawnStand (enemy_t which, int tilex, int tiley, int dir)
 
 		*map = tile;
 		new->areanumber = tile-AREATILE;
-#ifdef WOLFDOSMPU
-		// prevent memory corruption in case actor is in a holowall
-		if (new->areanumber >= NUMAREAS)
-			new->areanumber = 0;
-#endif // WOLFDOSMPU
 
 		new->flags |= FL_AMBUSH;
 	}

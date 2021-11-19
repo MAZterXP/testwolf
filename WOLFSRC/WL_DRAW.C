@@ -1133,20 +1133,6 @@ for (i = 0; i < 2; i++)
 			continue;
 #endif // WASD
 
-#ifdef WOLFDOSMPU
-		// pick up items using better logic
-		if (! (compflags & COMPFLAG_FLAWED_ITEM_PICKUP))
-		{
-			if (statptr->tilex == player->tilex && statptr->tiley == player->tiley
-				&& statptr->flags & FL_BONUS)
-			{
-				GetBonus(statptr);
-				if (statptr->shapenum == -1)
-					continue;
-			}
-		}
-#endif // WOLFDOSMPU
-
 #ifdef WASD
 		if (!(*statptr->visspot & 0x01))
 #else  // WASD

@@ -6,7 +6,7 @@
 
 #ifdef WOLFDOSMPU
 
-#define SAVENEARHEAP	0x200		// space to leave in data segment
+#define SAVENEARHEAP	0x100		// space to leave in data segment
 #define SAVEFARHEAP		0			// space to leave in far heap
 
 #define	BUFFERSIZE		0x2000		// bigger buffer size (for automap, and to make loading faster when loading larger asset data)
