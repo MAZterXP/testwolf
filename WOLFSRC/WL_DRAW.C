@@ -1538,8 +1538,8 @@ asm	rep stosw
 		lasttimecount = TimeCount = 0;		// don't make a big tic count
 
 #ifdef WOLFDOSMPU
-		// ignore keypresses and mouse while fizzling in
-		IN_ClearKeysDown();
+		// clear pending inputs
+		LastScan = sc_None;
 		if (MousePresent)
 			Mouse(MDelta);	// Clear accumulated mouse movement
 #endif // WOLFDOSMPU

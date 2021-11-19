@@ -2223,10 +2223,11 @@ void PlayLoop (void)
 #endif // WOLFDOSMPU
 			VW_FadeIn ();
 #ifdef WOLFDOSMPU
-			// ignore keypresses and mouse while fading in
-			IN_ClearKeysDown();
+			// clear pending inputs
+			LastScan = sc_None;
 			if (MousePresent)
 				Mouse(MDelta);	// Clear accumulated mouse movement
+			lasttimecount = TimeCount;	// don't frameskip
 		}
 #endif // WOLFDOSMPU
 

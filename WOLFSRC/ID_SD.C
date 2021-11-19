@@ -2723,6 +2723,35 @@ SD_PlaySound(soundnames sound)
 		Quit("SD_PlaySound() - Uncached sound");
 
 #ifdef WOLFDOSMPU
+	// special cases for door sounds to minimize cut-off issues
+	if (lp == 0 && rp == 0)
+	{
+		// an unattenuated door or pushwall sound should always play (because
+		// the player likely did these, and it tends to be very noticeable if
+		// the sound is dropped) but let other sounds override it afterwards
+		if (sound == OPENDOORSND || sound == CLOSEDOORSND || sound == PUSHWALLSND)
+		{
+			// deprioritize existing sound
+			if (DigiMode == sds_Off || DigiMode == sds_PC && (SoundMode == sdm_PC || sound != PUSHWALLSND))
+				SoundPriority = 0;
+			else
+				DigiPriority = 0;
+		}
+	}
+	else
+	{
+		// a far-away closing door sound is meant to be ambience only and should
+		// not override another door sound (*especially* near ones); a far-away
+		// opening door sound, however, should play according to regular priority
+		// rules (including overriding a near door sound, to alert the player
+		// that an enemy is opening a door)
+		if (sound == CLOSEDOORSND && (DigiNumber == OPENDOORSND || DigiNumber == CLOSEDOORSND
+									  || SD_SoundPlaying() == OPENDOORSND || SD_SoundPlaying() == CLOSEDOORSND))
+			return false;
+	}
+#endif // WOLFDOSMPU
+
+#ifdef WOLFDOSMPU
 	// when on PC speaker, revert to non-digital version for door noises
 	if (DigiMode != sds_PC || (sound != OPENDOORSND && sound != CLOSEDOORSND))
 #endif // WOLFDOSMPU

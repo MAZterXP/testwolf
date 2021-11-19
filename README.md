@@ -18,13 +18,120 @@ It is recommended to use this mod with [wolfmidi](https://github.com/ericvids/wo
 This mod is forked directly from the official Wolf3D source release from id Software. I did this as a personal exercise in DOS 80x86 assembly and 16-bit C programming. (Segmented memory is such a FAR-out concept, man!)
 
 
+Installation
+============
+
+Can I play NOW, daddy?
+----------------------
+
+Download a pre-built EXE file for your game from the [Releases section](https://github.com/ericvids/wolfdosmpu/releases/). Drop this EXE into your game's installation directory, e.g., C:\WOLF3D.
+
+Also download the latest [wolfmidi.zip](https://github.com/ericvids/wolfmidi/releases/). You will need to unzip wolfmidi.zip's contents inside your game's installation directory, e.g., C:\WOLF3D. _You need to preserve the directory structure when unzipping! (Refer to your preferred zip utility's documentation for details.)_ Afterwards, your game directory should look like this:
+
+```
+  WOLF3D\
+  | MUSIC\
+  | | COPYPRO
+  | | CORNER
+  | | .
+  | | .
+  | | _INFO
+  | AUDIOHED.WL6
+  | AUDIOT.WL6
+  | .
+  | .
+  | VSWAP.WL6
+  | WOLF3D.EXE (vanilla version)
+  | WOLF3DCM.EXE (wolfdosmpu version)
+```
+
+Then simply launch the wolfdosmpu EXE for your game (e.g., WOLF3DCM.EXE for Wolf3D commercial version).
+
+If you don't get MPU-401 music, check the Sound menu. If your MUSIC\ directory is being read by the game, the "AdLib/Sound Blaster" music option will change to "MPU-401/General MIDI"; otherwise, the game will revert to playing OPL2 music. If you are not hearing any music at all and the "MPU-401/General MIDI" option is shown, something else is wrong -- see the [tips section](#dont-hurt-midi) for troubleshooting.
+
+In case you're wondering, the MUSIC\ directory contains all the tracks for _both_ Wolf3D and SoD games. Any tracks with the same name between each game happen to be exact byte-for-byte duplicates. If you want to save space, you may install the data files of both Wolf3D and SoD in the same directory, so they can share the same MUSIC\ directory.
+
+Don't hurt MIDI.
+----------------
+
+Here are some tips and suggestions for some common problems:
+
+1. If you use wolfdosmpu inside DOSBox, wolfdosmpu will sometimes play on a different MIDI device than you intended (or will not play anything at all). In this case, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
+
+2. If your hardware MPU-401 is not being detected, try to set the port via the P option of the BLASTER environment variable.
+   ```
+            SET BLASTER= ... P330 ...
+
+   example: SET BLASTER=A220 I7 D1 T6 P330 H5
+   ```
+   Try this even if you don't have a Sound Blaster card (in which case, BLASTER would contain only the P option). Some Roland MPU-401s and clones may be configured to use a different address instead of the default 330, e.g., 300, 332, etc.
+
+3. If you have a DMA-less Sound-Blaster-compatible card (such as an ES1688-based card), you have to specify the address of your Sound-Blaster-compatible in your BLASTER environment variable but _do not_ specify the IRQ (I) and DMA (D) parameters. For example: "SET BLASTER=A220" or "SET BLASTER=A220 P330" (without the quotes). This enables DMA-less mode, which uses your CPU to push the audio samples to your device with the proper timing.
+
+4. If you have a parallel port digitized sound device that is similar to but not fully compatible with the Disney Sound Source (e.g., Covox Speech Thing), you can enable Covox compatibility mode by using the "SS#" command-line parameter, where # is the LPT port number. For example: "WOLF3DCM SS2" (without the quotes) to use a Covox on LPT2. The Sound menu will confirm that this mode is enabled by renaming the "Disney Sound Source" option to "Covox/Sound Source"; make sure that this option is selected. Covox compatibility mode, like DMA-less mode (above), relies on your CPU to push the audio samples to your device with the proper timing. (This mode also works for the Disney Sound Source itself; the game simply ignores the device's built-in sample buffering.)
+
+5. __Be careful when using Apogee shareware-/registered-version data files!__ Make sure your Apogee data files are version 1.4 or 1.4g. All earlier Apogee versions (1.2 and below) are not supported.
+
+   As a countermeasure, wolfdosmpu (as of version 1.42) tries to detect whether your data files are of the correct version, by checking the extension (WL6/WL1/SOD/SDM) and whether the VGAHEAD.WL6 file reports the correct size. If you get the error "NO WOLFENSTEIN 3-D .WL6/.WL1 FILES TO BE FOUND!", you are probably using shareware version data files on the registered/commercial version EXEs (or vice versa). If you get the error "VGAHEAD.WL6 IS INCOMPATIBLE!", you are probably using registered version data files on a commercial version EXE (or vice versa). Switch to the correct version EXE and try again.
+
+   The main reason for keeping the Apogee versions is for their "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
+
+6. __Note on memory and TSRs__: wolfdosmpu generally requires more conventional RAM than the vanilla Wolf3D engine. The additional memory is used for MIDI file caching and parsing, and has to be allocated in conventional memory for compatibility reasons. The amount needed will increase if you use longer custom songs. The modern-controls EXEs also consume more memory for program code supporting the automap and other features.
+
+   TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) consume part of your conventional memory. As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
+
+   My own testing with DOSBox-X indicates that the modern-controls EXEs require at least 576 KB of free conventional memory in order to run properly (with the default music). The MPU-only EXEs use about 7 KB less, but I still recommend freeing at least 576 KB of conventional memory for the best results.
+
+   One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
+
+   If you use the "nomain" command-line parameter, you can force the wolfdosmpu EXE to load regardless of available main memory. THIS IS AN EXPERIMENTAL FEATURE, and you risk all sorts of unexpected behavior, such as trigerring the mythical id Software copy protection code that erases your hard drive if you don't have a registered copy of v1.1. Don't say I didn't warn you. (Seriously, however, expect the game to exhibit weird problems like showing incorrect wall graphics and crashing when starting or loading a game.)
+
+7. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu EXEs and the vanilla EXEs. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global (non-far) variables or constant string literals WILL break future savegames.
+
+Bring "M" on!
+-------------
+
+If you want to use your own MIDI music, simply replace each music file that you want to change in the MUSIC\ directory with a MIDI file of your choice. (Do NOT use the MID extension. Also, do NOT touch the _INFO file unless you know what you are doing!)
+
+However, since the MIDI files have to be optimized specifically for Wolf3D's timing algorithm, you will likely need to edit any custom MIDI files. The current limitations are:
+
+- Only Type-0 (single-track) standard MIDI files up to 65535 bytes long are supported.
+- Only one tick rate and BPM is supported: 350 ticks per quarter note (TPQN) at 120 beats per minute (BPM) -- essentially 700 ticks per second. This is because the vanilla Wolf3D MUSE engine is locked to 700Hz. If your MIDI file does not have "350 TPQN" in its header, it will NOT play. You will need to edit it in a sequencer program to change the tick rate, and speed-up/slow-down the notes as necessary by decreasing/increasing note spacings instead of sending BPM change commands. (Tempo change is also NOT supported.) An alternative way to convert your MIDI files is to use MIDI recorder software: preset the recording to 350 TPQN and 120 BPM, and simply record the playback of an existing MIDI file.
+- System-exclusive (F0, F7) and meta-event (FF) messages are currently ignored. Please remove them if possible (to save space/processing time and to avoid variable-length data issues, described below).
+- Extra-long pauses, or anything necessitating more than two bytes of MIDI variable-length data (i.e., 16384+ ticks, or roughly 23+ seconds of pause between any note change) are not supported. The music will simply stop if the engine encounters this.
+
+I am H@xx0r Incarnate!
+----------------------
+
+If you want to build the EXE files yourself (or for some reason you love SoD's copy protection screen and its "Hitler Waltz" BGM), you will need to follow [Fabien Sanglard's guide](https://fabiensanglard.net/Compile_Like_Its_1992/) on how to build the Wolf3D source code on DOSBox using Borland C++ 3.1.
+
+The version of the Wolf3D source code in wolfdosmpu has been streamlined -- it does not include unnecessary files from id Software's original source release, and it also fixes some issues with building versions other than Wolf3D commercial release 1.4 (i.e., you will not need any of Fabien's additional downloads except for the Borland compiler itself -- everything else is already in here).
+
+In addition, helper batch files are provided to quickly switch between versions. You should execute the batch file of your preferred version inside DOSBox before launching the Borland C++ environment (BC.EXE). Then simply press F9 to build.
+
+```
+Supported versions:
+_WC.BAT -- Wolf3D commercial v1.4 (id, GT and Activision/Steam releases)
+_WR.BAT -- Wolf3D registered v1.4/v1.4g (Apogee releases)
+_SC.BAT -- SoD commercial v1.0/v1.4 (FormGen and Activision/Steam releases)
+
+Semi-supported versions:
+_WS.BAT -- Wolf3D shareware v1.4/v1.4g (Apogee releases)
+_SD.BAT -- SoD demo v1.0 (FormGen release)
+```
+
+As of version 1.10, LZEXE has been integrated into the build system. Whenever you switch between versions, an LZEXE-compressed EXE file is generated from the last built WOLF3D.EXE in the OBJ\ subdirectory, and renamed as appropriate (e.g., WOLF3DCM.EXE, SPEARCM.EXE, etc.). If you want LZEXE compression on your current build but don't want to switch between game versions, you can run VERSION.BAT to trigger the compression routine on its own.
+
+Also as of version 1.30, you can build the wolfdosmpu EXEs without modern control support by passing the "M" (MPU-only-version) argument to each batch file, or a completely clean version (equivalent to the original id source release, with only minimal modifications to compile SoD and the Apogee versions) by passing the "V" (vanilla) argument. You can build all 5 game versions (Wolf3D commercial, Wolf3D registered, Wolf3D shareware, SoD commercial, and SoD demo) of each variant at once by executing the _ALL.BAT file with the "V", "M", or "W" (WASD-version) argument, or with no arguments to build all 15 EXEs.
+
+
 FAQ
 ===
 
 General
 -------
 
-- ### Why use this over an enhanced port like [ECWolf](http://maniacsvault.net/ecwolf/) (which already supports MIDI)?
+- ### Why use wolfdosmpu over an enhanced port like [ECWolf](http://maniacsvault.net/ecwolf/) (which already supports MIDI)?
 
   Well, you _can_ use the music files generated by wolfmidi with enhanced ports that already support MIDI (I used to play ECWolf regularly myself)...
 
@@ -131,16 +238,19 @@ Usage
 Version History
 ===============
 
-Next release
-------------
+1.45 (2021-11-20)
+-----------------
 - Added "nompu" command-line parameter to disable MPU-401 usage and revert to OPL2 music. Removing/renaming your MUSIC directory has the same effect. Just in case you REALLY want that...
-- Fixed the sound attenuation behavior on SB pro, because SB pro volume level 7 of 15 (the minimum volume encoded into the Wolf3D volume lookup table) is actually near inaudible instead of half volume as one might expect. Since the developer intention seems to be for attenuating sounds only down to the half-volume point (coupled with the fact that non-SB-pro devices do not attenuate volume, making it "unfair" for SB pro owners if they don't hear some sounds), the value sent to the SB pro is now adjusted closer to the SB pro's real half-volume point. This fix also reduces (but not eliminates) sounds getting cut off abruptly -- which is actually a low-volume sound effect taking precedence over a high-volume one -- and also makes the sound positioning a bit more pleasing with headphones due to the more-balanced volume distribution. All that said, the real solution to the sound cut-off problem is to do software-based mixing of simultaneous sounds ala Doom, which would require significant engine changes and may be too much work for 286 (don't know when/if this will happen at all).
+- Fixed the sound attenuation behavior on SB pro, because SB pro volume level 7 of 15 (the minimum volume encoded into the Wolf3D volume lookup table) is actually near inaudible instead of half volume as one might expect. Since the developer intention seems to be for attenuating sounds only down to the half-volume point (coupled with the fact that non-SB-pro devices do not attenuate volume, making it "unfair" for SB pro owners if they don't hear some sounds), the value sent to the SB pro is now adjusted closer to the SB pro's real half-volume point. This fix also reduces (but not eliminates) sounds getting cut off abruptly -- which is actually a low-volume sound effect taking precedence over a high-volume one -- and also makes the sound positioning a bit more pleasing with headphones due to the more-balanced volume distribution.
+- Added special cases for door sounds, which account for many of the sound cut-off issues players experience in Wolf3D. Direct door interaction by the player should now always play a sound regardless of a currently-playing sound's priority, but the sound can be overridden by higher-priority sound effects afterwards. Ambient door closing sounds will not override other door sounds anymore (but ambient door opening still will, to alert the player of an enemy opening a door). Reopening a currently-closing door should also now override the door-closing sound with a door-open sound. All that said, the real solution to the sound cut-off problem is to do software-based mixing of simultaneous sounds ala Doom, which would require significant engine changes and may be too much work for 286 (don't know when/if this will happen at all).
 - Fixed Covox support where the first few digitized sounds will not play (but subsequent ones work fine).
 - Fixed slowdown issue with Covox and DMA-less SB mode combined with very short non-digitized AdLib sound effects (i.e., the digitized sound's pitch lowers when the player runs into a wall or holds the Open key).
 - Fixed DONOTHINGSND not getting played on tiles previously occupied by pushwalls (it now plays, as with any other tile, for consistency).
 - PUSHWALLSND is now a positioned sound.
 - Fixed rare possibility for the automap to break when the player is straferunning through a one-tile-wide corridor and experiencing framerate drops, which can result in the player skipping entire tiles (and breaking spotvis connectivity). Item pickup logic has also been fixed to not skip these tiles.
+- Previous version cleared keyboard inputs after screen fade-/fizzle-in, but this changed the level start's feel significantly (players would start pressing directional keys during the fade-in only for the movement to not register, killing running starts). Changed so that only the LastScan code is cleared, which only affects the processing of the menu keys Esc and F1-F10 (which was the intended fix).
 - Previous version broke some behavioral compatibility with existing maps with holowalls -- in particular, shooting inside a holowall should alert all enemies in the level. (Fixed in this version.)
+- Reverted SAVENEARHEAP to its original value (it was modified to help reduce the memory requirement to 576 KB, but it apparently causes random crashes; still not sure why).
 
 1.44 (2021-11-16)
 -----------------
@@ -163,7 +273,7 @@ Next release
   - Now displays up to 999:99 total episode time. This was previously capped at 99:99. Note that :99 shows instead of :59 to indicate timer overflow, like in the vanilla EXE. So now you will know the exact amount of time you wasted playing Wolf3D instead of working today! (Also because, even after so many hours of "debugging" wolfdosmpu, I still could not finish below 99:59 on SoD at the hardest difficulty with 100% completion ratios...)
   - Fixed typo in SoD ending text ("by" -> "be"). If it isn't obvious by now, I've been playing SoD a lot. :)
   - Fixed quicksave/quickload so that it immediately becomes active after a normal save/load. Also, if the user pressed Esc on the save/load screen, the quicksave/quickload slot will now revert to the previous one used instead of changing to the one currently selected by the cursor. (I've been victimized by this...)
-  - Fixed so that keyboard and mouse input is always cleared after screen fade/fizzle-ins (i.e., if you impatiently pressed Esc multiple times at a function key menu, the game screen won't anymore immediately fade back out to the main menu).
+  - Fixed so that keyboard and mouse input is always cleared after screen fade-/fizzle-ins (i.e., if you impatiently pressed Esc multiple times at a function key menu, the game screen won't anymore immediately fade back out to the main menu).
 
 1.43 (2021-11-03)
 -----------------
@@ -292,108 +402,3 @@ Next release
 - Initial release.
 
 
-Usage
-=====
-
-Can I play NOW, daddy?
-----------------------
-
-Download a pre-built EXE file for your game from the [Releases section](https://github.com/ericvids/wolfdosmpu/releases/). Drop this EXE into your game's installation directory, e.g., C:\WOLF3D.
-
-Also download the latest [wolfmidi.zip](https://github.com/ericvids/wolfmidi/releases/). You will need to unzip wolfmidi.zip's contents inside your game's installation directory, e.g., C:\WOLF3D. _You need to preserve the directory structure when unzipping! (Refer to your preferred zip utility's documentation for details.)_ Afterwards, your game directory should look like this:
-
-```
-  WOLF3D\
-  | MUSIC\
-  | | COPYPRO
-  | | CORNER
-  | | .
-  | | .
-  | | _INFO
-  | AUDIOHED.WL6
-  | AUDIOT.WL6
-  | .
-  | .
-  | VSWAP.WL6
-  | WOLF3D.EXE (vanilla version)
-  | WOLF3DCM.EXE (wolfdosmpu version)
-```
-
-Then simply launch the wolfdosmpu EXE for your game (e.g., WOLF3DCM.EXE for Wolf3D commercial version).
-
-If you don't get MPU-401 music, check the Sound menu. If your MUSIC\ directory is being read by the game, the "AdLib/Sound Blaster" music option will change to "MPU-401/General MIDI"; otherwise, the game will revert to playing OPL2 music. If you are not hearing any music at all and the "MPU-401/General MIDI" option is shown, something else is wrong -- see the [tips section](#dont-hurt-midi) for troubleshooting.
-
-In case you're wondering, the MUSIC\ directory contains all the tracks for _both_ Wolf3D and SoD games. Any tracks with the same name between each game happen to be exact byte-for-byte duplicates. If you want to save space, you may install the data files of both Wolf3D and SoD in the same directory, so they can share the same MUSIC\ directory.
-
-Don't hurt MIDI.
-----------------
-
-Here are some tips and suggestions for some common problems:
-
-1. If you use wolfdosmpu inside DOSBox, wolfdosmpu will sometimes play on a different MIDI device than you intended (or will not play anything at all). In this case, select your MIDI device with the help of [this guide](https://www.dosbox.com/wiki/Configuration:MIDI).
-
-2. If your hardware MPU-401 is not being detected, try to set the port via the P option of the BLASTER environment variable.
-   ```
-            SET BLASTER= ... P330 ...
-
-   example: SET BLASTER=A220 I7 D1 T6 P330 H5
-   ```
-   Try this even if you don't have a Sound Blaster card (in which case, BLASTER would contain only the P option). Some Roland MPU-401s and clones may be configured to use a different address instead of the default 330, e.g., 300, 332, etc.
-
-3. If you have a DMA-less Sound-Blaster-compatible card (such as an ES1688-based card), you have to specify the address of your Sound-Blaster-compatible in your BLASTER environment variable but _do not_ specify the IRQ (I) and DMA (D) parameters. For example: "SET BLASTER=A220" or "SET BLASTER=A220 P330" (without the quotes). This enables DMA-less mode, which uses your CPU to push the audio samples to your device with the proper timing.
-
-4. If you have a parallel port digitized sound device that is similar to but not fully compatible with the Disney Sound Source (e.g., Covox Speech Thing), you can enable Covox compatibility mode by using the "SS#" command-line parameter, where # is the LPT port number. For example: "WOLF3DCM SS2" (without the quotes) to use a Covox on LPT2. The Sound menu will confirm that this mode is enabled by renaming the "Disney Sound Source" option to "Covox/Sound Source"; make sure that this option is selected. Covox compatibility mode, like DMA-less mode (above), relies on your CPU to push the audio samples to your device with the proper timing. (This mode also works for the Disney Sound Source itself; the game simply ignores the device's built-in sample buffering.)
-
-5. __Be careful when using Apogee shareware-/registered-version data files!__ Make sure your Apogee data files are version 1.4 or 1.4g. All earlier Apogee versions (1.2 and below) are not supported.
-
-   As a countermeasure, wolfdosmpu (as of version 1.42) tries to detect whether your data files are of the correct version, by checking the extension (WL6/WL1/SOD/SDM) and whether the VGAHEAD.WL6 file reports the correct size. If you get the error "NO WOLFENSTEIN 3-D .WL6/.WL1 FILES TO BE FOUND!", you are probably using shareware version data files on the registered/commercial version EXEs (or vice versa). If you get the error "VGAHEAD.WL6 IS INCOMPATIBLE!", you are probably using registered version data files on a commercial version EXE (or vice versa). Switch to the correct version EXE and try again.
-
-   The main reason for keeping the Apogee versions is for their "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
-
-6. __Note on memory and TSRs__: wolfdosmpu generally requires more conventional RAM than the vanilla Wolf3D engine. The additional memory is used for MIDI file caching and parsing, and has to be allocated in conventional memory for compatibility reasons. The amount needed will increase if you use longer custom songs. The modern-controls EXEs also consume more memory for program code supporting the automap and other features.
-
-   TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) consume part of your conventional memory. As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
-
-   My own testing with DOSBox-X indicates that the modern-controls EXEs require at least 576 KB of free conventional memory in order to run properly (with the default music). The MPU-only EXEs use about 7 KB less, but I still recommend freeing at least 576 KB of conventional memory for the best results.
-
-   One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
-
-   If you use the "nomain" command-line parameter, you can force the wolfdosmpu EXE to load regardless of available main memory. THIS IS AN EXPERIMENTAL FEATURE, and you risk all sorts of unexpected behavior, such as trigerring the mythical id Software copy protection code that erases your hard drive if you don't have a registered copy of v1.1. Don't say I didn't warn you. (Seriously, however, expect the game to exhibit weird problems like showing incorrect wall graphics and crashing when starting or loading a game.)
-
-7. __Note on savegames__: Savegames are NOT compatible between wolfdosmpu EXEs and the vanilla EXEs. Some savegames may load, _but don't rely on this_; there may be anomalies like missing objects or broken actor logic. id's savegame code is fully dependent on the data segment's layout, which means that any modification that introduces new global (non-far) variables or constant string literals WILL break future savegames.
-
-Bring "M" on!
--------------
-
-If you want to use your own MIDI music, simply replace each music file that you want to change in the MUSIC\ directory with a MIDI file of your choice. (Do NOT use the MID extension. Also, do NOT touch the _INFO file unless you know what you are doing!)
-
-However, since the MIDI files have to be optimized specifically for Wolf3D's timing algorithm, you will likely need to edit any custom MIDI files. The current limitations are:
-
-- Only Type-0 (single-track) standard MIDI files up to 65535 bytes long are supported.
-- Only one tick rate and BPM is supported: 350 ticks per quarter note (TPQN) at 120 beats per minute (BPM) -- essentially 700 ticks per second. This is because the vanilla Wolf3D MUSE engine is locked to 700Hz. If your MIDI file does not have "350 TPQN" in its header, it will NOT play. You will need to edit it in a sequencer program to change the tick rate, and speed-up/slow-down the notes as necessary by decreasing/increasing note spacings instead of sending BPM change commands. (Tempo change is also NOT supported.) An alternative way to convert your MIDI files is to use MIDI recorder software: preset the recording to 350 TPQN and 120 BPM, and simply record the playback of an existing MIDI file.
-- System-exclusive (F0, F7) and meta-event (FF) messages are currently ignored. Please remove them if possible (to save space/processing time and to avoid variable-length data issues, described below).
-- Extra-long pauses, or anything necessitating more than two bytes of MIDI variable-length data (i.e., 16384+ ticks, or roughly 23+ seconds of pause between any note change) are not supported. The music will simply stop if the engine encounters this.
-
-I am H@xx0r Incarnate!
-----------------------
-
-If you want to build the EXE files yourself (or for some reason you love SoD's copy protection screen and its "Hitler Waltz" BGM), you will need to follow [Fabien Sanglard's guide](https://fabiensanglard.net/Compile_Like_Its_1992/) on how to build the Wolf3D source code on DOSBox using Borland C++ 3.1.
-
-The version of the Wolf3D source code in wolfdosmpu has been streamlined -- it does not include unnecessary files from id Software's original source release, and it also fixes some issues with building versions other than Wolf3D commercial release 1.4 (i.e., you will not need any of Fabien's additional downloads except for the Borland compiler itself -- everything else is already in here).
-
-In addition, helper batch files are provided to quickly switch between versions. You should execute the batch file of your preferred version inside DOSBox before launching the Borland C++ environment (BC.EXE). Then simply press F9 to build.
-
-```
-Supported versions:
-_WC.BAT -- Wolf3D commercial v1.4 (id, GT and Activision/Steam releases)
-_WR.BAT -- Wolf3D registered v1.4/v1.4g (Apogee releases)
-_SC.BAT -- SoD commercial v1.0/v1.4 (FormGen and Activision/Steam releases)
-
-Semi-supported versions:
-_WS.BAT -- Wolf3D shareware v1.4/v1.4g (Apogee releases)
-_SD.BAT -- SoD demo v1.0 (FormGen release)
-```
-
-As of version 1.10, LZEXE has been integrated into the build system. Whenever you switch between versions, an LZEXE-compressed EXE file is generated from the last built WOLF3D.EXE in the OBJ\ subdirectory, and renamed as appropriate (e.g., WOLF3DCM.EXE, SPEARCM.EXE, etc.). If you want LZEXE compression on your current build but don't want to switch between game versions, you can run VERSION.BAT to trigger the compression routine on its own.
-
-Also as of version 1.30, you can build the wolfdosmpu EXEs without modern control support by passing the "M" (MPU-only-version) argument to each batch file, or a completely clean version (equivalent to the original id source release, with only minimal modifications to compile SoD and the Apogee versions) by passing the "V" (vanilla) argument. You can build all 5 game versions (Wolf3D commercial, Wolf3D registered, Wolf3D shareware, SoD commercial, and SoD demo) of each variant at once by executing the _ALL.BAT file with the "V", "M", or "W" (WASD-version) argument, or with no arguments to build all 15 EXEs.

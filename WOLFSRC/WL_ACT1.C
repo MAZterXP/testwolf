@@ -409,6 +409,17 @@ void SpawnDoor (int tilex, int tiley, boolean vertical, int lock)
 
 void OpenDoor (int door)
 {
+#ifdef WOLFDOSMPU
+	// play the door sound again when it's being reopened
+	if (doorobjlist[door].action == dr_closing)
+	{
+		int area = *(mapsegs[0] + farmapylookup[doorobjlist[door].tiley]
+					+doorobjlist[door].tilex)-AREATILE;
+		if (areabyplayer[area])
+			PlaySoundLocTile(OPENDOORSND, doorobjlist[door].tilex, doorobjlist[door].tiley);
+	}
+#endif // WOLFDOSMPU
+
 	if (doorobjlist[door].action == dr_open)
 		doorobjlist[door].ticcount = 0;			// reset open time
 	else
