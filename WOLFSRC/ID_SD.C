@@ -788,6 +788,13 @@ SDL_SBService(void)
 
 	sbIn(sbDataAvail);	// Ack interrupt to SB
 
+#ifdef WOLFDOSMPU
+	// fix for first sample sometimes not getting played:
+	// a delayed interrupt can cause SDL_DigitizedDone to be called while no sound is being played,
+	// causing DigiMissed to be set to true and SD_Poll() to play the second sample immediately,
+	// even before the first sample has finished
+	if (sbSamplePlaying)
+#endif // WOLFDOSMPU
 	if (sbNextSegPtr)
 	{
 		used = SDL_SBPlaySeg(sbNextSegPtr,sbNextSegLen);
@@ -2377,9 +2384,13 @@ SD_SetMusicMode(SMMode mode)
 {
 	boolean	result = false;
 
+#ifdef WOLFDOSMPU
+	SD_MusicOff();
+#else  // WOLFDOSMPU
 	SD_FadeOutMusic();
 	while (SD_MusicPlaying())
 		;
+#endif // WOLFDOSMPU
 
 	switch (mode)
 	{
@@ -2581,6 +2592,7 @@ SD_Startup(void)
 }
 
 #ifdef WOLFDOSMPU
+	// unused
 #else  // WOLFDOSMPU
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -2741,12 +2753,14 @@ SD_PlaySound(soundnames sound)
 	else
 	{
 		// a far-away closing door sound is meant to be ambience only and should
-		// not override another door sound (*especially* near ones); a far-away
-		// opening door sound, however, should play according to regular priority
-		// rules (including overriding a near door sound, to alert the player
-		// that an enemy is opening a door)
+		// not override another door sound whether opening or closing (*especially* near ones)
 		if (sound == CLOSEDOORSND && (DigiNumber == OPENDOORSND || DigiNumber == CLOSEDOORSND
 									  || SD_SoundPlaying() == OPENDOORSND || SD_SoundPlaying() == CLOSEDOORSND))
+			return false;
+		// a far-away opening door sound should not override another opening door
+		// sound (*especially* near ones), but should override closing door sounds
+		// to alert the player of enemies
+		if (sound == OPENDOORSND && (DigiNumber == OPENDOORSND || SD_SoundPlaying() == OPENDOORSND))
 			return false;
 	}
 #endif // WOLFDOSMPU
@@ -2972,6 +2986,9 @@ asm	popf
 //		to see if the fadeout is complete
 //
 ///////////////////////////////////////////////////////////////////////////
+#ifdef WOLFDOSMPU
+	// unused
+#else  // WOLFDOSMPU
 void
 SD_FadeOutMusic(void)
 {
@@ -2983,6 +3000,7 @@ SD_FadeOutMusic(void)
 		break;
 	}
 }
+#endif // WOLFDOSMPU
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -2990,6 +3008,9 @@ SD_FadeOutMusic(void)
 //		not
 //
 ///////////////////////////////////////////////////////////////////////////
+#ifdef WOLFDOSMPU
+	// unused
+#else  // WOLFDOSMPU
 boolean
 SD_MusicPlaying(void)
 {
@@ -3007,3 +3028,4 @@ SD_MusicPlaying(void)
 
 	return(result);
 }
+#endif // WOLFDOSMPU
