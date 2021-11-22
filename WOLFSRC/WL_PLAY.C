@@ -722,9 +722,7 @@ void PushTile(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		int doornum = tilemap[x][y] & ~0x80;
 		int lock = doorobjlist[doornum].lock;
 
-		if (actor >= (unsigned) objlist && ! (((objtype *) actor)->state->think
-											  || ((objtype *) actor)->state->action
-											  || ((objtype *) actor)->state->next != ((objtype *) actor)->state)
+		if (actor >= (unsigned) objlist && ! Alive((objtype *) actor)
 			|| (! actor || actor >= (unsigned) objlist) && (automapmode == 3 || *visspot & 0x01))
 		{
 			// door is open and is either occupied by a corpse or currently visible; treat as blank space
@@ -940,7 +938,7 @@ void CheckAccessible()
 	{
 		// anything that is animating is marked on the map as an enemy
 		// (this includes special cases like ghosts and projectiles)
-		if (obj->state->think || obj->state->action || obj->state->next != obj->state)
+		if (Alive(obj))
 		{
 			byte *visspot = &spotvis[obj->x >> TILESHIFT][obj->y >> TILESHIFT];
 

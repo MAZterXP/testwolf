@@ -730,7 +730,11 @@ int CP_CheckQuick(unsigned scancode)
 			DrawAllPlayBorder();
 			WindowH=200;
 			fontnumber=0;
+#ifdef WOLFDOSMPU
+			// redundant
+#else  // WOLFDOSMPU
 			MainMenu[savegame].active = 0;
+#endif // WOLFDOSMPU
 			return 1;
 
 		//
@@ -973,7 +977,11 @@ int CP_EndGame(void)
 	playstate = ex_died;
 
 	#pragma warn -sus
+#ifdef WOLFDOSMPU
+	// redundant
+#else  // WOLFDOSMPU
 	MainMenu[savegame].active = 0;
+#endif // WOLFDOSMPU
 	MainMenu[viewscores].routine=CP_ViewScores;
 	#ifndef JAPAN
 	_fstrcpy(MainMenu[viewscores].string,STR_VS);
@@ -3608,6 +3616,10 @@ void SetupControlPanel(void)
 	fontnumber=1;
 	WindowH=200;
 
+#ifdef WOLFDOSMPU
+	// innocent until proven guilty
+	MainMenu[savegame].active = 0;
+#endif // WOLFDOSMPU
 	if (!ingame)
 		CA_LoadAllSounds();
 	else

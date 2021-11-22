@@ -1070,6 +1070,10 @@ int	CalcRotate (objtype *ob)
 
 #ifdef WOLFDOSMPU
 #define MAXVISABLE	MAXACTORS
+int Alive(objtype *obj)
+{
+	return obj->state->think || obj->state->action || obj->state->next != obj->state;
+}
 #else  // WOLFDOSMPU
 #define MAXVISABLE	50
 #endif // WOLFDOSMPU
@@ -1179,7 +1183,7 @@ for (i = 0; i < 2; i++)
 		// if sprite limit disabled, draw animating actors on the first pass, everything else on the second pass
 		if (! (compflags & COMPFLAG_50_SPRITE_LIMIT))
 		{
-			if ((obj->state->think || obj->state->action || obj->state->next != obj->state) ? i : ! i)
+			if (Alive(obj) ? i : ! i)
 				continue;
 		}
 #endif // WOLFDOSMPU

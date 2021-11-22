@@ -435,6 +435,25 @@ void OpenDoor (int door)
 =====================
 */
 
+#ifdef WOLFDOSMPU
+void MoveCorpseIntoDoor(int doorx, int doory, objtype *actor)
+{
+	// if a door is being blocked by a corpse, move the corpse in the door
+	// without actually changing its rendering position
+	// (note that this also fixes a bug where other enemies could move
+	// near the door and trigger its CloseDoor because they override the
+	// corpse in the actorat table, frustrating players who intentionally
+	// placed the corpse there to keep the door open)
+	if (Alive(actor))
+		return;
+	if (actorat[actor->tilex][actor->tiley] == actor)
+		actorat[actor->tilex][actor->tiley] = NULL;
+	actor->tilex = doorx;
+	actor->tiley = doory;
+	actorat[doorx][doory] = actor;
+}
+#endif // WOLFDOSMPU
+
 void CloseDoor (int door)
 {
 	int	tilex,tiley,area;
@@ -463,10 +482,24 @@ void CloseDoor (int door)
 		}
 		check = actorat[tilex-1][tiley];
 		if (check && ((check->x+MINDIST) >> TILESHIFT) == tilex )
+#ifdef WOLFDOSMPU
+		{
+			MoveCorpseIntoDoor(tilex, tiley, check);
+#endif // WOLFDOSMPU
 			return;
+#ifdef WOLFDOSMPU
+		}
+#endif // WOLFDOSMPU
 		check = actorat[tilex+1][tiley];
 		if (check && ((check->x-MINDIST) >> TILESHIFT) == tilex )
+#ifdef WOLFDOSMPU
+		{
+			MoveCorpseIntoDoor(tilex, tiley, check);
+#endif // WOLFDOSMPU
 			return;
+#ifdef WOLFDOSMPU
+		}
+#endif // WOLFDOSMPU
 	}
 	else if (!doorobjlist[door].vertical)
 	{
@@ -479,10 +512,24 @@ void CloseDoor (int door)
 		}
 		check = actorat[tilex][tiley-1];
 		if (check && ((check->y+MINDIST) >> TILESHIFT) == tiley )
+#ifdef WOLFDOSMPU
+		{
+			MoveCorpseIntoDoor(tilex, tiley, check);
+#endif // WOLFDOSMPU
 			return;
+#ifdef WOLFDOSMPU
+		}
+#endif // WOLFDOSMPU
 		check = actorat[tilex][tiley+1];
 		if (check && ((check->y-MINDIST) >> TILESHIFT) == tiley )
+#ifdef WOLFDOSMPU
+		{
+			MoveCorpseIntoDoor(tilex, tiley, check);
+#endif // WOLFDOSMPU
 			return;
+#ifdef WOLFDOSMPU
+		}
+#endif // WOLFDOSMPU
 	}
 
 

@@ -90,7 +90,11 @@ void EndSpear(void)
 
 	EndScreen (END2PALETTE, ENDSCREEN12PIC);
 
+#ifdef WOLFDOSMPU
+	// redundant
+#else  // WOLFDOSMPU
 	MainMenu[savegame].active = 0;
+#endif // WOLFDOSMPU
 }
 #endif
 #endif
