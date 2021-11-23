@@ -1440,6 +1440,7 @@ startplayloop:
 #endif // WASD
 #ifdef WOLFDOSMPU
 			pwallstate = 0;
+			gamestate.attackframe = gamestate.weaponframe = 0;		// reset the weapon image
 			gamestate.keys |= 1;	// in case player tricked a guy into opening the locked door
 			DrawKeys();
 #endif // WOLFDOSMPU

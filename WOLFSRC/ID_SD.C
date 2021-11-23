@@ -84,6 +84,11 @@ extern	void interrupt	SDL_t0ExtremeAsmService(void),
 //	Internal variables
 static	boolean			SD_Started;
 		boolean			nextsoundpos;
+#ifdef WOLFDOSMPU
+		char			far queuedcountdown;
+		byte			far queuedsound;
+		byte			far queuedpos;
+#endif // WOLFDOSMPU
 		longword		TimerDivisor,TimerCount;
 static	char			*ParmStrings[] =
 						{
@@ -1620,9 +1625,37 @@ SD_Poll(void)
 	SDL_SetTimerSpeed();
 }
 
+#ifdef WOLFDOSMPU
+int SD_Tic(int tics)
+{
+	SD_Poll();
+	queuedcountdown -= tics;
+	if (queuedcountdown <= 0)
+	{
+		queuedcountdown = 0;
+		if (queuedsound)
+		{
+			nextsoundpos = queuedpos;
+			SD_PlaySound(queuedsound);
+			queuedsound = queuedpos = 0;
+		}
+	}
+	return 0;
+}
+#endif // WOLFDOSMPU
+
 void
 SD_SetPosition(int leftpos,int rightpos)
 {
+#ifdef WOLFDOSMPU
+	if (queuedsound)
+	{
+		LeftPosition = leftpos;
+		RightPosition = rightpos;
+		return;
+	}
+#endif // WOLFDOSMPU
+
 	if
 	(
 		(leftpos < 0)
@@ -2715,6 +2748,9 @@ SD_PositionSound(int leftvol,int rightvol)
 boolean
 SD_PlaySound(soundnames sound)
 {
+#ifdef WOLFDOSMPU
+	boolean	door = (sound == OPENDOORSND || sound == CLOSEDOORSND);
+#endif // WOLFDOSMPU
 	boolean		ispos;
 	SoundCommon	far *s;
 	int	lp,rp;
@@ -2735,43 +2771,58 @@ SD_PlaySound(soundnames sound)
 		Quit("SD_PlaySound() - Uncached sound");
 
 #ifdef WOLFDOSMPU
-	// special cases for door sounds to minimize cut-off issues
-	if (lp == 0 && rp == 0)
-	{
-		// an unattenuated door or pushwall sound should always play (because
-		// the player likely did these, and it tends to be very noticeable if
-		// the sound is dropped) but let other sounds override it afterwards
-		if (sound == OPENDOORSND || sound == CLOSEDOORSND || sound == PUSHWALLSND)
-		{
-			// deprioritize existing sound
-			if (DigiMode == sds_Off || DigiMode == sds_PC && (SoundMode == sdm_PC || sound != PUSHWALLSND))
-				SoundPriority = 0;
-			else
-				DigiPriority = 0;
-		}
-	}
-	else
-	{
-		// a far-away closing door sound is meant to be ambience only and should
-		// not override another door sound whether opening or closing (*especially* near ones)
-		if (sound == CLOSEDOORSND && (DigiNumber == OPENDOORSND || DigiNumber == CLOSEDOORSND
-									  || SD_SoundPlaying() == OPENDOORSND || SD_SoundPlaying() == CLOSEDOORSND))
-			return false;
-		// a far-away opening door sound should not override another opening door
-		// sound (*especially* near ones), but should override closing door sounds
-		// to alert the player of enemies
-		if (sound == OPENDOORSND && (DigiNumber == OPENDOORSND || SD_SoundPlaying() == OPENDOORSND))
-			return false;
-	}
-#endif // WOLFDOSMPU
-
-#ifdef WOLFDOSMPU
 	// when on PC speaker, revert to non-digital version for door noises
-	if (DigiMode != sds_PC || (sound != OPENDOORSND && sound != CLOSEDOORSND))
+	if (DigiMode != sds_PC || ! door)
 #endif // WOLFDOSMPU
 
 	if ((DigiMode != sds_Off) && (DigiMap[sound] != -1))
 	{
+#ifdef WOLFDOSMPU
+		word *ppriority = ((DigiMode == sds_PC) && (SoundMode == sdm_PC)) ? &SoundPriority : &DigiPriority;
+		if (lp == 0 && rp == 0 && door)
+		{
+			// very-near door sounds get temporary boosted priority equivalent to player gunshots
+			// (this way, a player can shoot and then open/close a door and the door will still sound)
+			if (50 < *ppriority)
+				return false;
+
+			// very-near door sounds must play for a while before it may be interrupted by a queued sound
+			queuedcountdown = 35;
+		}
+		else
+		{
+			if (s->priority < *ppriority || 0 < *ppriority && sound == CLOSEDOORSND)
+			{
+				// don't play ambient close-door and other low-priority sounds if anything else is playing
+				return false;
+			}
+			if (queuedcountdown > 0)
+			{
+				// delay other sounds if a very-near door sound is playing
+				SoundCommon far *q = MK_FP(SoundTable[queuedsound], 0);
+				if (s->priority < q->priority)
+					return false;
+				queuedsound = sound;
+				SD_SetPosition(lp, rp);
+				SoundPositioned = queuedpos = ispos;
+				return true;
+			}
+		}
+
+		if (ppriority == &SoundPriority)
+			SDL_PCStopSound();
+		SD_PlayDigitized(DigiMap[sound],lp,rp);
+		if (ppriority == &SoundPriority)
+			SoundNumber = sound;
+		else
+			DigiNumber = sound;
+		SoundPositioned = ispos;
+		*ppriority = s->priority;
+
+		// Quit will never execute, but we need the string to keep dataseg compatibility
+		if (queuedsound = queuedpos = 0)	// intentional
+			Quit("SD_PlaySound: Priority without a sound");
+#else  // WOLFDOSMPU
 		if ((DigiMode == sds_PC) && (SoundMode == sdm_PC))
 		{
 			if (s->priority < SoundPriority)
@@ -2803,6 +2854,7 @@ SD_PlaySound(soundnames sound)
 			DigiNumber = sound;
 			DigiPriority = s->priority;
 		}
+#endif // WOLFDOSMPU
 
 		return(true);
 	}
@@ -2826,7 +2878,7 @@ SD_PlaySound(soundnames sound)
 	{
 	case sdm_PC:
 #ifdef WOLFDOSMPU
-		if (DigiPlaying && DigiMode == sds_PC)
+		if (DigiMode == sds_PC)
 			SD_StopDigitized();
 #endif // WOLFDOSMPU
 		SDL_PCPlaySound((void far *)s);
@@ -2893,6 +2945,10 @@ SD_StopSound(void)
 	SoundPositioned = false;
 
 	SDL_SoundFinished();
+
+#ifdef WOLFDOSMPU
+	queuedcountdown = queuedsound = queuedpos = 0;
+#endif // WOLFDOSMPU
 }
 
 ///////////////////////////////////////////////////////////////////////////

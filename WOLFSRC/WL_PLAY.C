@@ -2212,7 +2212,11 @@ void PlayLoop (void)
 
 		gamestate.TimeCount+=tics;
 
+#ifdef WOLFDOSMPU
+		SD_Tic(tics);
+#else  // WOLFDOSMPU
 		SD_Poll ();
+#endif // WOLFDOSMPU
 		UpdateSoundLoc();	// JAB
 
 		if (screenfaded)

@@ -823,15 +823,7 @@ void PushWall (int checkx, int checky, int dir)
 	int		oldtile;
 
 	if (pwallstate)
-#ifdef WOLFDOSMPU
-	{
-	  // for consistency
-	  SD_PlaySound(DONOTHINGSND);
-#endif // WOLFDOSMPU
 	  return;
-#ifdef WOLFDOSMPU
-	}
-#endif // WOLFDOSMPU
 
 
 	oldtile = tilemap[checkx][checky];
