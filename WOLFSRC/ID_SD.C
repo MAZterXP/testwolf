@@ -2748,17 +2748,20 @@ SD_PositionSound(int leftvol,int rightvol)
 boolean
 SD_PlaySound(soundnames sound)
 {
-#ifdef WOLFDOSMPU
-	boolean	door = (sound == OPENDOORSND || sound == CLOSEDOORSND);
-#endif // WOLFDOSMPU
 	boolean		ispos;
 	SoundCommon	far *s;
+#ifdef WOLFDOSMPU
+	boolean	door = (sound == OPENDOORSND || sound == CLOSEDOORSND);
+	boolean neardoor;
+	int priority;
+#else  // WOLFDOSMPU
 	int	lp,rp;
 
 	lp = LeftPosition;
 	rp = RightPosition;
 	LeftPosition = 0;
 	RightPosition = 0;
+#endif // WOLFDOSMPU
 
 	ispos = nextsoundpos;
 	nextsoundpos = false;
@@ -2771,6 +2774,15 @@ SD_PlaySound(soundnames sound)
 		Quit("SD_PlaySound() - Uncached sound");
 
 #ifdef WOLFDOSMPU
+	if (! ispos)
+		LeftPosition = RightPosition = 0;
+	priority = s->priority;
+
+	// very-near door sounds get temporary boosted priority, equivalent to player gunshots
+	neardoor = (door && LeftPosition == 0 && RightPosition == 0);
+	if (neardoor)
+		priority = 50;
+
 	// when on PC speaker, revert to non-digital version for door noises
 	if (DigiMode != sds_PC || ! door)
 #endif // WOLFDOSMPU
@@ -2779,49 +2791,43 @@ SD_PlaySound(soundnames sound)
 	{
 #ifdef WOLFDOSMPU
 		word *ppriority = ((DigiMode == sds_PC) && (SoundMode == sdm_PC)) ? &SoundPriority : &DigiPriority;
-		if (lp == 0 && rp == 0 && door)
+		if (priority < *ppriority)
+			return false;
+		if (neardoor)
+			queuedcountdown = 36;
+		else if (sound == ATKPISTOLSND)
+			queuedcountdown = 20;
+		else if (sound == ATKMACHINEGUNSND)
+			queuedcountdown = 8;
+		else if (sound == ATKGATLINGSND)
+			queuedcountdown = 4;
+		else if (queuedcountdown > 0)
 		{
-			// very-near door sounds get temporary boosted priority equivalent to player gunshots
-			// (this way, a player can shoot and then open/close a door and the door will still sound)
-			if (50 < *ppriority)
+			// delay other sounds if a very-near door sound or gunshot is playing
+			SoundCommon far *q = MK_FP(SoundTable[queuedsound], 0);
+			if (s->priority < q->priority)
 				return false;
-
-			// very-near door sounds must play for a while before it may be interrupted by a queued sound
-			queuedcountdown = 35;
-		}
-		else
-		{
-			if (s->priority < *ppriority || 0 < *ppriority && sound == CLOSEDOORSND)
-			{
-				// don't play ambient close-door and other low-priority sounds if anything else is playing
-				return false;
-			}
-			if (queuedcountdown > 0)
-			{
-				// delay other sounds if a very-near door sound is playing
-				SoundCommon far *q = MK_FP(SoundTable[queuedsound], 0);
-				if (s->priority < q->priority)
-					return false;
-				queuedsound = sound;
-				SD_SetPosition(lp, rp);
-				SoundPositioned = queuedpos = ispos;
-				return true;
-			}
+			queuedsound = sound;
+			SoundPositioned = queuedpos = ispos;
+			return true;
 		}
 
 		if (ppriority == &SoundPriority)
 			SDL_PCStopSound();
-		SD_PlayDigitized(DigiMap[sound],lp,rp);
+		SD_PlayDigitized(DigiMap[sound], LeftPosition, RightPosition);
+		SoundPositioned = ispos;
 		if (ppriority == &SoundPriority)
 			SoundNumber = sound;
 		else
 			DigiNumber = sound;
-		SoundPositioned = ispos;
 		*ppriority = s->priority;
 
-		// Quit will never execute, but we need the string to keep dataseg compatibility
+		// Quit will never execute, but we need the strings to keep dataseg compatibility
 		if (queuedsound = queuedpos = 0)	// intentional
+		{
 			Quit("SD_PlaySound: Priority without a sound");
+			Quit("SD_PlaySound() - Zero length sound");
+		}
 #else  // WOLFDOSMPU
 		if ((DigiMode == sds_PC) && (SoundMode == sdm_PC))
 		{
@@ -2861,17 +2867,19 @@ SD_PlaySound(soundnames sound)
 
 	if (SoundMode == sdm_Off)
 		return(false);
+#ifdef WOLFDOSMPU
+	if (priority < SoundPriority || (sound == DONOTHINGSND || sound == HITWALLSND) && SD_SoundPlaying() == sound && DigiPlaying)
+	{
+		// don't play lower priority sounds;
+		// also, don't cut-off and restart DONOTHINGSND and HITWALLSND if a digitized sound is playing
+		// (this prevents audio slowdown when the user hugs the wall or spams the use key)
+		return false;
+	}
+#else  // WOLFDOSMPU
 	if (!s->length)
 		Quit("SD_PlaySound() - Zero length sound");
 	if (s->priority < SoundPriority)
 		return(false);
-#ifdef WOLFDOSMPU
-	if ((sound == DONOTHINGSND || sound == HITWALLSND) && SD_SoundPlaying() == sound && DigiPlaying)
-	{
-		// don't cut-off and restart DONOTHINGSND and HITWALLSND if a digitized sound is playing
-		// (this prevents audio slowdown when the user hugs the wall or spams the use key)
-		return false;
-	}
 #endif // WOLFDOSMPU
 
 	switch (SoundMode)
