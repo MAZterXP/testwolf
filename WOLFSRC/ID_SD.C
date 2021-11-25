@@ -2793,14 +2793,14 @@ SD_PlaySound(soundnames sound)
 		word *ppriority = ((DigiMode == sds_PC) && (SoundMode == sdm_PC)) ? &SoundPriority : &DigiPriority;
 		if (priority < *ppriority)
 			return false;
-		if (neardoor)
-			queuedcountdown = 36;
+		if (neardoor || sound == PUSHWALLSND)
+			queuedcountdown = 41;		// play at least 2 out of the 3 clangs in the door-open sample
 		else if (sound == ATKPISTOLSND)
-			queuedcountdown = 20;
+			queuedcountdown = 17;		// ensure gunshot plays at least partially in DEMOTICS
 		else if (sound == ATKMACHINEGUNSND)
-			queuedcountdown = 8;
+			queuedcountdown = 5;		// ensure gunshot plays at least partially in DEMOTICS
 		else if (sound == ATKGATLINGSND)
-			queuedcountdown = 4;
+			queuedcountdown = 0;		// play immediately but let anything else override
 		else if (queuedcountdown > 0)
 		{
 			// delay other sounds if a very-near door sound or gunshot is playing

@@ -238,6 +238,13 @@ Usage
 Version History
 ===============
 
+1.46 (2021-11-25)
+-----------------
+- Implemented a sounding queueing scheme where a sound effect may only override a currently-playing one when the latter has played for a minimum length, replacing the door-related special cases in the previous version. This scheme fixes more sound cut-off issues while guaranteeing that the next sound effect still plays -- all player-activated digitized sounds (active door opening/closing, pushwall activation, and gun firing) are assigned minimum lengths. No more "silenced" gunshots or door-opening due to an enemy shouting too quickly in reaction -- and the enemy shout is not dropped! (Although you will still only hear the shout in full if you stop firing... again, sound effects mixing is currently not possible due to the Wolf3D sound engine being hardcoded to play monaural digitized sound with hardware stereo panning only.)
+- Fixed glitch where doors that are "perpetually" open due to a partially-blocking corpse may suddenly close when an enemy passes over the corpse (not necessarily through the door). Incidentally this also fixes a special case in the automap where such doors are indicated as open only when the player looks at it (whereas they should be perpetually open due to the corpse).
+- Fixed player weapon getting stuck in a firing frame when the player grabs the spear while firing.
+- Fixed Save Game not disabling after episode completion.
+
 1.45 (2021-11-20)
 -----------------
 - Added "nompu" command-line parameter to disable MPU-401 usage and revert to OPL2 music. Removing/renaming your MUSIC directory has the same effect. Just in case you REALLY want that...
