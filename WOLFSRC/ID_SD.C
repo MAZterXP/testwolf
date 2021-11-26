@@ -793,13 +793,6 @@ SDL_SBService(void)
 
 	sbIn(sbDataAvail);	// Ack interrupt to SB
 
-#ifdef WOLFDOSMPU
-	// fix for first sample sometimes not getting played:
-	// a delayed interrupt can cause SDL_DigitizedDone to be called while no sound is being played,
-	// causing DigiMissed to be set to true and SD_Poll() to play the second sample immediately,
-	// even before the first sample has finished
-	if (sbSamplePlaying)
-#endif // WOLFDOSMPU
 	if (sbNextSegPtr)
 	{
 		used = SDL_SBPlaySeg(sbNextSegPtr,sbNextSegLen);
@@ -833,8 +826,6 @@ static void
 #endif
 SDL_SBPlaySample(byte huge *data,longword len)
 {
-	longword	used;
-
 #ifdef WOLFDOSMPU
 	if (sbDMA == 2)
 	{
@@ -842,6 +833,8 @@ SDL_SBPlaySample(byte huge *data,longword len)
 		SDL_SSPlaySample(data, len);
 		return;
 	}
+#else  // WOLFDOSMPU
+	longword	used;
 #endif // WOLFDOSMPU
 
 	SDL_SBStopSample();
@@ -849,6 +842,18 @@ SDL_SBPlaySample(byte huge *data,longword len)
 asm	pushf
 asm	cli
 
+#ifdef WOLFDOSMPU
+	// not sure why, but when we play something before unmasking the interrupt
+	// and then unmask it, the interrupt sometimes gets received BEFORE the sample
+	// is played, causing that sample to be dropped (because we play the next
+	// sample in response to that interrupt);
+	// as a workaround, play only one byte for our first sample (so it would be
+	// imperceptible if it gets dropped), then start the playback of the full
+	// first sample in response to the interrupt
+	SDL_SBPlaySeg(data, 1);
+	sbNextSegPtr = data;
+	sbNextSegLen = len;
+#else  // WOLFDOSMPU
 	used = SDL_SBPlaySeg(data,len);
 	if (len <= used)
 		sbNextSegPtr = nil;
@@ -857,6 +862,7 @@ asm	cli
 		sbNextSegPtr = data + used;
 		sbNextSegLen = len - used;
 	}
+#endif // WOLFDOSMPU
 
 	// Save old interrupt status and unmask ours
 	sbOldIntMask = inportb(0x21);
