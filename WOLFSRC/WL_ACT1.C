@@ -421,7 +421,15 @@ void OpenDoor (int door)
 #endif // WOLFDOSMPU
 
 	if (doorobjlist[door].action == dr_open)
+#ifdef WOLFDOSMPU
+	{
+		// don't unmark unclosable doors
+		if ((compflags & COMPFLAG_DOOR_BLOCKING_QUIRKS) || doorobjlist[door].ticcount != -1)
+#endif // WOLFDOSMPU
 		doorobjlist[door].ticcount = 0;			// reset open time
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 	else
 		doorobjlist[door].action = dr_opening;	// start it opening
 }
@@ -436,21 +444,15 @@ void OpenDoor (int door)
 */
 
 #ifdef WOLFDOSMPU
-void MoveCorpseIntoDoor(int doorx, int doory, objtype *actor)
+void MarkUnclosableDoor(doorobj_t *door, objtype *actor)
 {
-	// if a door is being blocked by a corpse, move the corpse in the door
-	// without actually changing its rendering position
+	// if a door is being blocked by a corpse, mark the door as unclosable
 	// (note that this also fixes a bug where other enemies could move
 	// near the door and trigger its CloseDoor because they override the
 	// corpse in the actorat table, frustrating players who intentionally
 	// placed the corpse there to keep the door open)
-	if (Alive(actor))
-		return;
-	if (actorat[actor->tilex][actor->tiley] == actor)
-		actorat[actor->tilex][actor->tiley] = NULL;
-	actor->tilex = doorx;
-	actor->tiley = doory;
-	actorat[doorx][doory] = actor;
+	if (! ((compflags & COMPFLAG_DOOR_BLOCKING_QUIRKS) || (unsigned) actor < 256 || Alive(actor)))
+		door->ticcount = -1;
 }
 #endif // WOLFDOSMPU
 
@@ -459,6 +461,15 @@ void CloseDoor (int door)
 	int	tilex,tiley,area;
 	objtype *check;
 
+#ifdef WOLFDOSMPU
+	if (! (compflags & COMPFLAG_DOOR_BLOCKING_QUIRKS))
+	{
+		// don't allow closing of unclosable doors
+		if (doorobjlist[door].ticcount == -1)
+			return;
+	}
+#endif // WOLFDOSMPU
+
 //
 // don't close on anything solid
 //
@@ -466,7 +477,14 @@ void CloseDoor (int door)
 	tiley = doorobjlist[door].tiley;
 
 	if (actorat[tilex][tiley])
+#ifdef WOLFDOSMPU
+	{
+		MarkUnclosableDoor(&doorobjlist[door], actorat[tilex][tiley]);
+#endif // WOLFDOSMPU
 		return;
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 
 	if (player->tilex == tilex && player->tiley == tiley)
 		return;
@@ -484,7 +502,7 @@ void CloseDoor (int door)
 		if (check && ((check->x+MINDIST) >> TILESHIFT) == tilex )
 #ifdef WOLFDOSMPU
 		{
-			MoveCorpseIntoDoor(tilex, tiley, check);
+			MarkUnclosableDoor(&doorobjlist[door], check);
 #endif // WOLFDOSMPU
 			return;
 #ifdef WOLFDOSMPU
@@ -494,7 +512,7 @@ void CloseDoor (int door)
 		if (check && ((check->x-MINDIST) >> TILESHIFT) == tilex )
 #ifdef WOLFDOSMPU
 		{
-			MoveCorpseIntoDoor(tilex, tiley, check);
+			MarkUnclosableDoor(&doorobjlist[door], check);
 #endif // WOLFDOSMPU
 			return;
 #ifdef WOLFDOSMPU
@@ -514,7 +532,7 @@ void CloseDoor (int door)
 		if (check && ((check->y+MINDIST) >> TILESHIFT) == tiley )
 #ifdef WOLFDOSMPU
 		{
-			MoveCorpseIntoDoor(tilex, tiley, check);
+			MarkUnclosableDoor(&doorobjlist[door], check);
 #endif // WOLFDOSMPU
 			return;
 #ifdef WOLFDOSMPU
@@ -524,7 +542,7 @@ void CloseDoor (int door)
 		if (check && ((check->y-MINDIST) >> TILESHIFT) == tiley )
 #ifdef WOLFDOSMPU
 		{
-			MoveCorpseIntoDoor(tilex, tiley, check);
+			MarkUnclosableDoor(&doorobjlist[door], check);
 #endif // WOLFDOSMPU
 			return;
 #ifdef WOLFDOSMPU
@@ -605,8 +623,18 @@ void OperateDoor (int door)
 
 void DoorOpen (int door)
 {
+#ifdef WOLFDOSMPU
+	// don't unmark unclosable doors
+	if ((compflags & COMPFLAG_DOOR_BLOCKING_QUIRKS) || doorobjlist[door].ticcount != -1)
+#endif // WOLFDOSMPU
 	if ( (doorobjlist[door].ticcount += tics) >= OPENTICS)
 		CloseDoor (door);
+#ifdef WOLFDOSMPU
+	// eliminate additional quirk where doors that have been left open for 7.8 minutes
+	// and then unblocked would still remain open for another 7.8 minutes
+	if (! (compflags & COMPFLAG_DOOR_BLOCKING_QUIRKS) && doorobjlist[door].ticcount < -1)
+		doorobjlist[door].ticcount = OPENTICS;
+#endif // WOLFDOSMPU
 }
 
 

@@ -722,10 +722,9 @@ void PushTile(byte x, byte y, byte z, controldir_t dir, unsigned far **stackptr)
 		int doornum = tilemap[x][y] & ~0x80;
 		int lock = doorobjlist[doornum].lock;
 
-		if (actor >= (unsigned) objlist && ! Alive((objtype *) actor)
-			|| (! actor || actor >= (unsigned) objlist) && (automapmode == 3 || *visspot & 0x01))
+		if (doorobjlist[doornum].action == dr_open && (doorobjlist[doornum].ticcount == -1 || automapmode == 3 || *visspot & 0x01))
 		{
-			// door is open and is either occupied by a corpse or currently visible; treat as blank space
+			// door is open and is either unclosable or currently visible; treat as blank space
 			*visspot |= z;
 
 			// flood through (whether accessible or visible)

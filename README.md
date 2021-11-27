@@ -229,14 +229,26 @@ Usage
        let actors pass through as if they were open; the door is reset to a regular door when opened
        (note: wolfdosmpu fixes this bug by opening all doors faced by patrolling enemies on level
        start; see E4M6 on hard mode for an example, in the top left room with the crowns)
+
+  128: enable quirks related to door-blocking, such as enemies being able to close doors blocked by
+       corpses by walking on the tile occupied by the corpse (without necessarily passing through the
+       door), and unblocked doors remaining open if they were previously blocked for 7.8 minutes
+       (note: enabling these quirks will cause the automap to mark blocked doors as closed instead of
+       open unless the blocked door is visible from the player's viewpoint)
+
   ```
-  For example, to mimic the vanilla game's behavior when they were run on a Pentium (or faster) system, specify COMP 127 (e.g., WOLF3DCM COMP 127). On the other hand, COMP 126 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
+  For example, to mimic the vanilla game's behavior when they were run on a Pentium (or faster) system, specify COMP 255 (e.g., WOLF3DCM COMP 255). On the other hand, COMP 254 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
 
   COMP by itself will enable all compatibility flags (including future ones). Use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags, which is the default setting.
 
 
 Version History
 ===============
+
+Next release
+------------
+- Really fixed first-sample dropping on Sound Blaster this time -- it seems to be caused by a driver problem that throws a stream-continue interrupt too early when the interrupt is masked and subsequently unmasked. The workaround was to defer playing of full samples until after the first interrupt.
+- Added COMP 128 to revert the enemies-closing-unclosable-doors glitch. Also fixed more cases where the glitch can happen (e.g., when two or more enemies step on all the corpses that block the door from closing with perfect timing) and a related glitch where a door that has been blocked open for more than 32767 tics (7.8 minutes) would not close for another 7.8 minutes even if unblocked.
 
 1.46 (2021-11-25)
 -----------------
