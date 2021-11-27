@@ -2223,6 +2223,7 @@ void PlayLoop (void)
 		{
 #endif // WOLFDOSMPU
 			VW_FadeIn ();
+
 #ifdef WOLFDOSMPU
 			// clear pending inputs
 			LastScan = sc_None;
@@ -2230,8 +2231,10 @@ void PlayLoop (void)
 				Mouse(MDelta);	// Clear accumulated mouse movement
 			lasttimecount = TimeCount;	// don't frameskip
 		}
-#endif // WOLFDOSMPU
 
+		// do not check keys when the game is already in a transitory play state
+		if (! playstate)
+#endif // WOLFDOSMPU
 		CheckKeys();
 
 //

@@ -891,20 +891,8 @@ SDL_PositionSBP(int leftpos,int rightpos)
 	if (!SBProPresent)
 		return;
 
-#ifdef WOLFDOSMPU
-	// sound blaster pro's volume attenuation curve is too steep,
-	// making far sounds practically inaudible; since non-pro SB
-	// plays everything at full volume, the softest sounds should
-	// at least be audible on pro SB to be "fair" (and to prevent
-	// users from thinking that sounds are just being turned off
-	// all of a sudden, when in reality, very soft/far sounds are
-	// overriding very loud/near sounds)
-	leftpos = 15 - (leftpos >> 1);
-	rightpos = 15 - (rightpos >> 1);
-#else  // WOLFDOSMPU
 	leftpos = 15 - leftpos;
 	rightpos = 15 - rightpos;
-#endif // WOLFDOSMPU
 	v = ((leftpos & 0x0f) << 4) | (rightpos & 0x0f);
 
 asm	pushf

@@ -788,6 +788,10 @@ int CP_CheckQuick(unsigned scancode)
 #endif // WOLFDOSMPU
 				DrawPlayScreen ();
 
+#ifdef WOLFDOSMPU
+				VW_FadeIn ();
+				StartMusic ();
+#else  // WOLFDOSMPU
 				if (!startgame && !loadedgame)
 				{
 					VW_FadeIn ();
@@ -801,8 +805,6 @@ int CP_CheckQuick(unsigned scancode)
 				if (MousePresent)
 					Mouse(MDelta);	// Clear accumulated mouse movement
 
-#ifdef WOLFDOSMPU
-#else  // WOLFDOSMPU
 				PM_CheckMainMem ();
 
 				#ifndef SPEAR
@@ -885,13 +887,12 @@ int CP_CheckQuick(unsigned scancode)
 				if (loadedgame)
 					playstate = ex_abort;
 
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 				lasttimecount = TimeCount;
 
 				if (MousePresent)
 					Mouse(MDelta);	// Clear accumulated mouse movement
-
-#ifdef WOLFDOSMPU
-#else  // WOLFDOSMPU
 				PM_CheckMainMem ();
 
 				#ifndef SPEAR

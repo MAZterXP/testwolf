@@ -245,10 +245,12 @@ Usage
 Version History
 ===============
 
-Next release
+1.47 (2021-11-27)
 ------------
-- Really fixed first-sample dropping on Sound Blaster this time -- it seems to be caused by a driver problem that throws a stream-continue interrupt too early when the interrupt is masked and subsequently unmasked. The workaround was to defer playing of full samples until after the first interrupt.
+- Really fixed first-sample dropping on Sound Blaster this time (I hope) -- it seems to be caused by a driver problem that throws a stream-continue interrupt too early when the interrupt is masked and subsequently unmasked. The new workaround defers playing of full samples until after the first interrupt.
 - Added COMP 128 to revert the enemies-closing-unclosable-doors glitch. Also fixed more cases where the glitch can happen (e.g., when two or more enemies step on all the corpses that block the door from closing with perfect timing) and a related glitch where a door that has been blocked open for more than 32767 tics (7.8 minutes) would not close for another 7.8 minutes even if unblocked.
+- Fixed so that Esc and function keys are inaccessible when the game is already in a special playstate (e.g., player dying, level completion, etc.). This fixes many succeeding bugs such as the player dying immediately after a quick load (which happens when the player was killed at the exact moment they press F9), or saving at the exact moment of death and reloading to find yourself alive but with zero health.
+- Reverted stereo separation formula -- the change was too jarring for players used to the original formula. The sound queuing system is retained, however.
 
 1.46 (2021-11-25)
 -----------------
