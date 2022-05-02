@@ -1,1 +1,1 @@
-#define VERSION 1.47
+#define VERSION 1.48

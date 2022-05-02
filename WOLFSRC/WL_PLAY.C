@@ -1241,9 +1241,10 @@ void CheckKeys (void)
 		fontnumber=0;
 		SETFONTCOLOR(0,15);
 		DebugKeys();
-#ifdef WOLFDOSMPU
+#ifdef WASD
+		// clear keys only in W exe (or else the Tab key is forgotten in M exe)
 		IN_ClearKeysDown();
-#endif // WOLFDOSMPU
+#endif // WASD
 		if (MousePresent)
 			Mouse(MDelta);	// Clear accumulated mouse movement
 		lasttimecount = TimeCount;

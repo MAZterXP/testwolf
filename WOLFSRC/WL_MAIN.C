@@ -426,6 +426,110 @@ void NewGame (int difficulty,int episode)
 
 //===========================================================================
 
+#ifdef WOLFDOSMPU
+// data segment locations of important savegame variables
+// order is objlist, spotvis, statobjlist, s_player
+# ifdef SPEAR
+unsigned far dspos[6][4] =
+{
+	{ 0xB312, 0xA30C, 0x853C, 0x17AC },		// activision
+	{ 0xA224, 0x921E, 0x765A, 0x14B4 },		// formgen demo
+	{ 0xA4CC, 0x94C6, 0x78BA, 0x1714 },		// formgen 1.0
+	{ 0xA4BA, 0x94B4, 0x78AA, 0x1712 },		// formgen 1.4
+	{ 0xA78A, 0x9784, 0x7B7A, 0x16E2 },		// old wolfdosmpu
+	{ 0xA4E2, 0x94DC, 0x791A, 0x1482 }		// old wolfdosmpu demo
+};
+#  ifdef SPEARDEMO
+#   define DEFAULT_DSPOS 1
+#  else
+#   define DEFAULT_DSPOS 0
+#  endif
+# else
+unsigned far dspos[6][4] =
+{
+	{ 0xB51C, 0xA516, 0x893C, 0x190C },		// activision
+	{ 0xAC4E, 0x9C48, 0x803A, 0x18F8 },		// apogee registered
+	{ 0xAB6E, 0x9B68, 0x7F5A, 0x181C },		// apogee shareware
+	{ 0xAC46, 0x9C40, 0x804A, 0x190A },		// gt/id
+	{ 0xAC2E, 0x9C28, 0x801A, 0x18DA },		// old wolfdosmpu
+	{ 0xAB4E, 0x9B48, 0x7F3A, 0x17FE }		// old wolfdosmpu shareware
+};
+#  ifdef UPLOAD
+#   define DEFAULT_DSPOS 2
+#  else
+#   ifdef GOODTIMES
+#    define DEFAULT_DSPOS 0
+#   else
+#    define DEFAULT_DSPOS 1
+#   endif
+#  endif
+# endif
+int far current_dspos = DEFAULT_DSPOS;
+
+// fix data structures to preserve savegame compatibility with the current game version
+void FixSaving()
+{
+	extern statetype s_player;
+	int i, j;
+	statobj_t *statptr;
+	objtype *ob;
+
+# ifdef SPEAR
+	// do not save a game beyond level 2 in demo format
+	if (current_dspos == 1 && gamestate.mapon > 1)
+		current_dspos = DEFAULT_DSPOS;
+# else
+	// do not save a game beyond episode 1 in shareware format
+	if (current_dspos == 2 && gamestate.episode > 0)
+		current_dspos = DEFAULT_DSPOS;
+# endif
+
+	for (i = 0; i < 64; i++)
+	{
+		for (j = 0; j < 64; j++)
+		{
+			if ((unsigned) actorat[i][j] > 256)
+				(unsigned) actorat[i][j] = (unsigned) actorat[i][j] - (unsigned) &objlist[0] + dspos[current_dspos][0];
+		}
+	}
+	for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
+		(unsigned) statptr->visspot = (unsigned) statptr->visspot - (unsigned) &spotvis[0][0] + dspos[current_dspos][1];
+	(unsigned) laststatobj = (unsigned) laststatobj - (unsigned) &statobjlist[0] + dspos[current_dspos][2];
+	for (ob = player; ob; ob = ob->next)
+		(unsigned) ob->state = (unsigned) ob->state - (unsigned) &s_player + dspos[current_dspos][3];
+	(unsigned) objlist[0].next = dspos[current_dspos][0] + sizeof(objtype);		// NOTE: this would break if there are no kills!
+}
+
+// fix data structures after loading a savegame
+void FixLoading()
+{
+	extern statetype s_player;
+	int i, j;
+	statobj_t *statptr;
+	objtype *ob;
+
+	for (i = 0; i < 64; i++)
+	{
+		for (j = 0; j < 64; j++)
+		{
+			if ((unsigned) actorat[i][j] > 256)
+				(unsigned) actorat[i][j] = (unsigned) actorat[i][j] + (unsigned) &objlist[0] - dspos[current_dspos][0];
+		}
+	}
+	(unsigned) laststatobj = (unsigned) laststatobj + (unsigned) &statobjlist[0] - dspos[current_dspos][2];
+	for (statptr = &statobjlist[0]; statptr != laststatobj; statptr++)
+		(unsigned) statptr->visspot = (unsigned) statptr->visspot + (unsigned) &spotvis[0][0] - dspos[current_dspos][1];
+	objlist[0].next = &objlist[1];		// NOTE: this would break if there are no kills!
+	for (ob = player; ob; ob = ob->next)
+		(unsigned) ob->state = (unsigned) ob->state + (unsigned) &s_player - dspos[current_dspos][3];
+
+	// if loading an old wolfdosmpu savegame, automatically convert it to the version used by the current EXE
+	if (current_dspos >= 4)
+		current_dspos = DEFAULT_DSPOS;
+}
+
+#endif // WOLFDOSMPU
+
 void DiskFlopAnim(int x,int y)
 {
  static char which=0;
@@ -507,6 +611,10 @@ boolean SaveTheGame(int file,int x,int y)
 	 return false;
 	}
 
+#ifdef WOLFDOSMPU
+	FixSaving();
+#endif // WOLFDOSMPU
+
 	checksum = 0;
 
 
@@ -516,8 +624,19 @@ boolean SaveTheGame(int file,int x,int y)
 
 	DiskFlopAnim(x,y);
 #ifdef SPEAR
+#ifdef WOLFDOSMPU
+	{
+		// FormGen savegames only save the first 8 levels' ratios
+		int multiplier = 20;
+		if (current_dspos >= 1 && current_dspos <= 3)
+			multiplier = 8;
+		CA_FarWrite(file, (void far *) &LevelRatios[0], sizeof(LRstruct) * multiplier);
+		checksum = DoChecksum((byte far *) &LevelRatios[0], sizeof(LRstruct) * multiplier, checksum);
+	}
+#else  // WOLFDOSMPU
 	CA_FarWrite (file,(void far *)&LevelRatios[0],sizeof(LRstruct)*20);
 	checksum = DoChecksum((byte far *)&LevelRatios[0],sizeof(LRstruct)*20,checksum);
+#endif // WOLFDOSMPU
 #else
 	CA_FarWrite (file,(void far *)&LevelRatios[0],sizeof(LRstruct)*8);
 	checksum = DoChecksum((byte far *)&LevelRatios[0],sizeof(LRstruct)*8,checksum);
@@ -533,7 +652,13 @@ boolean SaveTheGame(int file,int x,int y)
 	CA_FarWrite (file,(void far *)areaconnect,sizeof(areaconnect));
 	CA_FarWrite (file,(void far *)areabyplayer,sizeof(areabyplayer));
 
+#ifdef WOLFDOSMPU
+	DiskFlopAnim(x, y);
+	CA_FarWrite(file, (void far *) player, sizeof(*player));
+	for (ob = &objlist[1]; ob; ob = ob->next)
+#else  // WOLFDOSMPU
 	for (ob = player ; ob ; ob=ob->next)
+#endif // WOLFDOSMPU
 	{
 	 DiskFlopAnim(x,y);
 	 CA_FarWrite (file,(void far *)ob,sizeof(*ob));
@@ -584,6 +709,10 @@ boolean SaveTheGame(int file,int x,int y)
 	}
 #endif // WASD
 
+#ifdef WOLFDOSMPU
+	FixLoading();
+#endif // WOLFDOSMPU
+
 	return(true);
 }
 
@@ -601,6 +730,11 @@ boolean LoadTheGame(int file,int x,int y)
 {
 	long checksum,oldchecksum;
 	objtype *ob,nullobj;
+#ifdef WOLFDOSMPU
+# ifdef SPEAR
+	int i;
+# endif
+#endif // WOLFDOSMPU
 
 
 	checksum = 0;
@@ -612,6 +746,24 @@ boolean LoadTheGame(int file,int x,int y)
 	DiskFlopAnim(x,y);
 #ifdef SPEAR
 	CA_FarRead (file,(void far *)&LevelRatios[0],sizeof(LRstruct)*20);
+#ifdef WOLFDOSMPU
+	for (i = 8; i < 20; i++)
+	{
+		// if the treasure ratio is outside the range [0, 100], the game is trying
+		// to load a FormGen savegame, which only saves the first 8 levels' ratios
+		// (this hack depends on the fact that the tilemap would be partially loaded
+		// into the LevelRatio struct, and the first row of bytes would inevitably
+		// be nonzero due to the wall tiles required to enclose the level)
+		// (also note that the kill and secret ratios are ignored, because it is possible
+		// to exceed 100 percent when there are spectres or reactivating pushwalls)
+		// NOTE: While very unlikely, a user map can specifically break this code!
+		if (LevelRatios[i].treasure < 0 || LevelRatios[i].treasure > 100)
+			break;
+	}
+	if (i < 20)
+		checksum = DoChecksum((byte far *) &LevelRatios[0], sizeof(LRstruct) * 8, checksum);
+	else
+#endif // WOLFDOSMPU
 	checksum = DoChecksum((byte far *)&LevelRatios[0],sizeof(LRstruct)*20,checksum);
 #else
 	CA_FarRead (file,(void far *)&LevelRatios[0],sizeof(LRstruct)*8);
@@ -622,6 +774,18 @@ boolean LoadTheGame(int file,int x,int y)
 	SetupGameLevel ();
 
 	DiskFlopAnim(x,y);
+#ifdef WOLFDOSMPU
+# ifdef SPEAR
+	if (i < 20)
+	{
+		// recover the tilemap bits that were mistakenly placed into LevelRatios
+		memcpy(tilemap, &LevelRatios[8], sizeof(LRstruct) * 12);
+		memset(&LevelRatios[8], 0, sizeof(LRstruct) * 12);
+		CA_FarRead(file, (void far *) (void *) ((unsigned) tilemap + sizeof(LRstruct) * 12), sizeof(tilemap) - sizeof(LRstruct) * 12);
+	}
+	else
+# endif
+#endif // WOLFDOSMPU
 	CA_FarRead (file,(void far *)tilemap,sizeof(tilemap));
 	checksum = DoChecksum((byte far *)tilemap,sizeof(tilemap),checksum);
 	DiskFlopAnim(x,y);
@@ -636,6 +800,17 @@ boolean LoadTheGame(int file,int x,int y)
 	InitActorList ();
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)player,sizeof(*player));
+
+#ifdef WOLFDOSMPU
+	// determine game version
+	for (current_dspos = 0; current_dspos < 6; current_dspos++)
+	{
+		if ((unsigned) objlist[0].next == dspos[current_dspos][0] + sizeof(objtype))	// NOTE: this would break if there are no kills!
+			break;
+	}
+	if (current_dspos == 6)
+		Quit("Bad savegame");
+#endif // WOLFDOSMPU
 
 	while (1)
 	{
@@ -708,6 +883,7 @@ boolean LoadTheGame(int file,int x,int y)
 	}
 #endif // WASD
 #ifdef WOLFDOSMPU
+	FixLoading();
 	FixAreaTiles();
 #endif // WOLFDOSMPU
 

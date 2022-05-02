@@ -1,7 +1,7 @@
 .vscode/
 MUSIC/
 OBJ/
-*.MAP
+WOLFSRC/*.MAP
 *.SDM
 *.SOD
 *.SWP
