@@ -10,9 +10,9 @@
 #ifdef WOLFDOSMPU
 #define	BUFFERSIZE		0x2000		// bigger buffer size (for automap, and to make loading faster when loading larger asset data)
 #ifdef SPEAR
-#define MAINMEMSIZE		252928L
+#define MAINMEMSIZE		256000L		// modify to achieve 576KB target
 #else
-#define MAINMEMSIZE		251904L
+#define MAINMEMSIZE		250000L		// wolf3d exe consumes more code bytes than spear exe
 #endif
 #else  // WOLFDOSMPU
 #define	BUFFERSIZE		0x1000		// miscelanious, allways available buffer

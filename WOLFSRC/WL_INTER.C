@@ -1299,6 +1299,9 @@ void	CheckHighScore (long score,word other)
 }
 
 
+#ifdef WOLFDOSMPU
+	// unused
+#else  // WOLFDOSMPU
 #ifndef UPLOAD
 #ifndef SPEAR
 #ifndef JAPAN
@@ -1309,16 +1312,6 @@ void	CheckHighScore (long score,word other)
 ////////////////////////////////////////////////////////
 void NonShareware(void)
 {
-#ifdef WOLFDOSMPU
-	// unused, but hack for dataseg compatibility
-	printf(
-		"Attention",
-		"This game is NOT shareware.\n",
-		"Please do not distribute it.\n",
-		"Thanks.\n\n",
-		"        Id Software\n"
-	);
-#else  // WOLFDOSMPU
 	VW_FadeOut();
 
 	ClearMScreen();
@@ -1354,7 +1347,6 @@ void NonShareware(void)
 	VW_UpdateScreen ();
 	VW_FadeIn();
 	IN_Ack();
-#endif // WOLFDOSMPU
 }
 #endif
 #endif
@@ -1533,31 +1525,6 @@ int  BackDoor(char *s)
 
 void CopyProtection(void)
 {
-#ifdef WOLFDOSMPU
-	// unused, but hack for dataseg compatibility
-	int	enemypicked[4]={0,0,0,0},
-		bosses[4] = { BOSSPIC1PIC,BOSSPIC2PIC,BOSSPIC3PIC,BOSSPIC4PIC },
-		whichpicked[4]={0,0,0,0},
-		memberpicked[5]={0,0,0,0,0},
-		wordpicked[5]={0,0,0,0,0};
-	printf(
-		STR_DEBRIEF,
-		STR_ENEMY1"\n",
-		STR_ENEMY2"\n\n",
-		STR_CHECKMAN,
-		STR_MAN1,
-		STR_MAN2,
-		STR_MAN3" \"",
-		"\" "STR_MAN4,
-		STR_ID1,
-		"%s\n",
-		enemypicked[0],
-		bosses[0],
-		whichpicked[0],
-		memberpicked[0],
-		wordpicked[0]
-	);
-#else  // WOLFDOSMPU
 #define TYPEBOX_Y		177
 #define TYPEBOX_BKGD	0x9c
 #define PRINTCOLOR		HIGHLIGHT
@@ -1785,8 +1752,8 @@ void CopyProtection(void)
 
 	printf("%s\n",message);
 	exit(1);
-#endif // WOLFDOSMPU
 }
+#endif // WOLFDOSMPU
 
 #endif // SPEARDEMO
 #endif // SPEAR

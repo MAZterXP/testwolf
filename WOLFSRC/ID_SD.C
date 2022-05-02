@@ -2815,13 +2815,6 @@ SD_PlaySound(soundnames sound)
 		else
 			DigiNumber = sound;
 		*ppriority = s->priority;
-
-		// Quit will never execute, but we need the strings to keep dataseg compatibility
-		if (queuedsound = queuedpos = 0)	// intentional
-		{
-			Quit("SD_PlaySound: Priority without a sound");
-			Quit("SD_PlaySound() - Zero length sound");
-		}
 #else  // WOLFDOSMPU
 		if ((DigiMode == sds_PC) && (SoundMode == sdm_PC))
 		{
@@ -3038,15 +3031,15 @@ asm	cli
 asm	popf
 }
 
+#ifdef WOLFDOSMPU
+	// unused
+#else  // WOLFDOSMPU
 ///////////////////////////////////////////////////////////////////////////
 //
 //	SD_FadeOutMusic() - starts fading out the music. Call SD_MusicPlaying()
 //		to see if the fadeout is complete
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef WOLFDOSMPU
-	// unused
-#else  // WOLFDOSMPU
 void
 SD_FadeOutMusic(void)
 {
@@ -3058,7 +3051,6 @@ SD_FadeOutMusic(void)
 		break;
 	}
 }
-#endif // WOLFDOSMPU
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -3066,9 +3058,6 @@ SD_FadeOutMusic(void)
 //		not
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef WOLFDOSMPU
-	// unused
-#else  // WOLFDOSMPU
 boolean
 SD_MusicPlaying(void)
 {

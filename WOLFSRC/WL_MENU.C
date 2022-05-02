@@ -667,6 +667,9 @@ void CP_ReadThis(void)
 #ifndef GOODTIMES
 #else
 */
+#if defined(WOLFDOSMPU) && ! defined(GOODTIMES) && ! defined(SPEAR)
+	// unused
+#else  // WOLFDOSMPU
 ////////////////////////////////////////////////////////////////////
 //
 // BOSS KEY
@@ -674,10 +677,6 @@ void CP_ReadThis(void)
 ////////////////////////////////////////////////////////////////////
 void BossKey(void)
 {
-#if defined(WOLFDOSMPU) && ! defined(GOODTIMES) && ! defined(SPEAR)
-	// unused, but hack for dataseg compatibility
-	printf("C>");
-#else  // WOLFDOSMPU
 	SD_MusicOff();
 	_AX = 3;
 	geninterrupt(0x10);
@@ -690,8 +689,8 @@ void BossKey(void)
 	VL_TestPaletteSet ();
 	VL_SetPalette (&gamepal);
 	LoadLatchMem();
-#endif // WOLFDOSMPU
 }
+#endif // WOLFDOSMPU
 /*
 #endif
 #endif
@@ -4510,6 +4509,9 @@ void CheckForEpisodes(void)
 		EpisodeSelect[2] = 1;
 	}
 	else
+#ifdef WOLFDOSMPU
+		Quit("NO .WL6 FILES TO BE FOUND!");
+#endif // WOLFDOSMPU
 #endif
 #endif
 
@@ -4523,7 +4525,7 @@ void CheckForEpisodes(void)
 	}
 	else
 #ifdef WOLFDOSMPU
-		Quit("NO SPEAR OF DESTINY .SOD FILES TO BE FOUND!");
+		Quit("NO .SOD FILES TO BE FOUND!");
 #else  // WOLFDOSMPU
 		Quit("NO SPEAR OF DESTINY DATA FILES TO BE FOUND!");
 #endif // WOLFDOSMPU
@@ -4534,30 +4536,24 @@ void CheckForEpisodes(void)
 	}
 	else
 #ifdef WOLFDOSMPU
-		Quit("NO SPEAR OF DESTINY DEMO .SDM FILES TO BE FOUND!");
+		Quit("NO .SDM FILES TO BE FOUND!");
 #else  // WOLFDOSMPU
 		Quit("NO SPEAR OF DESTINY DEMO DATA FILES TO BE FOUND!");
 #endif // WOLFDOSMPU
 #endif
 
 #else
+#ifdef WOLFDOSMPU
+#ifdef UPLOAD
+	if (! findfirst("*.WL1", &f, FA_ARCH))
+		strcpy(extension, "WL1");
+	else
+		Quit("NO .WL1 FILES TO BE FOUND!");
+#endif
+#else  // WOLFDOSMPU
 	if (!findfirst("*.WL1",&f,FA_ARCH))
 	{
 		strcpy(extension,"WL1");
-#ifdef WOLFDOSMPU
-#ifndef UPLOAD
-		// don't actually continue on the commercial/registered version
-		// (we only do it like this to preserve data segment compatibility)
-		Quit("NO WOLFENSTEIN 3-D .WL6 FILES TO BE FOUND!");
-	}
-	else
-		Quit("NO WOLFENSTEIN 3-D .WL6 FILES TO BE FOUND!");
-#else
-	}
-	else
-		Quit("NO WOLFENSTEIN 3-D .WL1 FILES TO BE FOUND!");
-#endif
-#else  // WOLFDOSMPU
 	}
 	else
 		Quit("NO WOLFENSTEIN 3-D DATA FILES to be found!");

@@ -764,6 +764,9 @@ moveok:
 =============================================================================
 */
 
+#ifdef WOLFDOSMPU
+	// unused
+#else  // WOLFDOSMPU
 /*
 ===============
 =
@@ -775,9 +778,6 @@ moveok:
 ===============
 */
 
-#ifdef WOLFDOSMPU
-	// unused
-#else  // WOLFDOSMPU
 void DropItem (stat_t itemtype, int tilex, int tiley)
 {
 	int	x,y,xl,xh,yl,yh;

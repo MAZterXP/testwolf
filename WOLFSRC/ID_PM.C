@@ -1194,14 +1194,12 @@ PM_Startup(void)
 		PML_StartupXMS();
 
 #ifdef WOLFDOSMPU
-	// this code was actually useless because nomain was never really used,
-	// but now that we actually use nomain, preserve dataseg compatibility
-	if (PMStarted)
+	// nomain is used for something else now
 #else  // WOLFDOSMPU
 	if (nomain && !EMSPresent)
-#endif // WOLFDOSMPU
 		Quit("PM_Startup: No main or EMS");
 	else
+#endif // WOLFDOSMPU
 		PML_StartupMainMem();
 
 	PM_Reset();
