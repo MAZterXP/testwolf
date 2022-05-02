@@ -1115,6 +1115,33 @@ void SignonScreen (void)                        // VGA version
 
 void FinishSignon (void)
 {
+#ifdef WOLFDOSMPU
+
+	char sz[32];
+	sprintf(sz, "wolfdosmpu v%d.%02d - Press a key", (int) VERSION, ((int) ((VERSION + 0.001) * 100)) % 100);
+#ifdef SPEAR
+	VW_Bar(0, 187, 320, 2, 159);
+	VW_Bar(0, 189, 320, 11, 157);
+#else
+	VW_Bar(0, 187, 320, 2, 47);
+	VW_Bar(0, 189, 320, 11, 45);
+#endif
+	WindowX = 0;
+	WindowW = 320;
+	PrintY = 190;
+	SETFONTCOLOR(14, 4);
+	US_CPrint(sz);
+	if (! NoWait)
+		IN_Ack();
+#ifdef SPEAR
+	VW_Bar(0, 189, 320, 11, 157);
+#else
+	VW_Bar(0, 189, 320, 11, 45);
+#endif
+	PrintY = 190;
+	US_CPrint("Working...");
+
+#else  // WOLFDOSMPU
 
 #ifndef SPEAR
 	VW_Bar (0,189,300,11,peekb(0xa000,0));
@@ -1155,6 +1182,8 @@ void FinishSignon (void)
 	if (!NoWait)
 		VW_WaitVBL(3*70);
 #endif
+
+#endif // WOLFDOSMPU
 }
 
 //===========================================================================
@@ -1746,6 +1775,9 @@ void InitGame (void)
 {
 	int                     i,x,y;
 	unsigned        *blockstart;
+#ifdef WOLFDOSMPU
+	int skipSignon = 0;
+#endif // WOLFDOSMPU
 
 	if (MS_CheckParm ("virtual"))
 		virtualreality = true;
@@ -1821,7 +1853,14 @@ void InitGame (void)
 //
 #ifndef SPEARDEMO
 	if (Keyboard[sc_M])
+#ifdef WOLFDOSMPU
+	{
+		skipSignon = 1;
+#endif // WOLFDOSMPU
 	  DoJukebox();
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 	else
 #endif
 //
@@ -1866,6 +1905,9 @@ close(profilehandle);
 //
 	InitRedShifts ();
 	if (!virtualreality)
+#ifdef WOLFDOSMPU
+	if (! skipSignon)
+#endif // WOLFDOSMPU
 		FinishSignon();
 
 	displayofs = PAGE1START;
@@ -2018,33 +2060,6 @@ void Quit (char *error)
 //asm	mov ah,2
 //asm	int	0x10
 	}
-
-#ifdef WOLFDOSMPU
-	{
-		char sz[20];
-		int c = 0;
-		sz[c++] = 'w';
-		sz[c++] = 'o';
-		sz[c++] = 'l';
-		sz[c++] = 'f';
-		sz[c++] = 'd';
-		sz[c++] = 'o';
-		sz[c++] = 's';
-		sz[c++] = 'm';
-		sz[c++] = 'p';
-		sz[c++] = 'u';
-		sz[c++] = ' ';
-		sz[c++] = 'v';
-		sz[c++] = '0' + ((int) (VERSION + 0.001));
-		sz[c++] = '.';
-		sz[c++] = '0' + ((int) ((VERSION + 0.001) * 10) % 10);
-		sz[c++] = '0' + ((int) ((VERSION + 0.001) * 100) % 10);
-		sz[c++] = 0;
-		gotoxy(1,25);
-		puts(sz);
-		gotoxy(1,24);
-	}
-#endif // WOLFDOSMPU
 
 	exit(0);
 }

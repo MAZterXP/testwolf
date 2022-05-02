@@ -924,8 +924,10 @@ void CheckAccessible()
 			// show item in map if player can possibly see it (player visibility history will cull it later)
 			if (automapmode == 3 || *statptr->visspot & 0x0c)
 			{
-				if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal || n == bo_key1 || n == bo_key2 || n == bo_spear)
-					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x64;	// mark the treasure (including key items)
+				if (n == bo_key1 || n == bo_key2 || n == bo_spear)
+					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x65;	// mark the key item (and always make it glow)
+				else if (n == bo_cross || n == bo_chalice || n == bo_bible || n == bo_crown || n == bo_fullheal)
+					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x64;	// mark the treasure
 				else if (n != block)
 					*statptr->visspot = (*statptr->visspot & 0x8f) | 0x14;	// mark the bonus (except for barrels that mark pushwall spots that can't be reused)
 			}
@@ -953,8 +955,9 @@ void CheckAccessible()
 		}
 	}
 
-	// mark the player
-	spotvis[player->tilex][player->tiley] = (spotvis[player->tilex][player->tiley] & 0x80) | 0x4f;
+	// mark the player (except if we're doing the victory run, which offsets player->y without updating player->tiley)
+	if (player->tiley == (player->y >> TILESHIFT))
+		spotvis[player->tilex][player->tiley] = (spotvis[player->tilex][player->tiley] & 0x80) | 0x4f;
 }
 
 #endif // WASD
@@ -1520,22 +1523,22 @@ void CheckKeys (void)
 							byte glow;
 							if (! color)
 							{
-								// blank tiles should always be glowing if within automap viscone (so automap can properly show "see through" pillar-blocked areas)
+								// blank tiles should glow if they are visible, even if not accessible (so automap can properly show "see through" pillar-blocked areas)
 								glow = (*visspot & 0x01) << 3;
 							}
 							else if (color == 0x20)
 							{
-								// secrets should always be glowing if they are active
+								// secrets should glow if they are active
 								glow = (*visspot & 0x08);
 							}
 							else if ((color == 0x30 || color == 0x50) && tilemap[x][y] & 0x80)	// exclude wall elevator tiles
 							{
-								// doors should always be glowing if they have never been seen opened
+								// doors should glow if they have never been seen opened
 								glow = (*visspot & 0x80) >> 4;
 							}
 							else
 							{
-								// make player's viscone glow (except for special cases earlier marked by CheckAccessible
+								// other non-blank tiles should glow if they are both accessible and visible (key items are hacked to glow by always marking them as visible)
 								glow = (*visspot & 0x08) & ((*visspot & 0x01) << 3);
 							}
 							VWB_Bar(x * 4 + 60, y * 3 + 4, 4, 3, (color >> 4) | glow);
