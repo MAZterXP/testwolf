@@ -1415,12 +1415,18 @@ void CheckKeys (void)
 				VWB_DrawPropString(sz);
 				i = 0;
 				PRINTCOUNT(killaccessible);
-				if (killaccessible < gamestate.killtotal)
-					sz[i++] = '^';
 				sz[i++] = 0;
 				px -= 2;
 				py += 5;
 				VWB_DrawPropString(sz);
+				if (killaccessible < gamestate.killtotal)
+				{
+					sz[0] = '^';
+					sz[1] = 0;
+					if (x == 0)
+						fontcolor = 7;
+					VWB_DrawPropString(sz);
+				}
 
 				i = 0;
 				sz[i++] = 'S';
@@ -1458,12 +1464,18 @@ void CheckKeys (void)
 				VWB_DrawPropString(sz);
 				i = 0;
 				PRINTCOUNT(secretaccessible);
-				if (secretaccessible < gamestate.secrettotal)
-					sz[i++] = '^';
 				sz[i++] = 0;
 				px -= 2;
 				py += 5;
 				VWB_DrawPropString(sz);
+				if (secretaccessible < gamestate.secrettotal)
+				{
+					sz[0] = '^';
+					sz[1] = 0;
+					if (x == 0)
+						fontcolor = 7;
+					VWB_DrawPropString(sz);
+				}
 
 				i = 0;
 				sz[i++] = 'T';
@@ -1501,12 +1513,18 @@ void CheckKeys (void)
 				VWB_DrawPropString(sz);
 				i = 0;
 				PRINTCOUNT(treasureaccessible);
-				if (treasureaccessible < gamestate.treasuretotal)
-					sz[i++] = '^';
 				sz[i++] = 0;
 				px -= 2;
 				py += 5;
 				VWB_DrawPropString(sz);
+				if (treasureaccessible < gamestate.treasuretotal)
+				{
+					sz[0] = '^';
+					sz[1] = 0;
+					if (x == 0)
+						fontcolor = 7;
+					VWB_DrawPropString(sz);
+				}
 			}
 
 			if (tabfunction == 2)
