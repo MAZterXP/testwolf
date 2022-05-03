@@ -2815,6 +2815,7 @@ SD_PlaySound(soundnames sound)
 		else
 			DigiNumber = sound;
 		*ppriority = s->priority;
+		queuedsound = queuedpos = 0;
 #else  // WOLFDOSMPU
 		if ((DigiMode == sds_PC) && (SoundMode == sdm_PC))
 		{

@@ -411,6 +411,9 @@ extern int far  CheckIs386(void);
 
 void NewGame (int difficulty,int episode)
 {
+#ifdef WOLFDOSMPU
+	ResetToDefault();
+#endif // WOLFDOSMPU
 	memset (&gamestate,0,sizeof(gamestate));
 	gamestate.difficulty = difficulty;
 	gamestate.weapon = gamestate.bestweapon
@@ -466,6 +469,12 @@ unsigned far dspos[6][4] =
 # endif
 int far current_dspos = DEFAULT_DSPOS;
 
+int ResetToDefault()
+{
+	current_dspos = DEFAULT_DSPOS;
+	return 0;
+}
+
 // fix data structures to preserve savegame compatibility with the current game version
 void FixSaving()
 {
@@ -477,11 +486,7 @@ void FixSaving()
 # ifdef SPEAR
 	// do not save a game beyond level 2 in demo format
 	if (current_dspos == 1 && gamestate.mapon > 1)
-		current_dspos = DEFAULT_DSPOS;
-# else
-	// do not save a game beyond episode 1 in shareware format
-	if (current_dspos == 2 && gamestate.episode > 0)
-		current_dspos = DEFAULT_DSPOS;
+		ResetToDefault();
 # endif
 
 	for (i = 0; i < 64; i++)
@@ -525,7 +530,7 @@ void FixLoading()
 
 	// if loading an old wolfdosmpu savegame, automatically convert it to the version used by the current EXE
 	if (current_dspos >= 4)
-		current_dspos = DEFAULT_DSPOS;
+		ResetToDefault();
 }
 
 #endif // WOLFDOSMPU
