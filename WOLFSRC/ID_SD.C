@@ -88,6 +88,7 @@ static	boolean			SD_Started;
 		char			far queuedcountdown;
 		byte			far queuedsound;
 		byte			far queuedpos;
+		byte			far queueing = 1;
 #endif // WOLFDOSMPU
 		longword		TimerDivisor,TimerCount;
 static	char			*ParmStrings[] =
@@ -2774,7 +2775,7 @@ SD_PlaySound(soundnames sound)
 
 	// very-near door sounds get temporary boosted priority, equivalent to player gunshots
 	neardoor = (door && LeftPosition == 0 && RightPosition == 0);
-	if (neardoor)
+	if (neardoor && queueing)
 		priority = 50;
 
 	// when on PC speaker, revert to non-digital version for door noises
@@ -2787,23 +2788,26 @@ SD_PlaySound(soundnames sound)
 		word *ppriority = ((DigiMode == sds_PC) && (SoundMode == sdm_PC)) ? &SoundPriority : &DigiPriority;
 		if (priority < *ppriority)
 			return false;
-		if (neardoor || sound == PUSHWALLSND)
-			queuedcountdown = 41;		// play at least 2 out of the 3 clangs in the door-open sample
-		else if (sound == ATKPISTOLSND)
-			queuedcountdown = 17;		// ensure gunshot plays at least partially in DEMOTICS
-		else if (sound == ATKMACHINEGUNSND)
-			queuedcountdown = 5;		// ensure gunshot plays at least partially in DEMOTICS
-		else if (sound == ATKGATLINGSND)
-			queuedcountdown = 0;		// play immediately but let anything else override
-		else if (queuedcountdown > 0)
+		if (queueing)
 		{
-			// delay other sounds if a very-near door sound or gunshot is playing
-			SoundCommon far *q = MK_FP(SoundTable[queuedsound], 0);
-			if (s->priority < q->priority)
-				return false;
-			queuedsound = sound;
-			SoundPositioned = queuedpos = ispos;
-			return true;
+			if (neardoor || sound == PUSHWALLSND)
+				queuedcountdown = 41;		// play at least 2 out of the 3 clangs in the door-open sample
+			else if (sound == ATKPISTOLSND)
+				queuedcountdown = 17;		// ensure gunshot plays at least partially in DEMOTICS
+			else if (sound == ATKMACHINEGUNSND)
+				queuedcountdown = 5;		// ensure gunshot plays at least partially in DEMOTICS
+			else if (sound == ATKGATLINGSND)
+				queuedcountdown = 0;		// play immediately but let anything else override
+			else if (queuedcountdown > 0)
+			{
+				// delay other sounds if a very-near door sound or gunshot is playing
+				SoundCommon far *q = MK_FP(SoundTable[queuedsound], 0);
+				if (s->priority < q->priority)
+					return false;
+				queuedsound = sound;
+				SoundPositioned = queuedpos = ispos;
+				return true;
+			}
 		}
 
 		if (ppriority == &SoundPriority)

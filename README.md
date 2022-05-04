@@ -72,7 +72,7 @@ Here are some tips and suggestions for some common problems:
 
 5. __Be careful when using Apogee shareware-/registered-version data files!__ Make sure your Apogee data files are version 1.4 or 1.4g. All earlier Apogee versions (1.2 and below) are not supported.
 
-   As a countermeasure, wolfdosmpu (as of version 1.42) tries to detect whether your data files are of the correct version, by checking the extension (WL6/WL1/SOD/SDM) and whether the VGAHEAD.WL6 file reports the correct size. If you get the error "NO WOLFENSTEIN 3-D .WL6/.WL1 FILES TO BE FOUND!", you are probably using shareware version data files on the registered/commercial version EXEs (or vice versa). If you get the error "VGAHEAD.WL6 IS INCOMPATIBLE!", you are probably using registered version data files on a commercial version EXE (or vice versa). Switch to the correct version EXE and try again.
+   As a countermeasure, wolfdosmpu (as of version 1.42) tries to detect whether your data files are of the correct version, by checking the extension (WL6/WL1/SOD/SDM) and whether the VGAHEAD.WL6 file reports the correct size. If you get the error "NO .WL6/.WL1 FILES TO BE FOUND!", you are probably using shareware version data files on the registered/commercial version EXEs (or vice versa). If you get the error "VGAHEAD.WL6 IS INCOMPATIBLE!", you are probably using registered version data files on a commercial version EXE (or vice versa). Switch to the correct version EXE and try again.
 
    The main reason for keeping the Apogee versions is for their "Read This" feature, which is missing in the commercial versions and is potentially useful in other mods. (Since version 1.20, I have opted to replace the publisher logo in the sign-on screen with the id logo, for all Wolf3D builds.)
 
@@ -80,7 +80,7 @@ Here are some tips and suggestions for some common problems:
 
    TSRs such as AWEUTIL (which enables the necessary MPU-401 support on Sound Blaster AWE cards) consume part of your conventional memory. As with other old DOS games, try to load as few TSRs as possible; for necessary TSRs such as mouse drivers and AWEUTIL, load them into the upper memory area by using LOADHIGH. You can check your available conventional memory using the MEM command.
 
-   My own testing with DOSBox-X indicates that the modern-controls EXEs require at least 576 KB of free conventional memory in order to run properly (with the default music). The MPU-only EXEs use about 7 KB less, but I still recommend freeing at least 576 KB of conventional memory for the best results.
+   My own testing with DOSBox-X indicates that the modern-controls EXEs require at least 576 KB of free conventional memory in order to run properly (with the default music). The MPU-only EXEs use about 8 KB less, but I still recommend freeing at least 576 KB of conventional memory for the best results.
 
    One tester, Gmlb256, suggests to have about 578 to 590 KB of free conventional memory when using AWEUTIL (that is, about 615 to 620 KB _before_ loading AWEUTIL; the additional usage will depend on the soundfont you use). Gmlb256 also suggests using real-mode UMB drivers such as UMBPCI if you don't want to use an EMM such as EMM386 or QEMM.
 
@@ -174,7 +174,9 @@ Usage
 
 - ### Why are keys marked as treasure in the automap? And why is the silver key marked as gold?
 
-  The color gold/brown is used in the automap to denote "map completion" bonuses. This includes all treasure, keys, and the Spear. All other bonuses are colored blue. If the silver key was colored blue or gray (the two closest colors to silver in the 16-color automap palette), it would become too hard to distinguish it from the rest of the map; it's generally easier to just "look for everything that's gold and pick it up". Besides, in practice, the actual color of the key does not matter in Wolf3D since the locked doors don't actually indicate their key color, unlike in Doom.
+  The color gold/brown is used in the automap to denote "map completion" bonuses. This includes all treasure, keys, and the spear. As of version 1.48, the keys and spear will glow on the automap whether or not they are currently visible in first-person view, making them easier to find.
+
+  All other bonuses are colored blue, meaning they are not essential for 100% completion. If the silver key was colored blue or gray (the two closest colors to silver in the 16-color automap palette), it would become too hard to distinguish it from the rest of the map; it's generally easier to just "look for everything that's gold and pick it up". Besides, in practice, the actual color of the key does not matter in Wolf3D since the locked doors don't actually indicate their key color, unlike in Doom.
 
 - ### Why are pools of blood and gibs marked as bonuses in the automap?
 
@@ -234,15 +236,20 @@ Usage
        corpses by walking on the tile occupied by the corpse (without necessarily passing through the
        door), and unblocked doors remaining open if they were previously blocked for 7.8 minutes
        (note: enabling these quirks will cause the automap to mark blocked doors as closed instead of
-       open unless the blocked door is visible from the player's viewpoint)
+       open unless the blocked door is visible from the player's first-person viewpoint)
+
+  256: disable sound enhancements; this reverts to the original behavior where sound effects are
+       quickly dropped when higher-priority sounds override them (notably, gunshots and door opening/
+       closing could get completely muted if an enemy reacts at the exact same time), and the
+       distance attenuation range of audible sound is set to 8 tiles (instead of 15)
 
   ```
-  For example, to mimic the vanilla game's behavior when they were run on a Pentium (or faster) system, specify COMP 255 (e.g., WOLF3DCM COMP 255). On the other hand, COMP 254 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
+  For example, to mimic the vanilla game's behavior when they were run on a Pentium (or faster) system, specify COMP 511 (e.g., WOLF3DCM COMP 511). On the other hand, COMP 510 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
 
   COMP by itself will enable all compatibility flags (including future ones). Use NOCOMP (or simply not specify COMP at all) to disable all compatibility flags, which is the default setting.
 
 - ### What happened to my old wolfdosmpu savegames?!
-  If you have existing wolfdosmpu savegames (from v1.32 to v1.47), you may notice that the Load Game menu does not show these savegames. _This is not a bug_ -- wolfdosmpu's savegame naming convention has simply changed back to Wolf3D/SoD's original convention. (It was only changed to prevent people from accidentally corrupting their old original savegames, which wolfdosmpu now supports.)
+  If you have existing wolfdosmpu savegames (from versions 1.32 through 1.47), you may notice that the Load Game menu does not show these savegames. _This is not a bug_ -- wolfdosmpu's savegame naming convention has simply changed back to Wolf3D/SoD's original convention. (It was only changed to prevent people from accidentally corrupting their old original savegames, which wolfdosmpu now supports.)
   - Please rename your existing wolfdosmpu savegames from SAVEGM_n.xxx to SAVEGAMn.xxx (e.g., SAVEGM_0.WL6 -> SAVEGAM0.WL6).
   - Any subsequent saves will convert the old wolfdosmpu savegame to the new default internal format, explained below.
 
@@ -272,14 +279,16 @@ Version History
 
 1.48 (2022-05-05)
 -----------------
-- AKA the "30th Anniversary" release. :D
+- AKA the "Wolfenstein 3-D 30th Anniversary" release. :D
 - Thanks to an obscure hack, wolfdosmpu is now backwards-compatible with savegames from the original WOLF3D.EXE (v1.4 only) and SPEAR.EXE! See the FAQ above for details.
 - Now makes the positions of keys (and the spear) always glow on the automap. This can help players find the map's "quickest-path" solution without obtaining all treasure.
-- Now shows wolfdosmpu version at the sign-on screen instead of program exit.
-- Removed the extra keypress just after exiting Robert's Jukebox.
+- Improved the distance attenuation range of sound effects (when playing on SB pro). The original attenuation lookup table was designed to minimize the volume of a sound at just 8 tiles away, which makes the sound falloff too short. This fix extends the range to 15 tiles, making sounds that are further away much more audible, while maintaining clear stereo separation. (This should be a better solution than the previous one implemented in 1.45.)
+- Added COMP 256 to revert to the old sound engine behavior, disabling the extended distance attenuation range and sound queueing -- for people who still prefer the vanilla sound behavior.
 - Fixed goobers/debugmode Tab+key cheats in the MPU-only EXEs.
 - Removed the extra player mark that appears on the automap while BJ is doing the victory jump.
 - Changed color of the ^ symbol in the stats to white (because people confuse it as a half-rendered 0).
+- Removed the extra keypress just after exiting Robert's Jukebox.
+- Now shows wolfdosmpu version at the sign-on screen instead of program exit.
 
 1.47 (2021-11-27)
 -----------------

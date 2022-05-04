@@ -109,6 +109,63 @@ byte lefttable[ATABLEMAX][ATABLEMAX * 2] = {
 { 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8}
 };
 
+#ifdef WOLFDOSMPU
+int ExpandAudioTableRange()
+{
+	// expand left table
+	int row, col, altrow, altcol;
+	for (row = 12; row >= 0; row -= 2)
+	{
+		altrow = (row + 1) / 2;
+
+		for (col = 2; col < 15; col += 2)
+		{
+			altcol = 14 - (14 - col) / 2;
+			lefttable[row][col]      = lefttable[altrow][altcol];
+			lefttable[row][29 - col] = righttable[altrow][altcol];
+			if (lefttable[row][29 - col] < lefttable[row][col])		// fix table errors where sound-facing ear is quieter than the other ear
+				lefttable[row][29 - col] = lefttable[row][col];
+		}
+
+		// column-linear filter
+		for (col = 1; col < 14; col += 2)
+		{
+			lefttable[row][col]      = (lefttable[row][col - 1] + lefttable[row][col + 1]) / 2;
+			lefttable[row][29 - col] = (lefttable[row][29 - col - 1] + lefttable[row][29 - col + 1]) / 2;
+		}
+	}
+
+	// row-linear filter
+	for (row = 13; row >= 1; row -= 2)
+	{
+		for (col = 0; col < 29; col++)
+			lefttable[row][col] = (lefttable[row - 1][col] + lefttable[row + 1][col]) / 2;
+	}
+
+	// copy to right table
+	for (row = 0; row < ATABLEMAX; row++)
+	{
+		for (col = 0; col < ATABLEMAX * 2; col++)
+			righttable[row][col] = lefttable[row][29 - col]; //+= (byte) '0';
+	}
+
+#if 0
+	{
+		int handle;
+		unsigned nwritten;
+		unlink("a");
+		handle=creat("a",S_IREAD|S_IWRITE);
+		_dos_write(handle,(void far *)&lefttable[0][0],ATABLEMAX*ATABLEMAX*2,&nwritten);
+		_dos_write(handle,(void far *)&righttable[0][0],ATABLEMAX*ATABLEMAX*2,&nwritten);
+		close(handle);
+		Quit(0);
+	}
+#endif
+
+	return 0;
+}
+#endif // WOLFDOSMPU
+
 void
 SetSoundLoc(fixed gx,fixed gy)
 {

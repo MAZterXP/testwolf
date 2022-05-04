@@ -12,7 +12,7 @@
 #ifdef SPEAR
 #define MAINMEMSIZE		256000L		// modify to achieve 576KB target
 #else
-#define MAINMEMSIZE		250000L		// wolf3d exe consumes more code bytes than spear exe
+#define MAINMEMSIZE		250368L		// wolf3d exe consumes more code bytes than spear exe
 #endif
 #else  // WOLFDOSMPU
 #define	BUFFERSIZE		0x1000		// miscelanious, allways available buffer

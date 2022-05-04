@@ -1287,6 +1287,7 @@ extern	void	EndText(void);
 #define COMPFLAG_REACTIVATING_PUSHWALLS		0x0020
 #define COMPFLAG_PHANTOM_DOORS				0x0040
 #define COMPFLAG_DOOR_BLOCKING_QUIRKS		0x0080
+#define COMPFLAG_SOUND_QUIRKS				0x0100
 
 extern	int			far	midivolume;
 extern	word		far	compflags;

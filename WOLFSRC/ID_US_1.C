@@ -211,6 +211,17 @@ US_Startup(void)
 		}
 	}
 
+#ifdef WOLFDOSMPU
+#define COMPFLAG_SOUND_QUIRKS				0x0100
+	if (compflags & COMPFLAG_SOUND_QUIRKS)
+	{
+		extern byte far queueing;
+		queueing = 0;
+	}
+	else
+		ExpandAudioTableRange();
+#endif // WOLFDOSMPU
+
 	// Check for TED launching here
 	for (i = 1;i < _argc;i++)
 	{
