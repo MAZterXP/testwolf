@@ -490,7 +490,11 @@ void HitVertWall (void)
 	if (lastside==1 && lastintercept == xtile && lasttilehit == tilehit)
 	{
 		// in the same wall type as last time, so check for optimized draw
+#ifdef WOLFDOSMPU
+		if (texture == (unsigned) postsource && viewwidth < 320)
+#else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
+#endif // WOLFDOSMPU
 		{
 		// wide scale
 			postwidth++;
@@ -567,7 +571,11 @@ void HitHorizWall (void)
 	if (lastside==0 && lastintercept == ytile && lasttilehit == tilehit)
 	{
 		// in the same wall type as last time, so check for optimized draw
+#ifdef WOLFDOSMPU
+		if (texture == (unsigned) postsource && viewwidth < 320)
+#else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
+#endif // WOLFDOSMPU
 		{
 		// wide scale
 			postwidth++;
@@ -639,7 +647,11 @@ void HitHorizDoor (void)
 	if (lasttilehit == tilehit)
 	{
 	// in the same door as last time, so check for optimized draw
+#ifdef WOLFDOSMPU
+		if (texture == (unsigned) postsource && viewwidth < 320)
+#else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
+#endif // WOLFDOSMPU
 		{
 		// wide scale
 			postwidth++;
@@ -707,7 +719,11 @@ void HitVertDoor (void)
 	if (lasttilehit == tilehit)
 	{
 	// in the same door as last time, so check for optimized draw
+#ifdef WOLFDOSMPU
+		if (texture == (unsigned) postsource && viewwidth < 320)
+#else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
+#endif // WOLFDOSMPU
 		{
 		// wide scale
 			postwidth++;
@@ -786,7 +802,11 @@ void HitHorizPWall (void)
 	if (lasttilehit == tilehit)
 	{
 		// in the same wall type as last time, so check for optimized draw
+#ifdef WOLFDOSMPU
+		if (texture == (unsigned) postsource && viewwidth < 320)
+#else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
+#endif // WOLFDOSMPU
 		{
 		// wide scale
 			postwidth++;
@@ -850,7 +870,11 @@ void HitVertPWall (void)
 	if (lasttilehit == tilehit)
 	{
 		// in the same wall type as last time, so check for optimized draw
+#ifdef WOLFDOSMPU
+		if (texture == (unsigned) postsource && viewwidth < 320)
+#else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
+#endif // WOLFDOSMPU
 		{
 		// wide scale
 			postwidth++;

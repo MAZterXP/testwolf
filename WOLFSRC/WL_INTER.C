@@ -162,6 +162,10 @@ void Victory (void)
 #endif
 
 
+#ifdef WOLFDOSMPU
+	VWB_Hlin(0, 319, 160, 127);
+#endif // WOLFDOSMPU
+
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
 #ifdef JAPAN
 #ifndef JAPDEMO
@@ -585,6 +589,9 @@ void LevelCompleted (void)
 
 	CacheLump(LEVELEND_LUMP_START,LEVELEND_LUMP_END);
 	ClearSplitVWB ();			// set up for double buffering in split screen
+#ifdef WOLFDOSMPU
+	VWB_Hlin(0, 319, 160, 127);
+#endif // WOLFDOSMPU
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
 	StartCPMusic(ENDLEVEL_MUS);
 
@@ -1025,6 +1032,9 @@ void PreloadGraphics(void)
 	DrawLevel ();
 	ClearSplitVWB ();			// set up for double buffering in split screen
 
+#ifdef WOLFDOSMPU
+	VWB_Hlin(0, 319, 160, 127);
+#endif // WOLFDOSMPU
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
 
 	LatchDrawPic (20-14,80-3*8,GETPSYCHEDPIC);

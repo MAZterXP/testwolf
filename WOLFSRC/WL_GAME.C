@@ -934,6 +934,13 @@ void DrawPlayBorderSides (void)
 	yl = (200-STATUSLINES-viewheight)/2;
 
 #ifdef WOLFDOSMPU
+	if (viewwidth == 320)
+	{
+		VWB_Hlin(0, 319, 160, 125);
+		return;
+	}
+	VWB_Hlin(0, 319, 160, 127);
+
 	VWB_Bar (xl-1,0,viewwidth+2,yl-1,127);
 	VWB_Bar (xl-1,yl+viewheight+1,viewwidth+2,yl-1,127);
 	VWB_Hlin (xl,xl+viewwidth-1,yl-1,0);
@@ -1019,6 +1026,15 @@ void DrawPlayBorder (void)
 	yl = (200-STATUSLINES-viewheight)/2;
 	VWB_Bar (xl,yl,viewwidth,viewheight,0);
 
+#ifdef WOLFDOSMPU
+	if (viewwidth == 320)
+	{
+		VWB_Hlin(0, 319, 160, 125);
+		return;
+	}
+	VWB_Hlin(0, 319, 160, 127);
+#endif // WOLFDOSMPU
+
 	VWB_Hlin (xl-1,xl+viewwidth,yl-1,0);
 	VWB_Hlin (xl-1,xl+viewwidth,yl+viewheight,125);
 	VWB_Vlin (yl-1,yl+viewheight,xl-1,0);
@@ -1052,6 +1068,10 @@ void DrawPlayScreen (void)
 		bufferofs = screenloc[i];
 		DrawPlayBorder ();
 		VWB_DrawPic (0,200-STATUSLINES,STATUSBARPIC);
+#ifdef WOLFDOSMPU
+		if (viewwidth == 320)
+			VWB_Hlin(0, 319, 160, 125);
+#endif // WOLFDOSMPU
 	}
 
 	bufferofs = temp;

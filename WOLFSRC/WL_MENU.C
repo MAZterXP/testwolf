@@ -2192,13 +2192,13 @@ void DrawMouseSens(void)
 
 	VWB_Bar(60,97,200,10,TEXTCOLOR);
 	DrawOutline(60,97,200,10,0,HIGHLIGHT);
-#ifdef WASD
+#ifdef WOLFDOSMPU
 	DrawOutline(60+15*mouseadjustment,97,20,10,0,READCOLOR);
 	VWB_Bar(61+15*mouseadjustment,98,19,9,READHCOLOR);
-#else  // WASD
+#else  // WOLFDOSMPU
 	DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 	VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
-#endif // WASD
+#endif // WOLFDOSMPU
 
 	VW_UpdateScreen();
 	MenuFadeIn();
@@ -2275,13 +2275,13 @@ void MouseSensitivity(void)
 					mouseadjustment--;
 					VWB_Bar(60,97,200,10,TEXTCOLOR);
 					DrawOutline(60,97,200,10,0,HIGHLIGHT);
-#ifdef WASD
+#ifdef WOLFDOSMPU
 					DrawOutline(60+15*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+15*mouseadjustment,98,19,9,READHCOLOR);
-#else  // WASD
+#else  // WOLFDOSMPU
 					DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
-#endif // WASD
+#endif // WOLFDOSMPU
 					VW_UpdateScreen();
 					SD_PlaySound(MOVEGUN1SND);
 					while(Keyboard[sc_LeftArrow]);
@@ -2291,31 +2291,27 @@ void MouseSensitivity(void)
 
 			case dir_South:
 			case dir_East:
-#ifdef WASD
+#ifdef WOLFDOSMPU
 				if (mouseadjustment<12)
-#else  // WASD
+#else  // WOLFDOSMPU
 				if (mouseadjustment<9)
-#endif // WASD
+#endif // WOLFDOSMPU
 				{
 #ifdef WOLFDOSMPU
 					if (Keyboard[sc_DownArrow])
-#ifdef WASD
 						mouseadjustment = 12;
-#else  // WASD
-						mouseadjustment = 9;
-#endif // WASD
 					else
 #endif // WOLFDOSMPU
 					mouseadjustment++;
 					VWB_Bar(60,97,200,10,TEXTCOLOR);
 					DrawOutline(60,97,200,10,0,HIGHLIGHT);
-#ifdef WASD
+#ifdef WOLFDOSMPU
 					DrawOutline(60+15*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+15*mouseadjustment,98,19,9,READHCOLOR);
-#else  // WASD
+#else  // WOLFDOSMPU
 					DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
-#endif // WASD
+#endif // WOLFDOSMPU
 					VW_UpdateScreen();
 					SD_PlaySound(MOVEGUN1SND);
 					while(Keyboard[sc_RightArrow]);
@@ -3340,8 +3336,13 @@ void CP_ChangeView(void)
 		case dir_North:
 		case dir_East:
 			newview++;
+#ifdef WOLFDOSMPU
+			if (newview > 20)
+				newview = 20;
+#else  // WOLFDOSMPU
 			if (newview>19)
 				newview=19;
+#endif // WOLFDOSMPU
 			ShowViewSize(newview);
 			VW_UpdateScreen();
 			SD_PlaySound(HITWALLSND);

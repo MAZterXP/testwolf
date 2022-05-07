@@ -300,8 +300,13 @@ Usage
 Version History
 ===============
 
-1.49 (2022-xx-xx)
+1.49 (2022-05-08)
 -----------------
+- Now allows menu setting of the view size and mouse sensitivity to be stretched to the unofficial limits supported by the engine, both in the modern-controls and MPU-only versions. (Why both? Because players have enabled this on vanilla Wolf3D by hacking the config file -- so we might as well give them the full freedom. :))
+- Special fixes to make the maximum view size (AKA "borderless mode") work better:
+  - Fixed missing vertical wall lines/columns by disabling the related column-drawing optimization (but only for this view size). This eliminates no-clip-like artifacts when hugging walls at an angle, but note that this makes the game run a bit slower than vanilla, so only use the maximum view size if you don't mind (or notice) the performance penalty.
+  - Now properly renders the view's bottom border. (This also entails erasing this border when the game goes into the Get Psyched, level completion and victory screens.)
+  - Note that game logic determinism is slightly different on maximum view size. In fact, if you ever feel that the game plays differently, e.g., enemies take unusually more shots, it's probably due to your view size. _This is a known problem of the vanilla Wolf3D engine,_ with the view size determining your exact shooting radius. To see the problem in action, play back the shareware version's first demo on different view sizes -- the demo ends sooner than normal at the maximum view size, when BJ misses a shot on a guard and tries to run past him instead.
 - Expanded COMP 256 to include other sound fixes that potentially alter gameplay from the original (such as muted door re-opening, non-positioned pushwall sound, etc.).
 - Fixed some quirks when using the mouse to navigate menus (e.g., continuous triggering of options when the mouse button is held down).
 
