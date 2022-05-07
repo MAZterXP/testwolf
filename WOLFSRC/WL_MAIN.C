@@ -1729,7 +1729,7 @@ void DoJukebox(void)
 				start = 0;
 				DrawWindow (18,49,292,13*7,BKGDCOLOR);
 			}
-			else
+			else if (lastsong != start + which)
 			{
 				if (lastsong != -1)
 					MusicMenu[lastsong].active = 1;
@@ -1739,6 +1739,16 @@ void DoJukebox(void)
 			}
 			DrawMenu (&MusicItems,&MusicMenu[start]);
 			VW_UpdateScreen();
+		}
+		else if (start > 0)
+		{
+			// if you're in a subscreen, Esc gets you back to the previous screen
+			MusicItems.curpos = start / 6 - 1;
+			start = 0;
+			DrawWindow (18,49,292,13*7,BKGDCOLOR);
+			DrawMenu (&MusicItems,&MusicMenu[start]);
+			VW_UpdateScreen();
+			which = 0;
 #else  // WOLFDOSMPU
 			if (lastsong >= 0)
 				MusicMenu[start+lastsong].active = 1;

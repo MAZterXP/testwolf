@@ -190,9 +190,27 @@ Usage
 
   Since version 1.43, stationary enemies that you have already seen (but may have forgotten to snipe) are now marked in automap Hint mode. You still have to kill them first to show the pushwall hints.
 
-  If you're REALLY stuck, temporarily switch the automap mode to Full to find out where the enemies are. Remember to switch back if you don't want spoilers for the next level!
+  If you're REALLY stuck, temporarily switch the automap mode to "Full map" to find out where the enemies are. Remember to switch back if you don't want spoilers for the next level!
 
-  "Show hints if clear" will not work on SoD Map 21 (aka Map 18 part 2) due to the enemies constantly regenerating (therefore the level will never be cleared). Switch to "Always show hints" or "Full map" to reveal the pushwalls in that level.
+  "Show hints if clear" will simply not work on E2M9, E4M9, E6M9, and SoD Map 21, because the boss is part of the enemy count and the game ends when you kill it. It is also impossible to get 100% kills in SoD Map 21 because of the regenerating spectres. Switch to "Always show hints" or "Full map" to reveal the pushwalls in these levels. (Interestingly, E3M9 is an exception because the boss is behind a locked door, and you can kill all enemies before the locked door without getting the key to reveal the map's lone pushwall.)
+
+- ### How do the command-line options work in wolfdosmpu?
+
+  Here is a list of Wolf3D command-line options that work somewhat differently in wolfdosmpu:
+  ```
+  comp # - enables compatibility mode (# = compatibility flags)
+  nocomp - disables compatibility mode
+  noal   - disables OPL2 support, but will NOT disable Sound Blaster digitized sound
+           (unlike vanilla Wolf3D)
+  noss   - aside from disabling Disney Sound Source support, this will also enable the menu option
+           for PC Speaker digitized sound! (for DOSBox users, the speaker will be very loud --
+           enter "mixer spkr 40" on the command line to fix this)
+  ss1    - enables Covox Speech Thing support on LPT1
+  ss2    - enables Covox Speech Thing support on LPT2
+  ss3    - enables Covox Speech Thing support on LPT3
+  nomain - disables main memory size check; use with caution!
+  nompu  - disables MPU-401 support (i.e., re-enables OPL2 music)
+  ```
 
 - ### What is this COMP parameter thingamajig?
 
@@ -238,10 +256,15 @@ Usage
        (note: enabling these quirks will cause the automap to mark blocked doors as closed instead of
        open unless the blocked door is visible from the player's first-person viewpoint)
 
-  256: disable sound enhancements; this reverts to the original behavior where sound effects are
-       quickly dropped when higher-priority sounds override them (notably, gunshots and door opening/
-       closing could get completely muted if an enemy reacts at the exact same time), and the
-       distance attenuation range of audible sound is set to 8 tiles (instead of 15)
+  256: disable sound enhancements, re-enabling the following sound quirks:
+       - the distance attenuation range of audible sound is set to 8 tiles (instead of 15)
+       - sound effects are quickly dropped when higher-priority sounds override them (e.g., gunshots
+         and door sounds will get completely muted if an enemy reacts at the exact same time)
+       - doors that are re-opened while they are currently closing will not play the open-door sound
+       - on SB pro, the pushwall sound is non-positioned (i.e., it will play at full volume even
+         while you walk away from it)
+       - on PC Speaker digitized sound, doors will also use digitized sound effects (which will sound
+         garbled due to the speaker's limitations)
 
   ```
   For example, to mimic the vanilla game's behavior when they were run on a Pentium (or faster) system, specify COMP 511 (e.g., WOLF3DCM COMP 511). On the other hand, COMP 510 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
@@ -277,6 +300,11 @@ Usage
 Version History
 ===============
 
+1.49 (2022-xx-xx)
+-----------------
+- Expanded COMP 256 to include other sound fixes that potentially alter gameplay from the original (such as muted door re-opening, non-positioned pushwall sound, etc.).
+- Fixed some quirks when using the mouse to navigate menus (e.g., continuous triggering of options when the mouse button is held down).
+
 1.48 (2022-05-05)
 -----------------
 - AKA the "Wolfenstein 3-D 30th Anniversary" release. :D
@@ -295,7 +323,7 @@ Version History
 - Really fixed first-sample dropping on Sound Blaster this time (I hope) -- it seems to be caused by a driver problem that throws a stream-continue interrupt too early when the interrupt is masked and subsequently unmasked. The new workaround defers playing of full samples until after the first interrupt.
 - Added COMP 128 to revert the enemies-closing-unclosable-doors glitch. Also fixed more cases where the glitch can happen (e.g., when two or more enemies step on all the corpses that block the door from closing with perfect timing) and a related glitch where a door that has been blocked open for more than 32767 tics (7.8 minutes) would not close for another 7.8 minutes even if unblocked.
 - Fixed so that Esc and function keys are inaccessible when the game is already in a special playstate (e.g., player dying, level completion, etc.). This fixes many succeeding bugs such as the player dying immediately after a quick load (which happens when the player was killed at the exact moment they press F9), or saving at the exact moment of death and reloading to find yourself alive but with zero health.
-- Reverted stereo separation formula -- the change was too jarring for players used to the original formula. The sound queuing system is retained, however.
+- Reverted stereo separation formula -- the change was too jarring for players used to the original formula. The sound queueing system is retained, however.
 
 1.46 (2021-11-25)
 -----------------
@@ -326,9 +354,9 @@ Version History
   - Fixed out-of-memory issue that can happen on rare memory configurations after the level restarts due to player death.
   - Fixed memory corruption issue where pushing a secret wall again while it is moving can cause random static map ornaments to become impassable. I have experienced it myself on E4M2 and SoD Map 1, and [this video](https://www.youtube.com/watch?v=_1ieQL_8wgA) shows how it can be triggered in SoD Map 2 (which renders it unwinnable if no enemies are left to help reverse the glitch).
   - Fixed memory corruption issue where loading a game and entering an already-pushed secret wall's original position puts the player in an undefined area, subsequently causing random walls to change to texture page number 1 (darkened stone wall).
-  - Increased the conventional memory requirement to 576 KB (exactly 9/10ths of 640 KB) to avoid memory thrashing issues. You can now bypass this memory requirement with the "nomain" command-line parameter (instead of the "goobers" or "debugmode" parameters), to force the game to run on a low-memory system without enabling cheat codes. Please save your game often if you need to use "nomain" because the game is much more likely to crash.
+  - Increased the conventional memory requirement to 576 KB (exactly 9/10ths of 640 KB) to avoid memory thrashing issues. You can now bypass this memory requirement with the "nomain" command-line parameter, forcing the game to run on a low-memory system. Please save your game often if you need to use "nomain" because the game is much more likely to crash.
 - Gameplay fixes:
-  - Fixed the classic "phantom doors" glitch where actors can pass through a closed door if a patrolling enemy was initially placed facing that door. This was fixed because it was clearly not intended by the developer when it happens on E4M6 on the hardest difficulty (in the top left room with the crowns). However, since this bug may be intentionally used in mods to surprise players with ambushes or to make "fake" locked doors that the player can pass through without a key, you can reenable it by using the new COMP flag 64. (A related quirk, "holowalls", remains supported for mods without the need for COMP.)
+  - Fixed the classic "phantom doors" glitch where actors can pass through a closed door if a patrolling enemy was initially placed facing that door. This was fixed because it was clearly not intended by the developer when it happens on E4M6 on the hardest difficulty (in the top left room with the crowns). However, since this bug may be intentionally used in mods to surprise players with ambushes or to make "fake" locked doors that the player can pass through without a key, you can re-enable it by using the new COMP flag 64. (A related quirk, "holowalls", remains supported for mods without the need for COMP.)
   - Now gives the gold key to the player upon getting the spear; otherwise, a player can trick an enemy to open the locked door without the key, grab the spear, and get into an unwinnable final level (because you need the key to get out).
 - Rendering fixes:
   - Now properly renders bonus item sprites that could not be picked up (e.g., 25-ammo boxes). Previously they seem to disappear as if they were already picked up, only to reappear when the player backs away.
@@ -348,11 +376,11 @@ Version History
 - Automap tracing has been improved to cut off visibility at unopened doors. This improvement reduces automap errors where visibility would "seep through" areas that the player hasn't explored yet but has already been "seen" by the ray-casting engine, which is caused by precision errors when checking for wall collisions. This issue also affects other source ports and derivative games that rely on the ray-casting engine for automapping, such as ECWolf and the DOS version of Super 3-D Noah's Ark. (The actual precision errors are left untouched because fixing them may affect the speed and determinism of the renderer and may cause subtle differences in gameplay.)
 - Now marks previously-seen stationary enemies on the map if they are the only ones left and you have seen all of them (only on "Show hints if clear" automap mode or higher, renamed from "Show secrets if clear"). The rationale for this is that the automap is supposed to help the player determine where enemies may still be hiding, and if these stationary enemies were seen but never alerted, they should obviously remain where they are. If they are not marked (and the map is already mostly explored), then the player is forced to explore every part of the level again, which just wastes time and adds to frustration. However, if there are any moving enemies left (aside from ghosts), no enemy positions will be marked unless the player sees them directly, because their positions _should_ be uncertain to the player.
 - Fixed modern-controls bug where items can still be picked up even when they are made inaccessible by pushing a secret wall on top of them. This bug did not affect the MPU-only version because the spotvis algorithm was modified only in the modern-controls version (to support showing walls on the automap).
-- Fixed a classic bug where pushwall spots reactivate when another pushwall is pushed into its place and the user saves and reloads the game. To reenable the previous behavior, use new COMP flag 32.
+- Fixed a classic bug where pushwall spots reactivate when another pushwall is pushed into its place and the user saves and reloads the game. To re-enable the previous behavior, use new COMP flag 32.
 - Fixed so that the OPL2 device is cleaned up twice on system exit. The vanilla EXEs were actually doing this second clean-up in the main game code, but it does not respect the "noal" option, so it was #ifdef-ed out for safety. But then I later noticed that not cleaning up twice caused the game to sometimes not detect the OPL2 properly on the next startup, so I reimplemented it with proper support for "noal". This might be a DOSBox-only thing, but I'm not taking chances.
 - Fixed a classic bug that causes sounds to get cut off at the last segment (which sometimes even causes lower-priority digitized sounds to never play again).
 - Fixed a classic bug where the engine tries (and fails) to play back both digitized and non-digitized PC Speaker sounds simultaneously. What for? See the next fix. ;)
-- If no Disney Sound Source is present (or if the "noss" command-line parameter is supplied), its menu option is now replaced with the glorious PC Speaker option. For DOSBox users, it is recommended to set the volume of the emulated PC Speaker device to 40 (or below) using the DOSBox command line "MIXER SPKR 40" for proper loudness relative to the emulated SB and FM devices.
+- If no Disney Sound Source is present (or if the "noss" command-line parameter is supplied), its menu option is now replaced with the glorious PC Speaker option. For DOSBox users, it is recommended to set the volume of the emulated PC Speaker device to 40 (or below) using the DOSBox command line "mixer spkr 40" for proper loudness relative to the emulated SB and FM devices.
 - Door sound effects now revert to their non-digitized counterparts when playing on PC Speaker because the samples are too noisy and unintelligible (and play very often in a level); hopefully this makes PC Speaker digitized sound much more tolerable.
 
 1.42 (2021-10-29)

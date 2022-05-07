@@ -112,8 +112,13 @@ byte lefttable[ATABLEMAX][ATABLEMAX * 2] = {
 #ifdef WOLFDOSMPU
 int ExpandAudioTableRange()
 {
-	// expand left table
 	int row, col, altrow, altcol;
+	extern byte far soundFixes;
+
+	// enable all other sound fixes
+	soundFixes = 1;
+
+	// expand left table
 	for (row = 12; row >= 0; row -= 2)
 	{
 		altrow = (row + 1) / 2;

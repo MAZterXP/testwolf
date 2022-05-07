@@ -88,7 +88,7 @@ static	boolean			SD_Started;
 		char			far queuedcountdown;
 		byte			far queuedsound;
 		byte			far queuedpos;
-		byte			far queueing = 1;
+		byte			far soundFixes;
 #endif // WOLFDOSMPU
 		longword		TimerDivisor,TimerCount;
 static	char			*ParmStrings[] =
@@ -2775,11 +2775,11 @@ SD_PlaySound(soundnames sound)
 
 	// very-near door sounds get temporary boosted priority, equivalent to player gunshots
 	neardoor = (door && LeftPosition == 0 && RightPosition == 0);
-	if (neardoor && queueing)
+	if (neardoor && soundFixes)
 		priority = 50;
 
-	// when on PC speaker, revert to non-digital version for door noises
-	if (DigiMode != sds_PC || ! door)
+	// when on PC speaker, revert to non-digital version for door noises (unless COMP 256 specified)
+	if (DigiMode != sds_PC || ! (door && soundFixes))
 #endif // WOLFDOSMPU
 
 	if ((DigiMode != sds_Off) && (DigiMap[sound] != -1))
@@ -2788,7 +2788,7 @@ SD_PlaySound(soundnames sound)
 		word *ppriority = ((DigiMode == sds_PC) && (SoundMode == sdm_PC)) ? &SoundPriority : &DigiPriority;
 		if (priority < *ppriority)
 			return false;
-		if (queueing)
+		if (soundFixes)
 		{
 			if (neardoor || sound == PUSHWALLSND)
 				queuedcountdown = 41;		// play at least 2 out of the 3 clangs in the door-open sample
@@ -2860,11 +2860,11 @@ SD_PlaySound(soundnames sound)
 	if (SoundMode == sdm_Off)
 		return(false);
 #ifdef WOLFDOSMPU
-	if (priority < SoundPriority || (sound == DONOTHINGSND || sound == HITWALLSND) && SD_SoundPlaying() == sound && DigiPlaying)
+	if (priority < SoundPriority || soundFixes && (sound == DONOTHINGSND || sound == HITWALLSND) && SD_SoundPlaying() == sound && DigiPlaying)
 	{
 		// don't play lower priority sounds;
-		// also, don't cut-off and restart DONOTHINGSND and HITWALLSND if a digitized sound is playing
-		// (this prevents audio slowdown when the user hugs the wall or spams the use key)
+		// also, if sound fixes are on, don't cut-off and restart DONOTHINGSND and HITWALLSND if a digitized sound is playing
+		// (this prevents audio slowdown when the user hugs the wall or spams the use key during digitized sound playback)
 		return false;
 	}
 #else  // WOLFDOSMPU

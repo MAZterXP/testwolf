@@ -1179,7 +1179,11 @@ void DrawNewEpisode(void)
 
 	VW_UpdateScreen();
 	MenuFadeIn();
+#ifdef WOLFDOSMPU
+	// WaitKeyUp now handled in HandleMenu
+#else  // WOLFDOSMPU
 	WaitKeyUp();
+#endif // WOLFDOSMPU
 }
 #endif
 
@@ -1216,7 +1220,11 @@ void DrawNewGame(void)
 	DrawNewGameDiff(NewItems.curpos);
 	VW_UpdateScreen();
 	MenuFadeIn();
+#ifdef WOLFDOSMPU
+	// WaitKeyUp now handled in HandleMenu
+#else  // WOLFDOSMPU
 	WaitKeyUp();
+#endif // WOLFDOSMPU
 }
 
 
@@ -1247,6 +1255,7 @@ void CP_Sound(void)
 	{
 		// if no MUSIC\_INFO file was found, revert option string to AdLib/Sound Blaster
 		_fstrcpy(SndMenu[11].string, SndMenu[2].string);
+		_fstrcpy(SndMenu[12].string, SndMenu[3].string);
 		SndMenu[12].active = 0;
 	}
 	else if (MusicMode == smm_AdLib)
@@ -1262,7 +1271,11 @@ void CP_Sound(void)
 
 	DrawSoundMenu();
 	MenuFadeIn();
+#ifdef WOLFDOSMPU
+	// WaitKeyUp now handled in HandleMenu
+#else  // WOLFDOSMPU
 	WaitKeyUp();
+#endif // WOLFDOSMPU
 
 	do
 	{
@@ -1378,7 +1391,6 @@ void CP_Sound(void)
 			case 12:
 				DrawSoundMenu();
 				MenuFadeIn();
-				WaitKeyUp();
 				break;
 #endif // WOLFDOSMPU
 		}
@@ -1414,7 +1426,10 @@ void DrawSoundMenu(void)
 #ifdef WOLFDOSMPU
 	DrawWindow(SM_X-12,SM_Y1-3,SM_W+4,SM_H1,BKGDCOLOR);
 	DrawWindow(SM_X-12,SM_Y2-3,SM_W+4,SM_H2,BKGDCOLOR);
-	DrawWindow(SM_X-12,SM_Y3-3,SM_W+4,SM_H2-1,BKGDCOLOR);
+	if (mpuIsEnabled())
+		DrawWindow(SM_X-12,SM_Y3-3,SM_W+4,SM_H2-1,BKGDCOLOR);
+	else
+		DrawWindow(SM_X-12,SM_Y3-3,SM_W+4,SM_H3,BKGDCOLOR);
 #else  // WOLFDOSMPU
 	DrawWindow(SM_X-8,SM_Y1-3,SM_W,SM_H1,BKGDCOLOR);
 	DrawWindow(SM_X-8,SM_Y2-3,SM_W,SM_H2,BKGDCOLOR);
@@ -1565,7 +1580,6 @@ void TabKeyFunction()
 	TabItems.indent = 50;
 	DrawTabMenu(TabItems);
 	MenuFadeIn();
-	WaitKeyUp();
 	do
 	{
 		which = HandleMenu(&TabItems,&TabMenu[0],NULL);
@@ -1577,7 +1591,6 @@ void TabKeyFunction()
 				automapmode = which - 6;
 			DrawTabMenu(TabItems);
 			ShootSnd();
-			WaitKeyUp();
 		}
 	}
 	while (which >= 0);
@@ -1766,7 +1779,11 @@ void DrawLoadSaveScreen(int loadsave)
 	DrawMenu(&LSItems,&LSMenu[0]);
 	VW_UpdateScreen();
 	MenuFadeIn();
+#ifdef WOLFDOSMPU
+	// WaitKeyUp now handled in HandleMenu
+#else  // WOLFDOSMPU
 	WaitKeyUp();
+#endif // WOLFDOSMPU
 }
 
 
@@ -2047,7 +2064,11 @@ void CP_Control(void)
 
 	DrawCtlScreen();
 	MenuFadeIn();
+#ifdef WOLFDOSMPU
+	// WaitKeyUp now handled in HandleMenu
+#else  // WOLFDOSMPU
 	WaitKeyUp();
+#endif // WOLFDOSMPU
 
 	do
 	{
@@ -2061,9 +2082,6 @@ void CP_Control(void)
 				DrawCtlScreen();
 				CusItems.curpos=-1;
 				ShootSnd();
-#ifdef WOLFDOSMPU
-				WaitKeyUp();
-#endif // WOLFDOSMPU
 				break;
 
 			case JOYENABLE:
@@ -2074,27 +2092,18 @@ void CP_Control(void)
 				DrawCtlScreen();
 				CusItems.curpos=-1;
 				ShootSnd();
-#ifdef WOLFDOSMPU
-				WaitKeyUp();
-#endif // WOLFDOSMPU
 				break;
 
 			case USEPORT2:
 				joystickport^=1;
 				DrawCtlScreen();
 				ShootSnd();
-#ifdef WOLFDOSMPU
-				WaitKeyUp();
-#endif // WOLFDOSMPU
 				break;
 
 			case PADENABLE:
 				joypadenabled^=1;
 				DrawCtlScreen();
 				ShootSnd();
-#ifdef WOLFDOSMPU
-				WaitKeyUp();
-#endif // WOLFDOSMPU
 				break;
 
 			case MOUSESENS:
@@ -2104,7 +2113,11 @@ void CP_Control(void)
 #endif // WASD
 				DrawCtlScreen();
 				MenuFadeIn();
+#ifdef WOLFDOSMPU
+				// WaitKeyUp now handled in HandleMenu
+#else  // WOLFDOSMPU
 				WaitKeyUp();
+#endif // WOLFDOSMPU
 				break;
 
 #ifdef WASD
@@ -2112,21 +2125,18 @@ void CP_Control(void)
 				alwaysrun^=1;
 				DrawCtlScreen();
 				ShootSnd();
-				WaitKeyUp();
 				break;
 
 			case STRAFE:
 				keysalwaysstrafe^=1;
 				DrawCtlScreen();
 				ShootSnd();
-				WaitKeyUp();
 				break;
 
 			case MOUSETURN:
 				mouseturningonly^=1;
 				DrawCtlScreen();
 				ShootSnd();
-				WaitKeyUp();
 				break;
 #endif // WASD
 		}
@@ -2192,6 +2202,9 @@ void DrawMouseSens(void)
 
 	VW_UpdateScreen();
 	MenuFadeIn();
+#ifdef WOLFDOSMPU
+	WaitKeyUp();
+#endif // WOLFDOSMPU
 }
 
 #ifdef WOLFDOSMPU
@@ -2229,6 +2242,7 @@ void DrawMidiVolume()
 
 	VW_UpdateScreen();
 	MenuFadeIn();
+	WaitKeyUp();
 }
 #endif // WOLFDOSMPU
 
@@ -2253,6 +2267,11 @@ void MouseSensitivity(void)
 			case dir_West:
 				if (mouseadjustment)
 				{
+#ifdef WOLFDOSMPU
+					if (Keyboard[sc_UpArrow])
+						mouseadjustment = 0;
+					else
+#endif // WOLFDOSMPU
 					mouseadjustment--;
 					VWB_Bar(60,97,200,10,TEXTCOLOR);
 					DrawOutline(60,97,200,10,0,HIGHLIGHT);
@@ -2278,6 +2297,15 @@ void MouseSensitivity(void)
 				if (mouseadjustment<9)
 #endif // WASD
 				{
+#ifdef WOLFDOSMPU
+					if (Keyboard[sc_DownArrow])
+#ifdef WASD
+						mouseadjustment = 12;
+#else  // WASD
+						mouseadjustment = 9;
+#endif // WASD
+					else
+#endif // WOLFDOSMPU
 					mouseadjustment++;
 					VWB_Bar(60,97,200,10,TEXTCOLOR);
 					DrawOutline(60,97,200,10,0,HIGHLIGHT);
@@ -2319,7 +2347,11 @@ void MouseSensitivity(void)
 	else
 		SD_PlaySound(SHOOTSND);
 
+#ifdef WOLFDOSMPU
+	// WaitKeyUp now handled in HandleMenu
+#else  // WOLFDOSMPU
 	WaitKeyUp();
+#endif // WOLFDOSMPU
 	MenuFadeOut();
 }
 
@@ -2341,7 +2373,10 @@ void MidiVolume()
 			case dir_West:
 				if (midivolume)
 				{
-					midivolume--;
+					if (Keyboard[sc_UpArrow])
+						midivolume = 0;
+					else
+						midivolume--;
 					mpuRestart();
 					VWB_Bar(60,97,200,10,TEXTCOLOR);
 					DrawOutline(60,97,200,10,0,HIGHLIGHT);
@@ -2358,7 +2393,10 @@ void MidiVolume()
 			case dir_East:
 				if (midivolume<10)
 				{
-					midivolume++;
+					if (Keyboard[sc_DownArrow])
+						midivolume = 10;
+					else
+						midivolume++;
 					mpuRestart();
 					VWB_Bar(60,97,200,10,TEXTCOLOR);
 					DrawOutline(60,97,200,10,0,HIGHLIGHT);
@@ -2399,7 +2437,6 @@ void MidiVolume()
 	else
 		SD_PlaySound(SHOOTSND);
 
-	WaitKeyUp();
 	MenuFadeOut();
 }
 #endif // WOLFDOSMPU
@@ -3388,6 +3425,9 @@ void DrawChangeView(int view)
 	VW_UpdateScreen();
 
 	MenuFadeIn();
+#ifdef WOLFDOSMPU
+	WaitKeyUp();
+#endif // WOLFDOSMPU
 }
 
 
@@ -3705,6 +3745,9 @@ int HandleMenu(CP_iteminfo *item_i,CP_itemtype far *items,void (*routine)(int w)
 	exit=0;
 	TimeCount=0;
 	IN_ClearKeysDown();
+#ifdef WOLFDOSMPU
+	WaitKeyUp();
+#endif // WOLFDOSMPU
 
 
 	do

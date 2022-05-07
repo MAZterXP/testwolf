@@ -213,12 +213,7 @@ US_Startup(void)
 
 #ifdef WOLFDOSMPU
 #define COMPFLAG_SOUND_QUIRKS				0x0100
-	if (compflags & COMPFLAG_SOUND_QUIRKS)
-	{
-		extern byte far queueing;
-		queueing = 0;
-	}
-	else
+	if (! (compflags & COMPFLAG_SOUND_QUIRKS))
 		ExpandAudioTableRange();
 #endif // WOLFDOSMPU
 

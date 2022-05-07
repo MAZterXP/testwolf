@@ -411,7 +411,8 @@ void OpenDoor (int door)
 {
 #ifdef WOLFDOSMPU
 	// play the door sound again when it's being reopened
-	if (doorobjlist[door].action == dr_closing)
+	extern byte far soundFixes;
+	if (doorobjlist[door].action == dr_closing && soundFixes)
 	{
 		int area = *(mapsegs[0] + farmapylookup[doorobjlist[door].tiley]
 					+doorobjlist[door].tilex)-AREATILE;
@@ -859,7 +860,9 @@ void PushWall (int checkx, int checky, int dir)
 #ifdef WOLFDOSMPU
 	{
 		// for consistency
-		SD_PlaySound(DONOTHINGSND);
+		extern byte far soundFixes;
+		if (soundFixes)
+			SD_PlaySound(DONOTHINGSND);
 #endif // WOLFDOSMPU
 		return;
 #ifdef WOLFDOSMPU
@@ -957,9 +960,15 @@ void PushWall (int checkx, int checky, int dir)
 #endif // WASD
 
 #ifdef WOLFDOSMPU
-	PlaySoundLocTile(PUSHWALLSND, pwallx, pwally);
-#else  // WOLFDOSMPU
+	{
+		extern byte far soundFixes;
+		if (soundFixes)
+			PlaySoundLocTile(PUSHWALLSND, pwallx, pwally);
+		else
+#endif // WOLFDOSMPU
 	SD_PlaySound (PUSHWALLSND);
+#ifdef WOLFDOSMPU
+	}
 #endif // WOLFDOSMPU
 }
 
