@@ -1208,6 +1208,9 @@ void CheckKeys (void)
 		if (!startgame && !loadedgame)
 		{
 			VW_FadeIn ();
+#ifdef WOLFDOSMPU
+			StopMusic();
+#endif // WOLFDOSMPU
 			StartMusic ();
 		}
 		if (loadedgame)

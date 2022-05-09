@@ -384,6 +384,9 @@ void US_ControlPanel(byte scancode)
 		if (CP_CheckQuick(scancode))
 			return;
 
+#ifdef WOLFDOSMPU
+	if (scancode != sc_F1)
+#endif // WOLFDOSMPU
 	StartCPMusic(MENUSONG);
 	SetupControlPanel();
 
@@ -399,6 +402,9 @@ void US_ControlPanel(byte scancode)
 			#ifdef GOODTIMES
 			BossKey();
 			#else
+#ifdef WOLFDOSMPU
+			StartCPMusic(CORNER_MUS);
+#endif // WOLFDOSMPU
 			HelpScreens();
 			#endif
 			#endif
@@ -677,14 +683,20 @@ void CP_ReadThis(void)
 ////////////////////////////////////////////////////////////////////
 void BossKey(void)
 {
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 	SD_MusicOff();
+#endif // WOLFDOSMPU
 	_AX = 3;
 	geninterrupt(0x10);
 	printf("C>");
 	while (!Keyboard[sc_Escape])
 	IN_ClearKeysDown();
 
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 	SD_MusicOn();
+#endif // WOLFDOSMPU
 	VL_SetVGAPlaneMode ();
 	VL_TestPaletteSet ();
 	VL_SetPalette (&gamepal);
