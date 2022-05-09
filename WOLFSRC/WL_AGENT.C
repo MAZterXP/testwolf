@@ -885,7 +885,11 @@ void ClipMove (objtype *ob, long xmove, long ymove)
 	if (TryMove (ob))
 		return;
 
+#ifdef WOLFDOSMPU
+	if (noclip && ob->x > TILEGLOBAL && ob->y > TILEGLOBAL &&
+#else  // WOLFDOSMPU
 	if (noclip && ob->x > 2*TILEGLOBAL && ob->y > 2*TILEGLOBAL &&
+#endif // WOLFDOSMPU
 	ob->x < (((long)(mapwidth-1))<<TILESHIFT)
 	&& ob->y < (((long)(mapheight-1))<<TILESHIFT) )
 		return;		// walk through walls

@@ -499,7 +499,7 @@ int DebugKeys (void)
 		DebugMemory();
 		return 1;
 	}
-#ifdef SPEAR
+#if defined(WOLFDOSMPU) || defined(SPEAR)
 	else if (Keyboard[sc_N])			// N = no clip
 	{
 		noclip^=1;
@@ -512,7 +512,7 @@ int DebugKeys (void)
 		IN_Ack ();
 		return 1;
 	}
-#endif
+#endif // WOLFDOSMPU
 #if 0
 	else if (Keyboard[sc_O])			// O = overhead
 	{
