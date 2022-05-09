@@ -491,7 +491,8 @@ void HitVertWall (void)
 	{
 		// in the same wall type as last time, so check for optimized draw
 #ifdef WOLFDOSMPU
-		if (texture == (unsigned) postsource && viewwidth < 320)
+		// the VGA-specific post scaling routine only allow posts of up to 8 pixels wide
+		if (texture == (unsigned) postsource && postwidth < 8)
 #else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
 #endif // WOLFDOSMPU
@@ -502,14 +503,27 @@ void HitVertWall (void)
 			return;
 		}
 		else
+#ifdef WOLFDOSMPU
+		// apply the next optimization only if we are rendering a later column
+		// or, if it's an earlier column, if we are NOT rendering a door side
+		// (otherwise we might render the wall again instead of the door side;
+		// this bug can be seen in E2M8 and E5M5)
+		if (texture >= (unsigned) postsource || ! (tilehit & 0x40))
+#endif // WOLFDOSMPU
 		{
 			ScalePost ();
 			(unsigned)postsource = texture;
 			postwidth = 1;
 			postx = pixx;
+#ifdef WOLFDOSMPU
+			return;
+#endif // WOLFDOSMPU
 		}
 	}
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 	else
+#endif // WOLFDOSMPU
 	{
 	// new wall
 		if (lastside != -1)				// if not the first scaled post
@@ -572,7 +586,8 @@ void HitHorizWall (void)
 	{
 		// in the same wall type as last time, so check for optimized draw
 #ifdef WOLFDOSMPU
-		if (texture == (unsigned) postsource && viewwidth < 320)
+		// the VGA-specific post scaling routine only allow posts of up to 8 pixels wide
+		if (texture == (unsigned) postsource && postwidth < 8)
 #else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
 #endif // WOLFDOSMPU
@@ -583,14 +598,27 @@ void HitHorizWall (void)
 			return;
 		}
 		else
+#ifdef WOLFDOSMPU
+		// apply the next optimization only if we are rendering a later column
+		// or, if it's an earlier column, if we are NOT rendering a door side
+		// (otherwise we might render the wall again instead of the door side;
+		// this bug can be seen in E2M8 and E5M5)
+		if (texture >= (unsigned) postsource || ! (tilehit & 0x40))
+#endif // WOLFDOSMPU
 		{
 			ScalePost ();
 			(unsigned)postsource = texture;
 			postwidth = 1;
 			postx = pixx;
+#ifdef WOLFDOSMPU
+			return;
+#endif // WOLFDOSMPU
 		}
 	}
+#ifdef WOLFDOSMPU
+#else  // WOLFDOSMPU
 	else
+#endif // WOLFDOSMPU
 	{
 	// new wall
 		if (lastside != -1)				// if not the first scaled post
@@ -648,7 +676,8 @@ void HitHorizDoor (void)
 	{
 	// in the same door as last time, so check for optimized draw
 #ifdef WOLFDOSMPU
-		if (texture == (unsigned) postsource && viewwidth < 320)
+		// the VGA-specific post scaling routine only allow posts of up to 8 pixels wide
+		if (texture == (unsigned) postsource && postwidth < 8)
 #else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
 #endif // WOLFDOSMPU
@@ -720,7 +749,8 @@ void HitVertDoor (void)
 	{
 	// in the same door as last time, so check for optimized draw
 #ifdef WOLFDOSMPU
-		if (texture == (unsigned) postsource && viewwidth < 320)
+		// the VGA-specific post scaling routine only allow posts of up to 8 pixels wide
+		if (texture == (unsigned) postsource && postwidth < 8)
 #else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
 #endif // WOLFDOSMPU
@@ -803,7 +833,8 @@ void HitHorizPWall (void)
 	{
 		// in the same wall type as last time, so check for optimized draw
 #ifdef WOLFDOSMPU
-		if (texture == (unsigned) postsource && viewwidth < 320)
+		// the VGA-specific post scaling routine only allow posts of up to 8 pixels wide
+		if (texture == (unsigned) postsource && postwidth < 8)
 #else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
 #endif // WOLFDOSMPU
@@ -871,7 +902,8 @@ void HitVertPWall (void)
 	{
 		// in the same wall type as last time, so check for optimized draw
 #ifdef WOLFDOSMPU
-		if (texture == (unsigned) postsource && viewwidth < 320)
+		// the VGA-specific post scaling routine only allow posts of up to 8 pixels wide
+		if (texture == (unsigned) postsource && postwidth < 8)
 #else  // WOLFDOSMPU
 		if (texture == (unsigned)postsource)
 #endif // WOLFDOSMPU
