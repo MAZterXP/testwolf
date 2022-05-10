@@ -255,6 +255,10 @@ void StatusDrawPic (unsigned x, unsigned y, unsigned picnum)
 {
 	unsigned	temp;
 
+#ifdef WOLFDOSMPU
+	if (viewheight == 200)
+		return;
+#endif // WOLFDOSMPU
 	temp = bufferofs;
 	bufferofs = 0;
 

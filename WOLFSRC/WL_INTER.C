@@ -163,10 +163,15 @@ void Victory (void)
 
 
 #ifdef WOLFDOSMPU
-	VWB_Hlin(0, 319, 160, 127);
-#endif // WOLFDOSMPU
-
+	if (viewheight == 200)
+		viewheight = 0;			// force drawing status elements in fullscreen
+	DrawPlayScreen();
+	if (viewheight == 0)
+		viewheight = 200;
+	VWB_Bar(0, 0, 320, 161, 127);
+#else  // WOLFDOSMPU
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
+#endif // WOLFDOSMPU
 #ifdef JAPAN
 #ifndef JAPDEMO
 	CA_CacheGrChunk(C_ENDRATIOSPIC);
@@ -590,9 +595,15 @@ void LevelCompleted (void)
 	CacheLump(LEVELEND_LUMP_START,LEVELEND_LUMP_END);
 	ClearSplitVWB ();			// set up for double buffering in split screen
 #ifdef WOLFDOSMPU
-	VWB_Hlin(0, 319, 160, 127);
-#endif // WOLFDOSMPU
+	if (viewheight == 200)
+	{
+		viewheight = 0;			// force drawing status elements in fullscreen
+		DrawPlayScreen();
+	}
+	VWB_Bar(0, 0, 320, 161, 127);
+#else  // WOLFDOSMPU
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
+#endif // WOLFDOSMPU
 	StartCPMusic(ENDLEVEL_MUS);
 
 //
@@ -978,6 +989,10 @@ void LevelCompleted (void)
 	#endif
 
 	VW_FadeOut ();
+#ifdef WOLFDOSMPU
+	if (viewheight == 0)
+		viewheight = 200;
+#else  // WOLFDOSMPU
 	temp = bufferofs;
 	for (i=0;i<3;i++)
 	{
@@ -985,6 +1000,7 @@ void LevelCompleted (void)
 		DrawPlayBorder ();
 	}
 	bufferofs = temp;
+#endif // WOLFDOSMPU
 
 	UnCacheLump(LEVELEND_LUMP_START,LEVELEND_LUMP_END);
 }
@@ -1029,13 +1045,23 @@ boolean PreloadUpdate(unsigned current, unsigned total)
 
 void PreloadGraphics(void)
 {
+#ifdef WOLFDOSMPU
+	if (viewheight == 200)
+		viewheight = 0;			// force drawing status elements in fullscreen
+#endif // WOLFDOSMPU
 	DrawLevel ();
+#ifdef WOLFDOSMPU
+	if (viewheight == 0)
+		viewheight = 200;
+#endif // WOLFDOSMPU
 	ClearSplitVWB ();			// set up for double buffering in split screen
 
 #ifdef WOLFDOSMPU
-	VWB_Hlin(0, 319, 160, 127);
-#endif // WOLFDOSMPU
+	VWB_Bar(0, 0, 320, 161, 127);
+#else  // WOLFDOSMPU
+
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
+#endif // WOLFDOSMPU
 
 	LatchDrawPic (20-14,80-3*8,GETPSYCHEDPIC);
 

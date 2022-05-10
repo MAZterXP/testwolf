@@ -675,7 +675,7 @@ void CP_ReadThis(void)
 */
 #if defined(WOLFDOSMPU) && ! defined(GOODTIMES) && ! defined(SPEAR)
 	// unused
-#else  // WOLFDOSMPU
+#else
 ////////////////////////////////////////////////////////////////////
 //
 // BOSS KEY
@@ -702,7 +702,7 @@ void BossKey(void)
 	VL_SetPalette (&gamepal);
 	LoadLatchMem();
 }
-#endif // WOLFDOSMPU
+#endif
 /*
 #endif
 #endif
@@ -3339,6 +3339,11 @@ void CP_ChangeView(void)
 			newview--;
 			if (newview<4)
 				newview=4;
+#ifdef WOLFDOSMPU
+			if (newview == 20)
+				DrawChangeView(20);
+			else
+#endif // WOLFDOSMPU
 			ShowViewSize(newview);
 			VW_UpdateScreen();
 			SD_PlaySound(HITWALLSND);
@@ -3349,8 +3354,12 @@ void CP_ChangeView(void)
 		case dir_East:
 			newview++;
 #ifdef WOLFDOSMPU
-			if (newview > 20)
-				newview = 20;
+			if (newview >= 21)
+			{
+				newview = 21;
+				DrawChangeView(21);
+			}
+			else
 #else  // WOLFDOSMPU
 			if (newview>19)
 				newview=19;
@@ -3423,6 +3432,11 @@ void DrawChangeView(int view)
 
 	ShowViewSize(view);
 #else
+#ifdef WOLFDOSMPU
+	if (view == 21)
+		VWB_Bar(0, 160, 320, 40, 0);
+	else
+#endif // WOLFDOSMPU
 	VWB_Bar(0,160,320,40,VIEWCOLOR);
 	ShowViewSize(view);
 

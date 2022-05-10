@@ -86,7 +86,7 @@ Here are some tips and suggestions for some common problems:
 
    If you use the "nomain" command-line parameter, you can force the wolfdosmpu EXE to load regardless of available main memory. THIS IS AN EXPERIMENTAL FEATURE, and you risk all sorts of unexpected behavior, such as trigerring the mythical id Software copy protection code that erases your hard drive if you don't have a registered copy of v1.1. Don't say I didn't warn you. (Seriously, however, expect the game to exhibit weird problems like showing incorrect wall graphics and crashing when starting or loading a game.)
 
-7. __Note on savegames__: Beginning with version 1.48, wolfdosmpu is now backwards-compatible with savegames from the original WOLF3D.EXE (v1.4 only) and SPEAR.EXE! See the FAQ below for details.
+7. __Note on savegames__: Beginning with version 1.48, wolfdosmpu is now backwards-compatible with savegames from the vanilla WOLF3D.EXE (v1.4 only) and SPEAR.EXE! See the FAQ below for details.
 
 Bring "M" on!
 -------------
@@ -281,24 +281,36 @@ Usage
   - You can cross-load savegames of different formats, such as:
     - Load an Apogee-format savegame in wolfdosmpu's commercial version (WOLF3DCM.EXE/WOLF3DCW.EXE).
     - Load a GT- or Activision-format savegame in wolfdosmpu's registered version (WOLF3DRM.EXE/WOLF3DRW.EXE).
-    - Load a shareware/demo savegame in wolfdosmpu's registered/commercial versions -- however, you will have to rename its extension (.WL1 -> .WL6 / .SDM -> .SOD) to make the savegame visible in the menu. _Be forewarned that renaming these savegames do NOT make them compatible with the original registered/commercial EXEs, only with wolfdosmpu!_
-  - Any subsequent saves in wolfdosmpu will also be compatible with your original EXE, but only _that_ EXE.
-    - For example, if you load and save an Activision-format savegame, the resulting savegame will be compatible with your original Activision-version EXE, but _not_ with the Apogee-version EXE (even if you use WOLF3DRM.EXE/WOLF3DRW.EXE)!
-    - If you load and save a shareware/demo savegame in a registered/commercial wolfdosmpu version, the resulting savegame will be compatible with your original shareware/demo EXE (after renaming back to .WL1/.SDM), but _not_ with original registered/commercial EXEs.
+    - Load a shareware/demo savegame in wolfdosmpu's registered/commercial versions -- however, you will have to rename its extension (.WL1 -> .WL6 / .SDM -> .SOD) to make the savegame visible in the menu. _Be forewarned that renaming these savegames do NOT make them compatible with the vanilla registered/commercial EXEs, only with wolfdosmpu!_
+  - Any subsequent saves in wolfdosmpu will also be compatible with your vanilla EXE, but only _that_ EXE.
+    - For example, if you load and save an Activision-format savegame, the resulting savegame will be compatible with your vanilla Activision-version EXE, but _not_ with the vanilla Apogee-version EXE (even if you use WOLF3DRM.EXE/WOLF3DRW.EXE to save it)!
+    - If you load and save a shareware/demo savegame in a registered/commercial wolfdosmpu version, the resulting savegame will be compatible with your vanilla shareware/demo EXE (after renaming back to .WL1/.SDM), but _not_ with vanilla registered/commercial EXEs.
       - The only exception is if you go past level 2 in SoD -- the savegame will automatically be converted to Activision-format because the SoD demo only goes up to level 2.
   - Upon launching a new game, wolfdosmpu's default internal format is:
     - Activision format for the commercial versions (CM/CW).
     - Apogee format for the shareware and registered versions (RM/RW/SM/SW).
     - FormGen format for the SoD demo version only (DM/DW).
     - Note: There is no way to create a fresh new wolfdosmpu game in GT format or commercial FormGen format. If compatibility is strictly required, start a new game from a GT- or FormGen-version EXE, save it, and load it in the wolfdosmpu EXE.
-  - When using the modern-controls version, automap data is appended to the end of the savegame. This is safely ignored by the original EXEs.
-  - Automap data will be lost if a wolfdosmpu savegame is loaded and saved again on your original EXE.
+  - When using the modern-controls version, automap data is appended to the end of the savegame. This is safely ignored by the vanilla EXEs.
+  - Automap data will be lost if a wolfdosmpu savegame is loaded and saved again on your vanilla EXE.
   - FormGen-version EXEs have a bug where only the first 8 levels' statistics are saved. To preserve compatibility with these FormGen-version EXEs, wolfdosmpu forgets the latter levels' stats whenever a FormGen-format savegame is loaded and saved, leading to incorrect stats upon finishing the game.
     - To ensure that all level stats are preserved, use an Activision-format savegame (or start a fresh new game in wolfdosmpu).
 
 
 Version History
 ===============
+
+1.50 (2022-05-11)
+-----------------
+- Now supports fullscreen (status-bar-less) mode for both modern-controls and MPU-only versions.
+  - For the MPU-only version, the config file is written so that you can still use your vanilla EXE with it -- the vanilla game will revert to the (unofficially-supported) borderless view size.
+  - For the modern-controls version, pressing the Tab key now shows your health and ammo in addition to completion stats, to compensate for the status bar being hidden in fullscreen.
+- Fixed rendering of door sides that are adjacent and perpendicular to each other, where one of them would occasionally render as a regular wall instead of a door side (and the door would appear to recede into the wall when opened). This bug can be observed on E2M8 and E5M5 (on the vanilla EXE) -- look for these doors in areas with one-tile-wide wooden corridors.
+- Fixed noclip cheat (Tab+N) where the player cannot walk through blocked tiles on the first row or column of the map. Also made the cheat available in Wolf3D (instead of just SoD).
+- Warp cheat (Tab+W) now removes your keys.
+- Fixed F1 boss key (for commercial/demo releases) so that the menu music does not start playing (only to quickly turn off as the C> appears).
+- Fixed F1 help key (for shareware/registered releases) so that the CORNER music is played, to be consistent with the Read This menu option.
+- Fixed some out-of-memory issues on 576 KB of conventional RAM.
 
 1.49 (2022-05-08)
 -----------------
@@ -313,7 +325,7 @@ Version History
 1.48 (2022-05-05)
 -----------------
 - AKA the "Wolfenstein 3-D 30th Anniversary" release. :D
-- Thanks to an obscure hack, wolfdosmpu is now backwards-compatible with savegames from the original WOLF3D.EXE (v1.4 only) and SPEAR.EXE! See the FAQ above for details.
+- Thanks to an obscure hack, wolfdosmpu is now backwards-compatible with savegames from the vanilla WOLF3D.EXE (v1.4 only) and SPEAR.EXE! See the FAQ above for details.
 - Now makes the positions of keys (and the spear) always glow on the automap. This can help players find the map's "quickest-path" solution without obtaining all treasure.
 - Improved the distance attenuation range of sound effects (when playing on SB pro). The original attenuation lookup table was designed to minimize the volume of a sound at just 8 tiles away, which makes the sound falloff too short. This fix extends the range to 15 tiles, making sounds that are further away much more audible, while maintaining clear stereo separation. (This should be a better solution than the previous one implemented in 1.45.)
 - Added COMP 256 to revert to the old sound engine behavior, disabling the extended distance attenuation range and sound queueing -- for people who still prefer the vanilla sound behavior.

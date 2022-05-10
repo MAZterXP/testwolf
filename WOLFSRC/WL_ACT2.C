@@ -3784,10 +3784,15 @@ void	A_StartDeathCam (objtype *ob)
 
 	gamestate.victoryflag = true;
 #ifdef WOLFDOSMPU
-	VWB_Hlin(0, 319, 160, 127);
-#endif // WOLFDOSMPU
+	if (viewheight == 200)
+		VW_Bar(0, 0, 320, 200, 127);
+	else
+		VW_Bar(0, 0, 320, 161, 127);
+	FizzleFade(bufferofs, displayofs, 320, 200, 70, false);
+#else  // WOLFDOSMPU
 	VW_Bar (0,0,320,200-STATUSLINES,127);
 	FizzleFade(bufferofs,displayofs,320,200-STATUSLINES,70,false);
+#endif // WOLFDOSMPU
 
 	PM_UnlockMainMem ();
 	CA_UpLevel ();

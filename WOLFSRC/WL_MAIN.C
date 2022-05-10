@@ -154,19 +154,14 @@ void ReadConfig(void)
 
 #ifdef WOLFDOSMPU
 		{
-			// if the config file does not have the midi volume value yet, set it to max
-			int value, bytesread;
-			bytesread = read(file,&value,sizeof(value));
-			if (bytesread < sizeof(value))
+			byte value;
+			int bytesread = read(file, &value, sizeof(value));
+			midivolume = value;
+			if (bytesread == 0 || midivolume > 10)
 				midivolume = 10;
-			else
-			{
-				midivolume = value;
-				if (midivolume < 0)
-					midivolume = 0;
-				if (midivolume > 10)
-					midivolume = 10;
-			}
+			bytesread = read(file, &value, sizeof(value));
+			if (bytesread == 1 && value)
+				viewsize = 21;
 		}
 		close(file);
 
@@ -324,6 +319,8 @@ void WriteConfig(void)
 #ifdef WOLFDOSMPU
 		// save what the user believes the viewsize currently is
 		viewsize = savedviewsize;
+		if (viewsize == 21)
+			viewsize = 20;	// be backward-compatible with original exe
 #endif // WOLFDOSMPU
 		write(file,&viewsize,sizeof(viewsize));
 		write(file,&mouseadjustment,sizeof(mouseadjustment));
@@ -349,8 +346,10 @@ void WriteConfig(void)
 #ifdef WOLFDOSMPU
 		{
 			// this will be ignored by the original executable and would not actually change its value
-			int value;
+			byte value;
 			value = midivolume;
+			write(file,&value,sizeof(value));
+			value = (savedviewsize == 21);
 			write(file,&value,sizeof(value));
 		}
 #endif // WOLFDOSMPU
@@ -1951,6 +1950,11 @@ boolean SetViewSize (unsigned width, unsigned height)
 	viewheight = height&~1;                 // must be even
 	centerx = viewwidth/2-1;
 	shootdelta = viewwidth/10;
+#ifdef WOLFDOSMPU
+	if (viewheight == 200)
+		screenofs = 0;
+	else
+#endif // WOLFDOSMPU
 	screenofs = ((200-STATUSLINES-viewheight)/2*SCREENWIDTH+(320-viewwidth)/8);
 
 //
@@ -1983,8 +1987,20 @@ void ShowViewSize (int width)
 	oldwidth = viewwidth;
 	oldheight = viewheight;
 
+#ifdef WOLFDOSMPU
+	if (width == 21)
+	{
+		viewwidth = 320;
+		viewheight = 200;
+	}
+	else
+	{
+#endif // WOLFDOSMPU
 	viewwidth = width*16;
 	viewheight = width*16*HEIGHTRATIO;
+#ifdef WOLFDOSMPU
+	}
+#endif // WOLFDOSMPU
 	DrawPlayBorder ();
 
 	viewheight = oldheight;
@@ -1997,6 +2013,11 @@ void NewViewSize (int width)
 	CA_UpLevel ();
 	MM_SortMem ();
 	viewsize = width;
+#ifdef WOLFDOSMPU
+	if (viewsize == 21)
+		SetViewSize(320, 200);
+	else
+#endif // WOLFDOSMPU
 	SetViewSize (width*16,width*16*HEIGHTRATIO);
 	CA_DownLevel ();
 }

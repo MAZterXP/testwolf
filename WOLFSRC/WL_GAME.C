@@ -934,11 +934,10 @@ void DrawPlayBorderSides (void)
 	yl = (200-STATUSLINES-viewheight)/2;
 
 #ifdef WOLFDOSMPU
-	if (viewwidth == 320)
-	{
+	if (viewheight == 160)
 		VWB_Hlin(0, 319, 160, 125);
+	if (viewheight >= 160)
 		return;
-	}
 	VWB_Hlin(0, 319, 160, 127);
 
 	VWB_Bar (xl-1,0,viewwidth+2,yl-1,127);
@@ -1027,11 +1026,10 @@ void DrawPlayBorder (void)
 	VWB_Bar (xl,yl,viewwidth,viewheight,0);
 
 #ifdef WOLFDOSMPU
-	if (viewwidth == 320)
-	{
+	if (viewheight == 160)
 		VWB_Hlin(0, 319, 160, 125);
+	if (viewheight >= 160)
 		return;
-	}
 	VWB_Hlin(0, 319, 160, 127);
 #endif // WOLFDOSMPU
 
@@ -1067,9 +1065,12 @@ void DrawPlayScreen (void)
 	{
 		bufferofs = screenloc[i];
 		DrawPlayBorder ();
+#ifdef WOLFDOSMPU
+		if (viewheight <= 160)
+#endif // WOLFDOSMPU
 		VWB_DrawPic (0,200-STATUSLINES,STATUSBARPIC);
 #ifdef WOLFDOSMPU
-		if (viewwidth == 320)
+		if (viewheight == 160)
 			VWB_Hlin(0, 319, 160, 125);
 #endif // WOLFDOSMPU
 	}
@@ -1438,7 +1439,18 @@ void GameLoop (void)
 restartgame:
 	ClearMemory ();
 	SETFONTCOLOR(0,15);
+#ifdef WOLFDOSMPU
+	// shrinking screens fix
+	NewViewSize(savedviewsize);
+	savedviewsize = viewsize;
+	if (viewheight == 200)
+		viewheight = 0;			// force drawing status elements in fullscreen
+#endif // WOLFDOSMPU
 	DrawPlayScreen ();
+#ifdef WOLFDOSMPU
+	if (viewheight == 0)
+		viewheight = 200;
+#endif // WOLFDOSMPU
 	died = false;
 restart:
 	do
@@ -1536,7 +1548,11 @@ startplayloop:
 		if (demorecord && playstate != ex_warped)
 			FinishDemoRecord ();
 
+#ifdef WOLFDOSMPU
+		if (startgame || loadedgame || playstate == ex_warped)
+#else  // WOLFDOSMPU
 		if (startgame || loadedgame)
+#endif // WOLFDOSMPU
 			goto restartgame;
 
 		switch (playstate)

@@ -960,6 +960,15 @@ void CheckAccessible()
 		spotvis[player->tilex][player->tiley] = (spotvis[player->tilex][player->tiley] & 0x80) | 0x4f;
 }
 
+void PrintCount(char *sz, int *i, int c)
+{
+	if (c >= 100)
+		sz[(*i)++] = '0' + (c / 100) % 10;
+	if (c >= 10)
+		sz[(*i)++] = '0' + (c / 10) % 10;
+	sz[(*i)++] = '0' + (c % 10);
+}
+
 #endif // WASD
 
 
@@ -1335,32 +1344,37 @@ void CheckKeys (void)
 
 			CheckAccessible();
 
-#define PRINTCOUNT(c) {						\
-	if ((c) >= 100)							\
-		sz[i++] = '0' + ((c) / 100) % 10;	\
-	if ((c) >= 10)							\
-		sz[i++] = '0' + ((c) / 10) % 10;	\
-	sz[i++] = '0' + ((c) % 10);				\
-}
-
 			memset(sz, ' ', sizeof(sz));
 
 			if (tabfunction == 1)
 			{
-				VW_ScreenToScreen(displayofs,bufferofs,80,160);
+				int extension = (viewheight == 200 ? 25 : 0);
+				VW_ScreenToScreen(displayofs,bufferofs,80,200);
 
 #define DW 40
 #define DH 36
 				// create dialog window
-				VWB_Bar(160 - DW, 80 - DH, DW * 2, DH * 2, 127);
+				VWB_Bar(160 - DW, 80 - DH, DW * 2, DH * 2 + extension, 127);
 
 				VWB_Hlin(160 - DW, 160 + DW - 1, 80 - DH - 1, 125);
-				VWB_Hlin(160 - DW - 1, 160 + DW, 80 + DH, 0);
-				VWB_Vlin(80 - DH - 1, 80 + DH - 1, 160 - DW - 1, 125);
-				VWB_Vlin(80 - DH - 1, 80 + DH - 1, 160 + DW, 0);
+				VWB_Hlin(160 - DW - 1, 160 + DW, 80 + DH + extension, 0);
+				VWB_Vlin(80 - DH - 1, 80 + DH - 1 + extension, 160 - DW - 1, 125);
+				VWB_Vlin(80 - DH - 1, 80 + DH - 1 + extension, 160 + DW, 0);
 			}
 			else
 			{
+				if (viewheight == 200)
+				{
+					// need to draw the status bar pic to display the floor number
+					ClearMemory();
+					CA_CacheGrChunk(STATUSBARPIC);
+					VWB_DrawPic(0, 200 - STATUSLINES, STATUSBARPIC);
+					UNCACHEGRCHUNK(STATUSBARPIC);
+					PM_CheckMainMem();
+					viewheight = 0;			// force drawing status elements in fullscreen
+					DrawLevel();
+					viewheight = 200;
+				}
 				// clear screen except for floor display
 				VWB_Bar(0, 0, 320, 163, 127);
 				VWB_Vlin(163, 197, 42, 126);
@@ -1400,7 +1414,7 @@ void CheckKeys (void)
 				}
 				VWB_DrawPropString(sz);
 				i = 0;
-				PRINTCOUNT(gamestate.killcount);
+				PrintCount(sz, &i, gamestate.killcount);
 				sz[i++] = 0;
 				if (x == 0)
 					fontcolor = 12;
@@ -1417,7 +1431,7 @@ void CheckKeys (void)
 				py += 6;
 				VWB_DrawPropString(sz);
 				i = 0;
-				PRINTCOUNT(killaccessible);
+				PrintCount(sz, &i, killaccessible);
 				sz[i++] = 0;
 				px -= 2;
 				py += 5;
@@ -1445,11 +1459,11 @@ void CheckKeys (void)
 				else
 				{
 					px = x + 6;
-					py += 24;
+					py += 20;
 				}
 				VWB_DrawPropString(sz);
 				i = 0;
-				PRINTCOUNT(gamestate.secretcount);
+				PrintCount(sz, &i, gamestate.secretcount);
 				sz[i++] = 0;
 				if (x == 0)
 					fontcolor = 10;
@@ -1466,7 +1480,7 @@ void CheckKeys (void)
 				py += 6;
 				VWB_DrawPropString(sz);
 				i = 0;
-				PRINTCOUNT(secretaccessible);
+				PrintCount(sz, &i, secretaccessible);
 				sz[i++] = 0;
 				px -= 2;
 				py += 5;
@@ -1494,11 +1508,11 @@ void CheckKeys (void)
 				else
 				{
 					px = x + 6;
-					py += 24;
+					py += 20;
 				}
 				VWB_DrawPropString(sz);
 				i = 0;
-				PRINTCOUNT(gamestate.treasurecount);
+				PrintCount(sz, &i, gamestate.treasurecount);
 				sz[i++] = 0;
 				if (x == 0)
 					fontcolor = 14;
@@ -1515,7 +1529,7 @@ void CheckKeys (void)
 				py += 6;
 				VWB_DrawPropString(sz);
 				i = 0;
-				PRINTCOUNT(treasureaccessible);
+				PrintCount(sz, &i, treasureaccessible);
 				sz[i++] = 0;
 				px -= 2;
 				py += 5;
@@ -1524,6 +1538,60 @@ void CheckKeys (void)
 				{
 					sz[0] = '^';
 					sz[1] = 0;
+					if (x == 0)
+						fontcolor = 7;
+					VWB_DrawPropString(sz);
+				}
+
+				if (tabfunction == 2 || viewheight == 200)
+				{
+					i = 0;
+					sz[i++] = 'H';
+					sz[i++] = ':';
+					sz[i++] = 0;
+					if (x == 0)
+						fontcolor = 16;
+					if (tabfunction == 1)
+					{
+						px = x + 128;
+						py += 15;
+					}
+					else
+					{
+						px = x + 6;
+						py += 25;
+					}
+					VWB_DrawPropString(sz);
+					i = 0;
+					px += 6;
+					PrintCount(sz, &i, gamestate.health);
+					sz[i++] = '%';
+					sz[i++] = 0;
+					if (x == 0)
+						fontcolor = 7;
+					VWB_DrawPropString(sz);
+
+					i = 0;
+					sz[i++] = 'A';
+					sz[i++] = ':';
+					sz[i++] = 0;
+					if (x == 0)
+						fontcolor = 16;
+					if (tabfunction == 1)
+					{
+						px = x + 128;
+						py += 10;
+					}
+					else
+					{
+						px = x + 6;
+						py += 10;
+					}
+					VWB_DrawPropString(sz);
+					i = 0;
+					px += 6;
+					PrintCount(sz, &i, gamestate.ammo);
+					sz[i++] = 0;
 					if (x == 0)
 						fontcolor = 7;
 					VWB_DrawPropString(sz);
@@ -1617,20 +1685,23 @@ void CheckKeys (void)
 			if (Keyboard[sc_Escape])
 				IN_ClearKeysDown();		// don't allow Escape to trigger menu
 
-			// reshow the old screen
-			asm	cli
-			asm	mov	cx,[displayofs]
-			asm	mov	dx,3d4h		// CRTC address register
-			asm	mov	al,0ch		// start address high register
-			asm	out	dx,al
-			asm	inc	dx
-			asm	mov	al,ch
-			asm	out	dx,al   	// set the high byte
-			asm	sti
+			if (tabfunction == 1 || viewheight < 200)
+			{
+				// reshow the old screen
+				asm	cli
+				asm	mov	cx,[displayofs]
+				asm	mov	dx,3d4h		// CRTC address register
+				asm	mov	al,0ch		// start address high register
+				asm	out	dx,al
+				asm	inc	dx
+				asm	mov	al,ch
+				asm	out	dx,al   	// set the high byte
+				asm	sti
 
-			// copy the old screen over the new screen (overwriting the map)
-			VL_WaitVBL(1);
-			VW_ScreenToScreen(displayofs,bufferofs,80,200);
+				// copy the old screen over the new screen (overwriting the map)
+				VL_WaitVBL(1);
+				VW_ScreenToScreen(displayofs,bufferofs,80,200);
+			}
 
 			if (MousePresent)
 				Mouse(MDelta);	// Clear accumulated mouse movement

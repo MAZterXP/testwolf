@@ -512,7 +512,7 @@ int DebugKeys (void)
 		IN_Ack ();
 		return 1;
 	}
-#endif // WOLFDOSMPU
+#endif
 #if 0
 	else if (Keyboard[sc_O])			// O = overhead
 	{
@@ -581,6 +581,9 @@ int DebugKeys (void)
 			{
 				gamestate.mapon = level-1;
 				playstate = ex_warped;
+#ifdef WOLFDOSMPU
+				gamestate.keys = 0;
+#endif // WOLFDOSMPU
 			}
 		}
 		return 1;

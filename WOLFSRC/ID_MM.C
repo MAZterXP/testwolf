@@ -578,7 +578,11 @@ boolean SetViewSize (unsigned width, unsigned height);
 //
 // wolf hack -- size the view down
 //
+#ifdef WOLFDOSMPU
+		if (! insetupscaling && viewsize > 5)
+#else  // WOLFDOSMPU
 		if (!insetupscaling && viewsize>10)
+#endif // WOLFDOSMPU
 		{
 mmblocktype	far *savedmmnew;
 			savedmmnew = mmnew;
