@@ -3394,6 +3394,24 @@ void CP_ChangeView(void)
 			return;
 		}
 
+#ifdef WOLFDOSMPU
+		if (exit && oldview != newview && newview == 21)
+		{
+#ifdef WASD
+			if (! Confirm("This view size hides the\n"
+						  "status bar. You must use\n"
+						  "the Tab key to view your\n"
+						  "stats. Continue? (Y or N):"))
+#else  // WASD
+			if (! Confirm("This view size hides the\n"
+						  "status bar, preventing\n"
+						  "you from viewing essential\n"
+						  "stats. Continue? (Y or N):"))
+#endif // WASD
+				exit = 0;
+			DrawChangeView(21);
+		}
+#endif  // WOLFDOSMPU
 	} while(!exit);
 
 

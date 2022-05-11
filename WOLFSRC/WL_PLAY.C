@@ -1377,9 +1377,6 @@ void CheckKeys (void)
 					VWB_DrawPic(0, 200 - STATUSLINES, STATUSBARPIC);
 					UNCACHEGRCHUNK(STATUSBARPIC);
 					PM_CheckMainMem();
-					viewheight = 0;			// force drawing status elements in fullscreen
-					DrawLevel();
-					viewheight = 200;
 				}
 				// clear screen except for floor display
 				VWB_Bar(0, 0, 320, 163, 127);
@@ -1681,6 +1678,14 @@ void CheckKeys (void)
 						}
 					}
 				}
+
+				// display floor level (do this here to minimize the amount of time it gets pre-shown in the current screen)
+				if (viewheight == 200)
+				{
+					viewheight = 0;			// force drawing status elements in fullscreen
+					DrawLevel();
+					viewheight = 200;
+				}
 			}
 
 			// temporarily move to the new screen
@@ -1693,6 +1698,13 @@ void CheckKeys (void)
 			asm	mov	al,ch
 			asm	out	dx,al   	// set the high byte
 			asm	sti
+
+			VL_WaitVBL(1);
+			if (viewheight == 200)
+			{
+				// if fullscreen, copy the map over to the old screen (to prevent seeing the floor number that was copied to all screens)
+				VW_ScreenToScreen(bufferofs,displayofs,80,200);
+			}
 
 			if (tabfunction == 1)
 			{
@@ -1732,21 +1744,21 @@ void CheckKeys (void)
 			if (Keyboard[sc_Escape])
 				IN_ClearKeysDown();		// don't allow Escape to trigger menu
 
-			if (tabfunction == 1 || viewheight < 200)
-			{
-				// reshow the old screen
-				asm	cli
-				asm	mov	cx,[displayofs]
-				asm	mov	dx,3d4h		// CRTC address register
-				asm	mov	al,0ch		// start address high register
-				asm	out	dx,al
-				asm	inc	dx
-				asm	mov	al,ch
-				asm	out	dx,al   	// set the high byte
-				asm	sti
+			// reshow the old screen
+			asm	cli
+			asm	mov	cx,[displayofs]
+			asm	mov	dx,3d4h		// CRTC address register
+			asm	mov	al,0ch		// start address high register
+			asm	out	dx,al
+			asm	inc	dx
+			asm	mov	al,ch
+			asm	out	dx,al   	// set the high byte
+			asm	sti
 
-				// copy the old screen over the new screen (overwriting the map)
-				VL_WaitVBL(1);
+			VL_WaitVBL(1);
+			if (viewheight != 200)
+			{
+				// if not fullscreen, copy the old screen over the new screen (overwriting the map)
 				VW_ScreenToScreen(displayofs,bufferofs,80,200);
 			}
 

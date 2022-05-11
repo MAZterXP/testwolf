@@ -168,7 +168,7 @@ Usage
 
   All these little changes cause an estimated 10 to 33 percent decrease in frame rate. There might be slightly more efficient methods, but there will always be a memory tradeoff (and we are also constrained by the conventional memory limit). Since I'm still discovering more bugs in the classic code that need fixing, that takes priority over optimization for now.
 
-- ### What does the ^ symbol in the completion stats/automap mean?
+- ### What does the ^ symbol in the statistics/automap mean?
 
   The ^ indicates that there are more kills/secrets/treasures on the level but they are currently inaccessible. When you get a key or push a secret door that makes more items accessible, the counts increase, and eventually the ^ disappears when everything is accessible. The ^ will not disappear in E2M8, E3M10 and E6M10 by the way, because of map bugs and/or ghosts that can not be killed.
 
@@ -300,7 +300,7 @@ Usage
 Version History
 ===============
 
-1.50 (2022-05-11)
+1.50 (2022-05-12)
 -----------------
 - Now supports fullscreen (status-bar-less) mode for both modern-controls and MPU-only versions.
   - For the MPU-only version, the config file is written so that you can still use your vanilla EXE with it -- the vanilla game will revert to the (unofficially-supported) borderless view size.
