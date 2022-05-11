@@ -304,7 +304,7 @@ Version History
 -----------------
 - Now supports fullscreen (status-bar-less) mode for both modern-controls and MPU-only versions.
   - For the MPU-only version, the config file is written so that you can still use your vanilla EXE with it -- the vanilla game will revert to the (unofficially-supported) borderless view size.
-  - For the modern-controls version, pressing the Tab key now shows your health and ammo in addition to completion stats, to compensate for the status bar being hidden in fullscreen.
+  - For the modern-controls version, pressing the Tab key now shows your lives, health, ammo, and keys, to compensate for the status bar being hidden in fullscreen.
 - Fixed rendering of door sides that are adjacent and perpendicular to each other, where one of them would occasionally render as a regular wall instead of a door side (and the door would appear to recede into the wall when opened). This bug can be observed on E2M8 and E5M5 (on the vanilla EXE) -- look for these doors in areas with one-tile-wide wooden corridors.
 - Fixed noclip cheat (Tab+N) where the player cannot walk through blocked tiles on the first row or column of the map. Also made the cheat available in Wolf3D (instead of just SoD).
 - Warp cheat (Tab+W) now removes your keys.

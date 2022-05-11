@@ -782,7 +782,7 @@ void CheckAccessible()
 	unsigned far *stackptr;
 	memptr tempmem = MM_GetBuffer();
 	unsigned current;
-	byte x, y, z;
+	byte x, y, z, victory = 0;
 	unsigned killstationary = gamestate.killcount;
 
 	stackptr = (unsigned far *) tempmem;
@@ -950,13 +950,19 @@ void CheckAccessible()
 				 || *visspot & 0x0c && automapmode >= 1 && killstationary == killaccessible && obj->obclass != ghostobj))
 			{
 				// special case: enemy color is always dark to distinguish from player, and is drawn over everything else except player
-				*visspot = (*visspot & 0x83) | 0x44;
+				if (obj->obclass == bjobj)
+				{
+					victory = 1;
+					*visspot = (*visspot & 0x80) | 0x4f;
+				}
+				else
+					*visspot = (*visspot & 0x83) | 0x44;
 			}
 		}
 	}
 
-	// mark the player (except if we're doing the victory run, which offsets player->y without updating player->tiley)
-	if (player->tiley == (player->y >> TILESHIFT))
+	// mark the player (except if we're doing the victory run)
+	if (! victory)
 		spotvis[player->tilex][player->tiley] = (spotvis[player->tilex][player->tiley] & 0x80) | 0x4f;
 }
 
@@ -1348,18 +1354,18 @@ void CheckKeys (void)
 
 			if (tabfunction == 1)
 			{
-				int extension = (viewheight == 200 ? 25 : 0);
+				int extension = (viewheight == 200 ? 30 : 0);
 				VW_ScreenToScreen(displayofs,bufferofs,80,200);
 
-#define DW 40
-#define DH 36
+#define DW 44
+#define DH 37
 				// create dialog window
-				VWB_Bar(160 - DW, 80 - DH, DW * 2, DH * 2 + extension, 127);
+				VWB_Bar(160 - DW, 80 - DH, DW * 2 + 1, DH * 2 + extension, 127);
 
-				VWB_Hlin(160 - DW, 160 + DW - 1, 80 - DH - 1, 125);
-				VWB_Hlin(160 - DW - 1, 160 + DW, 80 + DH + extension, 0);
-				VWB_Vlin(80 - DH - 1, 80 + DH - 1 + extension, 160 - DW - 1, 125);
-				VWB_Vlin(80 - DH - 1, 80 + DH - 1 + extension, 160 + DW, 0);
+				VWB_Hlin(160 - DW, 160 + DW, 80 - DH, 125);
+				VWB_Hlin(160 - DW - 1, 160 + DW + 1, 80 + DH + extension, 0);
+				VWB_Vlin(80 - DH, 80 + DH - 1 + extension, 160 - DW - 1, 125);
+				VWB_Vlin(80 - DH, 80 + DH - 1 + extension, 160 + DW + 1, 0);
 			}
 			else
 			{
@@ -1377,8 +1383,12 @@ void CheckKeys (void)
 				}
 				// clear screen except for floor display
 				VWB_Bar(0, 0, 320, 163, 127);
-				VWB_Vlin(163, 197, 42, 126);
-				VWB_Bar(43, 163, 277, 35, 127);
+				VWB_Vlin(163, 196, 42, 126);
+				VWB_Vlin(164, 174, 43, 0);
+				VWB_Vlin(175, 186, 43, 31);
+				VWB_Vlin(187, 197, 43, 30);
+				VWB_Vlin(163, 197, 52, 126);
+				VWB_Bar(53, 163, 267, 35, 127);
 			}
 
 #if 0
@@ -1459,7 +1469,7 @@ void CheckKeys (void)
 				else
 				{
 					px = x + 6;
-					py += 20;
+					py += 15;
 				}
 				VWB_DrawPropString(sz);
 				i = 0;
@@ -1508,7 +1518,7 @@ void CheckKeys (void)
 				else
 				{
 					px = x + 6;
-					py += 20;
+					py += 15;
 				}
 				VWB_DrawPropString(sz);
 				i = 0;
@@ -1546,6 +1556,31 @@ void CheckKeys (void)
 				if (tabfunction == 2 || viewheight == 200)
 				{
 					i = 0;
+					sz[i++] = 'L';
+					sz[i++] = ':';
+					sz[i++] = 0;
+					if (x == 0)
+						fontcolor = 16;
+					if (tabfunction == 1)
+					{
+						px = x + 128;
+						py += 10;
+					}
+					else
+					{
+						px = x + 6;
+						py += 20;
+					}
+					VWB_DrawPropString(sz);
+					i = 0;
+					px += 6;
+					sz[i++] = gamestate.lives + '0';
+					sz[i++] = 0;
+					if (x == 0)
+						fontcolor = 7;
+					VWB_DrawPropString(sz);
+
+					i = 0;
 					sz[i++] = 'H';
 					sz[i++] = ':';
 					sz[i++] = 0;
@@ -1554,12 +1589,12 @@ void CheckKeys (void)
 					if (tabfunction == 1)
 					{
 						px = x + 128;
-						py += 15;
+						py += 10;
 					}
 					else
 					{
 						px = x + 6;
-						py += 25;
+						py += 10;
 					}
 					VWB_DrawPropString(sz);
 					i = 0;
@@ -1595,6 +1630,18 @@ void CheckKeys (void)
 					if (x == 0)
 						fontcolor = 7;
 					VWB_DrawPropString(sz);
+
+					#define LATCHPIC(x) latchpics[2+(x)-LATCHPICS_LUMP_START]
+					if (tabfunction == 2)
+					{
+						VL_LatchToScreen(LATCHPIC((gamestate.keys & 1) ? GOLDKEYPIC : NOKEYPIC), 2, 16, 44, 164);
+						VL_LatchToScreen(LATCHPIC((gamestate.keys & 2) ? SILVERKEYPIC : NOKEYPIC), 2, 16, 44, 180);
+					}
+					else
+					{
+						VL_LatchToScreen(LATCHPIC((gamestate.keys & 1) ? GOLDKEYPIC : NOKEYPIC), 2, 16, 180, 124);
+						VL_LatchToScreen(LATCHPIC((gamestate.keys & 2) ? SILVERKEYPIC : NOKEYPIC), 2, 16, 188, 124);
+					}
 				}
 			}
 
@@ -2362,6 +2409,12 @@ void PlayLoop (void)
 		}
 
 	}while (!playstate && !startgame);
+
+#ifdef WOLFDOSMPU
+	// prevent post-death fizzle-in when player starts a new game after a demo
+	if (demoplayback && playstate == ex_died)
+		playstate = 0;
+#endif // WOLFDOSMPU
 
 	if (playstate != ex_died)
 		FinishPaletteShifts ();
