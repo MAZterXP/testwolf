@@ -796,8 +796,8 @@ int CP_CheckQuick(unsigned scancode)
 				DrawPlayScreen ();
 
 #ifdef WOLFDOSMPU
-				VW_FadeIn ();
-				StartMusic ();
+				VL_FadeIn(0, 255, &gamepal, viewheight == 200 ? 0 : 30);
+				StartMusic();
 #else  // WOLFDOSMPU
 				if (!startgame && !loadedgame)
 				{
@@ -887,7 +887,11 @@ int CP_CheckQuick(unsigned scancode)
 
 				if (!startgame && !loadedgame)
 				{
+#ifdef WOLFDOSMPU
+					VL_FadeIn(0, 255, &gamepal, viewheight == 200 ? 0 : 30);
+#else  // WOLFDOSMPU
 					VW_FadeIn ();
+#endif // WOLFDOSMPU
 					StartMusic ();
 				}
 
@@ -2859,6 +2863,21 @@ void EnterCtrlData(int index,CustomCtrls *cust,void (*DrawRtn)(int),void (*Print
 	 case KEYBOARDBTNS:
 	   if (LastScan)
 	   {
+#ifdef WOLFDOSMPU
+			if (LastScan == sc_Escape)
+			{
+				picked = 1;
+				continue;
+			}
+			if (LastScan >= sc_F1 && LastScan <= sc_F10
+#ifdef WASD
+				|| LastScan == sc_Tab
+#endif // WASD
+			)
+			{
+				continue;
+			}
+#endif // WOLFDOSMPU
 	buttonscan[order[which]]=LastScan;
 	picked=1;
 	ShootSnd();
@@ -2869,6 +2888,21 @@ void EnterCtrlData(int index,CustomCtrls *cust,void (*DrawRtn)(int),void (*Print
 	 case KEYBOARDMOVE:
 	   if (LastScan)
 	   {
+#ifdef WOLFDOSMPU
+			if (LastScan == sc_Escape)
+			{
+				picked = 1;
+				continue;
+			}
+			if (LastScan >= sc_F1 && LastScan <= sc_F10
+#ifdef WASD
+				|| LastScan == sc_Tab
+#endif // WASD
+			)
+			{
+				continue;
+			}
+#endif // WOLFDOSMPU
 	dirscan[moveorder[which]]=LastScan;
 	picked=1;
 	ShootSnd();
@@ -3397,17 +3431,20 @@ void CP_ChangeView(void)
 #ifdef WOLFDOSMPU
 		if (exit && oldview != newview && newview == 21)
 		{
+			static byte fullScreenOK = 0;
 #ifdef WASD
-			if (! Confirm("This view size hides the\n"
-						  "status bar. You must use\n"
-						  "the Tab key to view your\n"
-						  "stats. Continue? (Y or N):"))
+			if (fullScreenOK || Confirm("This view size hides the\n"
+										"status bar. You must use\n"
+										"the Tab key to view your\n"
+										"stats. Continue? (Y or N):"))
 #else  // WASD
-			if (! Confirm("This view size hides the\n"
-						  "status bar, preventing\n"
-						  "you from viewing essential\n"
-						  "stats. Continue? (Y or N):"))
+			if (fullScreenOK || Confirm("This view size hides the\n"
+										"status bar, preventing\n"
+										"you from viewing essential\n"
+										"stats. Continue? (Y or N):"))
 #endif // WASD
+				fullScreenOK = 1;
+			else
 				exit = 0;
 			DrawChangeView(21);
 		}

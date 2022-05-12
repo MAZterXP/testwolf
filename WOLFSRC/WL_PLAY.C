@@ -1222,9 +1222,10 @@ void CheckKeys (void)
 		DrawPlayScreen ();
 		if (!startgame && !loadedgame)
 		{
-			VW_FadeIn ();
 #ifdef WOLFDOSMPU
-			StopMusic();
+			VL_FadeIn(0, 255, &gamepal, viewheight == 200 ? 0 : 30);
+#else  // WOLFDOSMPU
+			VW_FadeIn ();
 #endif // WOLFDOSMPU
 			StartMusic ();
 		}

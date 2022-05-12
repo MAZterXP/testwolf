@@ -212,6 +212,16 @@ Usage
   nompu  - disables MPU-401 support (i.e., re-enables OPL2 music)
   ```
 
+- ### Wow, PC Speaker digitized sound is now an option? (It used to be "hidden" as a config file hack!) Any other "hidden" features?
+
+  - __View size__: wolfdosmpu supports increasing the view window size to fill the entire screen ("fullscreen mode"), or just the status bar ("borderless mode"), ala Doom. You can select these modes via the Change View menu option.
+    - Technically, borderless mode is supported by vanilla Wolf3D via a config file hack, but there are wall rendering bugs that are fixed by wolfdosmpu.
+    - When in fullscreen mode, the modern-controls version can show the player's stats (health, ammo, etc.) by pressing the Tab key. (Note that the MPU-only version does not support the Tab key.)
+    - Fullscreen mode uses much more conventional RAM than borderless mode due to the way the auto-generated wall-scaler code works, and your hard drive will thrash by the time you enter the large middle area in E1M1 if you have just 576KB of RAM and no EMS/XMS. Consider fullscreen support as "experimental". ;)
+  - __Mouse sensitivity__: wolfdosmpu allows setting a slightly higher mouse sensitivity (12 instead of 9). (Also technically possible in vanilla Wolf3D via a config file hack.)
+  - __Cheats__: The no-clip cheat (Tab+N) from SoD will also work on Wolf3D.
+  - __Bug fixes__: wolfdosmpu also has numerous minor fixes to vanilla Wolf3D bugs. The COMP parameter (discussed below) allows you to revert these fixes on a per-fix basis.
+
 - ### What is this COMP parameter thingamajig?
 
   You can enable specific quirks/bugs of the vanilla game using the COMP (compatibility) command-line parameter. These parameters may be useful when you play custom maps that depend on these quirks. Specify a number after COMP, which should be the sum of the flags you want to enable (alternatively, specify a negative number to disable those flags and enable everything else):
@@ -265,6 +275,9 @@ Usage
          while you walk away from it)
        - on PC Speaker digitized sound, doors will also use digitized sound effects (which will sound
          garbled due to the speaker's limitations)
+       - DONOTHINGSND and HITWALLSND (i.e., the sounds effects that play when holding the Open key
+         and running into walls, respectively) may significantly slow down any digitized audio that
+         is playing at the same time, especially when using Covox or SB in DMA-less mode
 
   ```
   For example, to mimic the vanilla game's behavior when they were run on a Pentium (or faster) system, specify COMP 511 (e.g., WOLF3DCM COMP 511). On the other hand, COMP 510 (or COMP -1) disables the 3-tile pushwall move, which is ideal for completionists who wish to retain all other engine quirks.
@@ -299,6 +312,12 @@ Usage
 
 Version History
 ===============
+
+1.51 (2022-05-13)
+-----------------
+- Per Gmlb256's suggestion, removed the half-second delay before the play screen starts rendering in fullscreen mode. This was due to the game trying to fade in the play screen's UI elements, which do not exist in fullscreen mode. (If the game is not in fullscreen, these UI elements will still fade in as usual.)
+- The warning to enter fullscreen mode is now only shown once in a session (in case the user wants to switch often, e.g., to temporarily view the stats in the MPU-only version).
+- Customize Controls screen now prohibits essential keys (Esc, F1-F10, and Tab for the modern-controls version) from being customized.
 
 1.50 (2022-05-12)
 -----------------
