@@ -361,7 +361,7 @@ void mpuStart(word songId)
 	{
 		// ensure valid mpuPort
 		if (mpuPort < 0x200 || mpuPort > 0x3FF)
-			mpuPort = 0x330;
+			mpuPort = 0x370;
 
 		i = 65535;
 		while ((b = inportb(mpuPort + 1)) & 0x40)	// wait until we can write
@@ -539,7 +539,7 @@ void mpuInit()
 		{
 			sqHackTime = 0x80000000L;	// set MPU_DATA_FOUND to true
 			mpuBuffer = (byte far *) farmalloc(maxSize);
-			mpuPort = 0x330;
+			mpuPort = 0x370;
 			mpuPos = 0;
 		}
 	}
